@@ -1,24 +1,4 @@
-
-// Load the browser client from two independent CDNs to avoid an endless loading screen.
-async function importWithTimeout(url, timeoutMs = 11000) {
-  let timer;
-  try {
-    return await Promise.race([
-      import(url),
-      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('انتهت مهلة تحميل مكتبة تسجيل الدخول')), timeoutMs); })
-    ]);
-  } finally { clearTimeout(timer); }
-}
-let supabaseModule;
-for (const url of [
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm',
-  'https://esm.sh/@supabase/supabase-js@2.57.0'
-]) {
-  try { supabaseModule = await importWithTimeout(url); break; }
-  catch (error) { console.warn('Supabase library unavailable at', url, error); }
-}
-if (!supabaseModule?.createClient) throw new Error('تعذر تحميل مكتبة تسجيل الدخول؛ تحققي من الإنترنت ثم أعيدي المحاولة.');
-const { createClient } = supabaseModule;
+import { createClient } from '@supabase/supabase-js';
 const db=createClient('https://utlcejgzkrvdhojrnxcm.supabase.co','sb_publishable_iOHkDZzbKgUKy7h3HQp1PQ_U0zxCjzE');
 const safeUrl=v=>/^https?:\/\//i.test(String(v||''))?String(v):'#';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
