@@ -1,0 +1,1 @@
+insert into public.families(name,sort_order) select v.name,v.n from (values ('الأسرة الأولى',1),('الأسرة الثانية',2),('الأسرة الثالثة',3)) v(name,n) where not exists(select 1 from public.families f where f.name=v.name);
