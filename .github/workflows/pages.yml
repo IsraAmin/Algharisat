@@ -38,5 +38,8 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
+      # Give GitHub Pages artifact metadata time to become visible after upload.
+      - name: Allow Pages artifact metadata to propagate
+        run: sleep 15
       - id: deployment
         uses: actions/deploy-pages@v4
