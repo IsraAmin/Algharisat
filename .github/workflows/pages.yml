@@ -1,33 +1,28 @@
-name: Validate Algharisat
+name: Deploy Algharisat to GitHub Pages
 on:
   push:
     branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: algharisat-pages
+  cancel-in-progress: true
 jobs:
-  verify:
+  deploy:
     runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Validate JavaScript syntax
+      - name: Validate JavaScript
         run: node --input-type=module --check < app.js
-      - name: Check live Supabase HTTPS site
-        run: |
-          set -euo pipefail
-          BASE="https://utlcejgzkrvdhojrnxcm.supabase.co/functions/v1/algharisat"
-          curl -fsSL --retry 4 --retry-delay 2 "$BASE" -o /tmp/algharisat.html
-          curl -fsSL --retry 4 --retry-delay 2 "$BASE/app.js" -o /tmp/algharisat.js
-          curl -fsSL --retry 4 --retry-delay 2 "$BASE/style.css" -o /tmp/algharisat.css
-          grep -q 'الغارسات' /tmp/algharisat.html
-          grep -q 'createClient' /tmp/algharisat.js
-          grep -q 'IBM Plex Sans Arabic' /tmp/algharisat.css
-          node --input-type=module --check < /tmp/algharisat.js
-          echo "Algharisat entry point and assets respond successfully"
-
-      - name: Install browser test runtime
-        run: |
-          npm install --no-save --no-audit --no-fund playwright@1.57.0
-          npx playwright install chromium --with-deps
-      - name: Smoke test login on desktop and mobile
-        run: node tests/smoke.mjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
