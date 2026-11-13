@@ -27,6 +27,8 @@ jobs:
           npx esbuild app.js --bundle --format=iife --platform=browser --target=es2020 --outfile=dist/app.bundle.js
           cp index.html style.css dist/
           touch dist/.nojekyll
+          test -s dist/app.bundle.js
+          grep -q 'app.bundle.js' dist/index.html
       - uses: actions/configure-pages@v5
         with:
           enablement: true
