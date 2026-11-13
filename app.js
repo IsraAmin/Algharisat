@@ -50,7 +50,8 @@ render();
 try{await withTimeout(load(),20000)}catch(error){console.warn('تعذر تحميل بعض بيانات الحساب',error);flash('تم تسجيل الدخول، لكن تعذّر تحميل بعض البيانات. حاولي تحديث الصفحة.',true)}
 if(sequence===bootSequence)render();
 }
-db.auth.onAuthStateChange((event)=>{if(['SIGNED_IN','SIGNED_OUT','TOKEN_REFRESHED','USER_UPDATED'].includes(event)){setTimeout(start,0)}});
+let loginInProgress=false;
+db.auth.onAuthStateChange((event)=>{if(!loginInProgress&&['SIGNED_IN','SIGNED_OUT','USER_UPDATED'].includes(event)){setTimeout(()=>start().catch(err=>{console.error(err);flash('تعذر تحديث حالة تسجيل الدخول، أعيدي تحميل الصفحة.',true)}),0)}});
 function auth(){
 return '<div class="auth"><section class="auth-hero"><div class="brand"><div class="brandmark">✦</div>معهد التأسيس الشرعي | مشروع نبت</div><h1>الغارسات</h1><p class="verse">﴿كَزَرْعٍ أَخْرَجَ شَطْأَهُ فَآزَرَهُ فَاسْتَغْلَظَ فَاسْتَوَىٰ عَلَىٰ سُوقِهِ﴾</p><p style="margin-top:35px;color:#c8c7c6">مساحة تجمع الأسبوع، والأسرة، والمتابعة، والثمرة في مكان واحد.</p></section><section class="auth-panel"><div class="eyebrow">أهلًا بكِ في منصة الغارسات</div><h2 class="welcome">رحلة تُغرس فيها المعاني وتُرعى ثمارها.</h2><p class="muted">ادخلي إلى حسابك، أو أنشئي حسابًا جديدًا للمراجعة.</p><div class="tabs"><button data-action="signin" class="'+(state.authTab==='signin'?'active':'')+'">تسجيل الدخول</button><button data-action="signup" class="'+(state.authTab==='signup'?'active':'')+'">حساب جديد</button></div><form id="authForm">'+(state.authTab==='signup'?field('الاسم كاملًا','full_name','', 'text',true)+field('رقم الهاتف (واتساب)','phone','', 'tel',true):'')+field('البريد الإلكتروني','email','','email',true)+field('كلمة المرور','password','','password',true)+'<button class="btn" type="submit" style="width:100%;margin-top:15px">'+(state.authTab==='signup'?'إرسال طلب التسجيل':'دخول إلى المنصة')+'</button></form><button class="textbtn" data-action="reset">نسيتِ كلمة المرور؟</button></section></div>';
 }
@@ -239,7 +240,25 @@ if(submit)submit.disabled=true;
 try{
 if(f.id==='authForm'){
 if(state.authTab==='signup'){if((x.password||'').length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{data,error}=await db.auth.signUp({email:x.email,password:x.password,options:{data:{full_name:x.full_name,phone:x.phone}}});if(error)throw error;if(data.session){await start();flash('تم إنشاء الحساب وتسجيل الدخول. حسابك بانتظار موافقة الإدارة.')}else{flash('تم إرسال طلب التسجيل، لكن إعداد تأكيد البريد ما زال مفعلًا في Supabase. راجعي الإدارة لإيقافه.')}}
-else{const{data,error}=await withTimeout(db.auth.signInWithPassword({email:x.email.trim(),password:x.password}),18000);if(error)throw Error(error.status===400?'تعذر الدخول، تحققي من البريد وكلمة المرور':error.message||'تعذر تسجيل الدخول');if(!data?.session)throw Error('لم يتم إنشاء جلسة دخول. أعيدي المحاولة.');state.user=data.user;state.account=null;render();await start()}}
+else{
+loginInProgress=true;
+const status=document.createElement('p');status.setAttribute('role','status');status.style.cssText='margin-top:12px;font-weight:600;color:#172843';status.textContent='جارٍ التحقق من البريد وكلمة المرور…';f.appendChild(status);
+try{
+const{data,error}=await withTimeout(db.auth.signInWithPassword({email:x.email.trim(),password:x.password}),12000);
+if(error)throw Error(error.status===400?'تعذر الدخول، تحققي من البريد وكلمة المرور':error.message||'تعذر تسجيل الدخول');
+if(!data?.user||!data.session)throw Error('تعذر إكمال جلسة الدخول، حاولي مرة أخرى.');
+status.textContent='تم التحقق من الحساب، جارٍ فتح لوحة الغارسة…';
+const{data:account,error:profileError}=await withTimeout(db.from('accounts').select('*').eq('user_id',data.user.id).maybeSingle(),12000);
+if(profileError)throw Error('تم تسجيل الدخول، لكن تعذر قراءة الصلاحيات. '+profileError.message);
+state.user=data.user;state.account=account;
+if(account&&!['pending','disabled'].includes(account.role)){
+state.page=['admin','murafiqa','musaida'].includes(account.role)?'dashboard':'myweek';
+render();
+load().then(()=>render()).catch(err=>{console.error(err);flash('دخلتِ حسابكِ، لكن بعض البيانات لم تُحمّل. أعيدي تحديث الصفحة.',true)});
+}else{render()}
+}catch(error){status.textContent='تعذر إكمال الدخول: '+(error.message||'خطأ غير معروف');status.style.color='#a12525';throw error}
+finally{loginInProgress=false}
+}}
 else if(f.id==='modalForm')await modalSave(f);
 else if(f.id==='reportForm'){x.wird_days=Number(x.wird_days);x.thought_read=x.thought_read==='true';await save('reports_self',{...x,student_id:state.account.student_id,week_id:state.week},'student_id,week_id')}
 else if(f.id==='settingsForm'){for(const [key,value] of Object.entries(x)){await save('settings',{key,value:key==='current_cycle'?Number(value):value})}render()}
