@@ -149,7 +149,7 @@ const w=inPreparation?prepWeek:currentWeek();
 const people=rows('students').filter(s=>s.stage==='active');
 const candidates=rows('students').filter(s=>s.stage==='candidate');
 const waiting=leadership()?rows('accounts').filter(a=>a.role==='pending'):[];
-const pendingQuestionCount=rows('questions').filter(q=>q.status==='open').length;
+const pendingQuestionCount=rows('questions').filter(q=>['open','sent'].includes(q.status)).length;
 const follow=rows('followups').filter(f=>f.week_id===w?.id&&people.some(s=>s.id===f.student_id));
 const known=follow.filter(f=>!!f.majlis),present=known.filter(f=>['present','late'].includes(f.majlis));
 const wirdRecords=follow.filter(f=>f.wird_days!==null&&f.wird_days!==undefined);
@@ -168,8 +168,8 @@ const consecutive=recent.length===2?recent.map(week=>relevant.find(f=>f.week_id=
 const issues=[];
 if(consecutive.length===2&&consecutive.every(f=>f&&f.majlis==='absent'))issues.push('غياب المجلس أسبوعين متتاليين');
 if(consecutive.length===2&&consecutive.every(f=>f&&f.family_meeting==='absent'))issues.push('غياب لقاء الأسرة أسبوعين متتاليين');
-const latestRecorded=relevant.filter(f=>f.wird_days!==null&&f.wird_days!==undefined).sort((a,b)=>weeksForAlerts.findIndex(x=>x.id===b.week_id)-weeksForAlerts.findIndex(x=>x.id===a.week_id))[0];
-if(latestRecorded&&Number(latestRecorded.wird_days)<=2)issues.push('ورد '+Number(latestRecorded.wird_days)+' من ٧ أيام');
+const latestRecorded=relevant.sort((a,b)=>weeksForAlerts.findIndex(x=>x.id===b.week_id)-weeksForAlerts.findIndex(x=>x.id===a.week_id))[0];
+if(latestRecorded&&latestRecorded.wird_days!==null&&latestRecorded.wird_days!==undefined&&Number(latestRecorded.wird_days)<=2)issues.push('ورد '+Number(latestRecorded.wird_days)+' من ٧ أيام');
 if(issues.length)reasons.push({student,issues});
 }
 }
