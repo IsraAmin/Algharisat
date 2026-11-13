@@ -30,10 +30,25 @@ if(!team()&&state.account?.student_id){state.profile=rows('students').find(s=>s.
 state.week ||= currentWeek()?.id;
 state.family ||= state.profile?.family_id||rows('families')[0]?.id;
 }
+const withTimeout=(promise,ms=15000)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('استغرق الاتصال وقتًا أطول من المتوقع. تحققي من الإنترنت وحاولي مرة أخرى.')),ms))]);
+let bootSequence=0;
 async function start(){
-const{data:{session}}=await db.auth.getSession();state.user=session?.user||null;
-if(state.user){const{data,error}=await db.from('accounts').select('*').eq('user_id',state.user.id).maybeSingle();if(error)console.warn(error);state.account=data;if(data&&!['pending','disabled'].includes(data.role)){await load();state.page=team()?'dashboard':'myweek'}}
+const sequence=++bootSequence;
+const{data:{session},error:sessionError}=await withTimeout(db.auth.getSession());
+if(sessionError)throw sessionError;
+if(sequence!==bootSequence)return;
+state.user=session?.user||null;
+state.account=null;
+if(!state.user){render();return}
+const{data,error}=await withTimeout(db.from('accounts').select('*').eq('user_id',state.user.id).maybeSingle());
+if(sequence!==bootSequence)return;
+if(error)throw error;
+state.account=data;
+if(!data||['pending','disabled'].includes(data.role)){render();return}
+state.page=team()?'dashboard':'myweek';
 render();
+try{await withTimeout(load(),20000)}catch(error){console.warn('تعذر تحميل بعض بيانات الحساب',error);flash('تم تسجيل الدخول، لكن تعذّر تحميل بعض البيانات. حاولي تحديث الصفحة.',true)}
+if(sequence===bootSequence)render();
 }
 db.auth.onAuthStateChange((event)=>{if(['SIGNED_IN','SIGNED_OUT','TOKEN_REFRESHED','USER_UPDATED'].includes(event)){setTimeout(start,0)}});
 function auth(){
@@ -224,7 +239,7 @@ if(submit)submit.disabled=true;
 try{
 if(f.id==='authForm'){
 if(state.authTab==='signup'){if((x.password||'').length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{data,error}=await db.auth.signUp({email:x.email,password:x.password,options:{data:{full_name:x.full_name,phone:x.phone}}});if(error)throw error;if(data.session){await start();flash('تم إنشاء الحساب وتسجيل الدخول. حسابك بانتظار موافقة الإدارة.')}else{flash('تم إرسال طلب التسجيل، لكن إعداد تأكيد البريد ما زال مفعلًا في Supabase. راجعي الإدارة لإيقافه.')}}
-else{const{error}=await db.auth.signInWithPassword({email:x.email,password:x.password});if(error)throw Error('تعذر الدخول، تحققي من البريد وكلمة المرور');await start()}}
+else{const{data,error}=await withTimeout(db.auth.signInWithPassword({email:x.email.trim(),password:x.password}),18000);if(error)throw Error(error.status===400?'تعذر الدخول، تحققي من البريد وكلمة المرور':error.message||'تعذر تسجيل الدخول');if(!data?.session)throw Error('لم يتم إنشاء جلسة دخول. أعيدي المحاولة.');state.user=data.user;state.account=null;render();await start()}}
 else if(f.id==='modalForm')await modalSave(f);
 else if(f.id==='reportForm'){x.wird_days=Number(x.wird_days);x.thought_read=x.thought_read==='true';await save('reports_self',{...x,student_id:state.account.student_id,week_id:state.week},'student_id,week_id')}
 else if(f.id==='settingsForm'){for(const [key,value] of Object.entries(x)){await save('settings',{key,value:key==='current_cycle'?Number(value):value})}render()}
