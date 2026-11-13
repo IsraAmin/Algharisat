@@ -1,28 +1,26 @@
-name: Deploy Algharisat
+name: Validate Algharisat
 on:
   push:
     branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: algharisat-pages
-  cancel-in-progress: true
 jobs:
-  validate-and-deploy:
+  verify:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check JavaScript syntax
+      - name: Validate JavaScript syntax
         run: node --input-type=module --check < app.js
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: .
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Check live Supabase HTTPS site
+        run: |
+          set -euo pipefail
+          BASE="https://utlcejgzkrvdhojrnxcm.supabase.co/functions/v1/algharisat"
+          curl -fsSL --retry 4 --retry-delay 2 "$BASE" -o /tmp/algharisat.html
+          curl -fsSL --retry 4 --retry-delay 2 "$BASE/app.js" -o /tmp/algharisat.js
+          curl -fsSL --retry 4 --retry-delay 2 "$BASE/style.css" -o /tmp/algharisat.css
+          grep -q 'الغارسات' /tmp/algharisat.html
+          grep -q 'createClient' /tmp/algharisat.js
+          grep -q 'IBM Plex Sans Arabic' /tmp/algharisat.css
+          node --input-type=module --check < /tmp/algharisat.js
+          echo "Algharisat entry point and assets respond successfully"
