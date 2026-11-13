@@ -362,3 +362,10 @@ td .btn{margin:2px;vertical-align:middle}
 .logout-dialog-actions .dangerbtn{background:#ae3e39;border-color:#ae3e39;color:#fff}
 .logout-dialog-actions .dangerbtn:hover{background:#932b27;border-color:#932b27}
 @media(max-width:600px){.install-notice{gap:10px;padding:13px}.install-notice-mark{width:35px;height:35px}.install-notice-actions{width:100%;justify-content:space-between}.logout-confirm{padding:26px 20px}}
+
+.install-help-backdrop{position:fixed;inset:0;z-index:310;display:grid;place-items:center;padding:16px;background:rgba(13,35,48,.68);backdrop-filter:blur(5px)}
+.install-help{width:min(480px,100%);padding:25px;border-radius:20px;background:#fff;border:1px solid #e4e7e3;box-shadow:0 20px 65px rgba(10,28,40,.22)}
+.install-help h2{font-size:1.25rem;color:#193547;margin-bottom:16px}
+.install-help p{font-size:.91rem;color:#455d68;margin:10px 0;line-height:1.85}
+.install-help .small{font-size:.79rem}
+.install-help-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
