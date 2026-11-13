@@ -1,5 +1,24 @@
 
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+// Load the browser client from two independent CDNs to avoid an endless loading screen.
+async function importWithTimeout(url, timeoutMs = 11000) {
+  let timer;
+  try {
+    return await Promise.race([
+      import(url),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('انتهت مهلة تحميل مكتبة تسجيل الدخول')), timeoutMs); })
+    ]);
+  } finally { clearTimeout(timer); }
+}
+let supabaseModule;
+for (const url of [
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm',
+  'https://esm.sh/@supabase/supabase-js@2.57.0'
+]) {
+  try { supabaseModule = await importWithTimeout(url); break; }
+  catch (error) { console.warn('Supabase library unavailable at', url, error); }
+}
+if (!supabaseModule?.createClient) throw new Error('تعذر تحميل مكتبة تسجيل الدخول؛ تحققي من الإنترنت ثم أعيدي المحاولة.');
+const { createClient } = supabaseModule;
 const db=createClient('https://utlcejgzkrvdhojrnxcm.supabase.co','sb_publishable_iOHkDZzbKgUKy7h3HQp1PQ_U0zxCjzE');
 const safeUrl=v=>/^https?:\/\//i.test(String(v||''))?String(v):'#';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -127,7 +146,7 @@ function page(){
 switch(state.page){
 case 'dashboard':return dashboard();case 'weeks':case 'program':return weeks();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
 }
-function render(){document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');}
+function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');}
 function dialog(title,body,submit='حفظ'){const old=$('.dialog-backdrop');if(old)old.remove();const e=document.createElement('div');e.className='dialog-backdrop';e.innerHTML='<form id="modalForm" class="dialog"><div class="page-head"><h2>'+esc(title)+'</h2><button type="button" class="btn secondary smallbtn" data-action="close">إغلاق</button></div><div class="form-grid">'+body+'</div><div class="form-actions"><button class="btn" type="submit">'+esc(submit)+'</button></div></form>';document.body.appendChild(e)}
 function formData(f){const o={};new FormData(f).forEach((v,k)=>o[k]=v);return o}
 async function save(t,obj,conflict){const q=db.from(t).upsert(obj,conflict?{onConflict:conflict}:{});const{error}=await q;if(error)throw error;await read(t);flash('حُفظت التغييرات بنجاح')}
@@ -233,4 +252,5 @@ else if(f.id==='surveyForm'){const{error}=await db.rpc('submit_survey',{p_answer
 else if(f.id==='profileForm'){const{error}=await db.rpc('update_my_profile',{p_phone:x.phone,p_email:x.email,p_university:x.university,p_college:x.college,p_study_level:x.study_level,p_neighborhood:x.neighborhood});if(error)throw error;await load();flash('حُفظت بياناتكِ الشخصية')}
 }catch(err){console.error(err);const message=String(err?.message||'');const match=message.match(/(?:after|in)\s+(\d+)\s+seconds?/i);const throttled=err?.status===429||/for security purposes|rate limit|too many requests/i.test(message);flash(err?.code==='over_email_send_rate_limit'?'تعذّر إنشاء الحساب: بلغت رسائل تأكيد البريد حدّ الإرسال في Supabase. على الإدارة إيقاف Confirm Email من إعدادات Email؛ لا يكفي الانتظار بضع ثوانٍ.':throttled?'تم رفض الطلب مؤقتًا بسبب كثرة المحاولات. انتظري قليلًا ثم حاولي مرة واحدة.':message||'تعذر الحفظ، تحققي من الاتصال',true)}finally{if(submit)submit.disabled=false}
 });
+render();
 start().catch(err=>{console.error(err);$('#root').innerHTML='<div class="card" style="margin:30px"><h2>تعذر تحميل المنصة</h2><p>تحققي من الاتصال بالإنترنت ثم أعيدي تحميل الصفحة.</p></div>'});
