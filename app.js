@@ -8,7 +8,7 @@ const pwaStorageWrite=(key,value)=>{try{localStorage.setItem(key,value)}catch(e)
 const installedMode=()=>window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true;
 const installFlag=()=>state.user?'algharisat-installed-'+state.user.id:'';
 const dismissedFlag=()=>state.user?'algharisat-install-dismissed-'+state.user.id:'';
-const shouldShowInstall=()=>!!state.user&&!installedMode()&&!pwaStorageRead('algharisat-installed')&&!pwaStorageRead(installFlag())&&!pwaStorageRead(dismissedFlag());
+const shouldShowInstall=()=>!!state.user&&(window.matchMedia?.('(max-width: 800px)')?.matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))&&!installedMode()&&!pwaStorageRead('algharisat-installed')&&!pwaStorageRead(installFlag())&&!pwaStorageRead(dismissedFlag());
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(state.user)render()});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;pwaStorageWrite('algharisat-installed','1');if(state.user)pwaStorageWrite(installFlag(),'1');if(state.user)render()});
 const state={user:null,account:null,profile:null,page:'dashboard',rows:{},week:null,family:null,editing:null,notice:'',authTab:'signin',period:'all'};
@@ -281,10 +281,13 @@ await prompt.prompt();
 const choice=await prompt.userChoice;
 if(choice?.outcome==='accepted'){pwaStorageWrite('algharisat-installed','1');pwaStorageWrite(installFlag(),'1');render()}
 }else{
-alert('لإضافة الغارسات إلى الشاشة الرئيسية:\\n• آيفون: افتحي المنصة من Safari ثم مشاركة ثم إضافة إلى الشاشة الرئيسية.\\n• أندرويد: افتحي المنصة من Chrome ثم القائمة ⋮ ثم تثبيت التطبيق أو إضافة إلى الشاشة الرئيسية.');
+const layer=document.createElement('div');layer.className='install-help-backdrop';
+layer.innerHTML='<section class="install-help" role="dialog" aria-modal="true" aria-labelledby="install-help-title"><h2 id="install-help-title">أضيفي الغارسات إلى شاشة التليفون</h2><p><strong>آيفون:</strong> افتحي الموقع من Safari، ثم مشاركة، ثم «إضافة إلى الشاشة الرئيسية».</p><p><strong>أندرويد:</strong> افتحي الموقع من Chrome، ثم ⋮، ثم «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».</p><p class="muted small">بعد الإضافة افتحي الغارسات من الأيقونة الجديدة.</p><div class="install-help-actions"><button type="button" class="btn secondary" data-action="closeInstallHelp">إغلاق</button><button type="button" class="btn goldbtn" data-action="installedManually">تم التثبيت</button></div></section>';document.body.appendChild(layer);layer.querySelector('[data-action="closeInstallHelp"]').focus();
 }
 }
 else if(action==='dismissInstall'){pwaStorageWrite(dismissedFlag(),'1');render()}
+else if(action==='closeInstallHelp'){document.querySelector('.install-help-backdrop')?.remove()}
+else if(action==='installedManually'){pwaStorageWrite('algharisat-installed','1');pwaStorageWrite(installFlag(),'1');document.querySelector('.install-help-backdrop')?.remove();render()}
 else if(action==='cancelLogout'){document.querySelector('.logout-confirm-backdrop')?.remove()}
 else if(action==='confirmLogout'){el.disabled=true;try{const{error}=await db.auth.signOut();if(error)throw error;document.querySelector('.logout-confirm-backdrop')?.remove();state.user=null;state.account=null;render()}finally{el.disabled=false}}
 else if(action==='signin'||action==='signup'){state.authTab=action;render()}
