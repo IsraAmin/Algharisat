@@ -21,6 +21,8 @@ jobs:
       - name: Validate JavaScript
         run: node --input-type=module --check < app.js
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v4
         with:
           path: .
