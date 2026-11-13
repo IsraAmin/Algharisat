@@ -24,3 +24,10 @@ jobs:
           grep -q 'IBM Plex Sans Arabic' /tmp/algharisat.css
           node --input-type=module --check < /tmp/algharisat.js
           echo "Algharisat entry point and assets respond successfully"
+
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.57.0
+          npx playwright install chromium --with-deps
+      - name: Smoke test login on desktop and mobile
+        run: node tests/smoke.mjs
