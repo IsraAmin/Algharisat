@@ -3,4 +3,17 @@
 <meta name="theme-color" content="#172843"><meta name="description" content="منصة الغارسات لإدارة البرنامج التربوي">
 <title>الغارسات | معهد التأسيس الشرعي</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23172843'/%3E%3Ctext x='12' y='49' font-size='44' fill='%23b79867'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="./style.css"></head>
 <body><div id="root"><p style="margin:25vh auto;text-align:center;font-family:serif">جارٍ فتح منصة الغارسات…</p></div>
+<script>
+  setTimeout(function () {
+    if (window.__algharisatReady) return;
+    document.getElementById('root').innerHTML =
+      '<section style="max-width:500px;margin:15vh auto;padding:25px;text-align:center;font-family:system-ui,sans-serif;line-height:2">' +
+      '<h2>تعذّر فتح منصة الغارسات</h2>' +
+      '<p>قد يكون الاتصال بمكتبة تسجيل الدخول محجوبًا أو بطيئًا. تأكدي من الإنترنت، ثم أعيدي المحاولة.</p>' +
+      '<button onclick="location.reload()" style="background:#172843;color:#fff;border:0;border-radius:9px;padding:12px 25px;cursor:pointer">إعادة المحاولة</button></section>';
+  }, 12000);
+  window.addEventListener('unhandledrejection',function(event) {
+    console.error('خطأ في بدء تشغيل الغارسات:',event.reason);
+  });
+</script>
 <script type="module" src="./app.js"></script></body></html>
