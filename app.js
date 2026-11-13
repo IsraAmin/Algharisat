@@ -215,6 +215,25 @@ summary+
 launchPanel+familySection+
 '<div class="dashboard-secondary-grid">'+taskSection+eventSection+'</div></div>';
 }
+function dashboardStudentFile(){
+if(!team())return heading('ملف الغارسة','هذه الصفحة متاحة للفريق');
+const student=rows('students').find(x=>x.id===state.dashboardStudent);
+if(!student)return heading('ملف الغارسة','تعذّر العثور على الغارسة')+btn('go:students','العودة إلى سجل الغارسات');
+const program=sortedWeeks().filter(w=>w.kind==='program');
+const personalFollow=rows('followups').filter(f=>f.student_id===student.id);
+const reports=rows('reports_self').filter(r=>r.student_id===student.id);
+const stat=key=>({present:'حاضرة',late:'متأخرة',excused:'بعذر',absent:'غائبة'})[key]||'—';
+const linked=rows('accounts').find(a=>a.student_id===student.id);
+const details=[['الهاتف',student.phone],['البريد',student.email],['الجامعة',student.university],['الكلية',student.college],['المستوى الدراسي',student.study_level],['الحي',student.neighborhood],['الحالة الاجتماعية',student.marital_status],['دون العشرين',student.under_twenty?'نعم':'لا'],['ولي الأمر',student.guardian_name],['هاتف ولي الأمر',student.guardian_phone],['قادت السابق',student.led_before?'نعم':'لا'],['الحساب المرتبط',linked?.email||'غير مرتبط']];
+const goals=rows('goals').filter(g=>g.student_id===student.id);
+const milestones=rows('milestones').filter(m=>m.student_id===student.id);
+return '<div class="dashboard-student-file">'+btn('go:dashboard','العودة إلى اللوحة','secondary smallbtn')+
+heading(student.name,'ملف الغارسة · '+name('families',student.family_id),btn('editstudent:'+student.id,'تعديل البيانات','secondary smallbtn')+' '+btn('newgoal:'+student.id,'إضافة هدف','secondary smallbtn'))+
+'<div class="card"><h3>البيانات</h3><div class="dashboard-student-details">'+details.map(([k,v])=>'<div><span class="muted small">'+esc(k)+'</span><strong>'+esc(v||'—')+'</strong></div>').join('')+'</div></div>'+
+'<div class="card"><h3>المتابعة الأسبوعية والتقارير</h3><div class="dashboard-student-history">'+program.map(w=>{const f=personalFollow.find(x=>x.week_id===w.id),r=reports.find(x=>x.week_id===w.id);return '<div class="list-row"><div><strong>'+esc(w.title)+'</strong><p class="muted small">المجلس: '+stat(f?.majlis)+' · لقاء الأسرة: '+stat(f?.family_meeting)+' · الورد: '+esc(f?.wird_days??'—')+'</p></div><span class="chip '+(r?'ok':'')+'">'+(r?'وصل التقرير':'لم يُرسل')+'</span></div>'}).join('')+'</div></div>'+
+'<div class="card"><h3>البطاقة والخطة الفردية</h3>'+(goals.length?goals.map(g=>'<div class="list-row"><div><strong>'+esc(g.aspect)+'</strong><p>'+esc(g.goal)+'</p><p class="small muted">'+esc(g.measure||'')+'</p></div><span class="chip '+(g.done?'ok':'')+'">'+(g.done?'مكتمل':'جارٍ')+'</span></div>').join(''):empty('لا توجد أهداف مسجلة'))+'</div>'+
+'<div class="card"><h3>المخرجات</h3>'+(milestones.length?milestones.map(m=>'<div class="list-row"><span>'+esc(m.code)+'</span><span class="chip '+(m.done?'ok':'')+'">'+(m.done?'منجز':'غير منجز')+'</span></div>').join(''):empty('لا توجد مخرجات مسجلة'))+'</div></div>';
+}
 function weeks(){
 const all=visibleWeeks(),upcoming=rows('events').filter(e=>eventVisible(e)&&(!e.starts_at||new Date(e.starts_at).getTime()>=Date.now())).sort((a,b)=>!a.starts_at?1:!b.starts_at?-1:new Date(a.starts_at)-new Date(b.starts_at)).slice(0,4);
 const blocks=[['prep','التحضير','تهيئة الفريق والأسر قبل الانطلاق'],['program','المرحلة','الأسابيع الثمانية للغرس والتعلّم'],['break','ما بعدها','الفاصل وما بعد ختام المرحلة']];
@@ -306,7 +325,7 @@ const p=state.profile||{};return heading('حسابي','بيانات التواص
 }
 function page(){
 switch(state.page){
-case 'dashboard':return dashboard();case 'weeks':case 'program':return weeks();case 'weekdetail':return weekDetails();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
+case 'dashboard':return dashboard();case 'dashboardStudent':return dashboardStudentFile();case 'weeks':case 'program':return weeks();case 'weekdetail':return weekDetails();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
 }
 function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');}
 function dialog(title,body,submit='حفظ'){const old=$('.dialog-backdrop');if(old)old.remove();const e=document.createElement('div');e.className='dialog-backdrop';e.innerHTML='<form id="modalForm" class="dialog"><div class="page-head"><h2>'+esc(title)+'</h2><button type="button" class="btn secondary smallbtn" data-action="close">إغلاق</button></div><div class="form-grid">'+body+'</div><div class="form-actions"><button class="btn" type="submit">'+esc(submit)+'</button></div></form>';document.body.appendChild(e)}
@@ -399,6 +418,7 @@ else if(action==='print')window.print();
 else if(action==='shiftcalendar'){const newDate=$('#f_first_start')?.value;if(!newDate)throw Error('اختاري التاريخ الجديد');if(!confirm('ستتغير تواريخ جميع الأسابيع والمواعيد. هل تؤكدين؟'))return;const {data,error}=await db.rpc('shift_program',{p_first_week:newDate});if(error)throw error;await load();flash('تمت إزاحة التقويم بمقدار '+data+' يوم')}
 else if(action==='more'){showMobileMore()}
 else if(action==='closeMore'){closeMobileMore()}
+else if(action.startsWith('viewstudent:')){state.dashboardStudent=action.split(':')[1];state.page='dashboardStudent';render();window.scrollTo(0,0)}
 else if(action.startsWith('go:')){state.page=action.split(':')[1];render()}
 else if(action==='changepassword'){const password=$('#f_newpassword').value;if(password.length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{error}=await db.auth.updateUser({password});if(error)throw error;flash('تغيرت كلمة المرور')}
 else if(action==='togglesurvey'){await save('settings',{key:'survey_open',value:!setting('survey_open',false)});render()}
