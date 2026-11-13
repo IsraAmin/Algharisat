@@ -71,7 +71,27 @@ function empty(text){return '<div class="empty"><strong>لا توجد بيانا
 function table(headers,body){return '<div class="card table-wrap"><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div>'}
 function selectWeeks(){return '<select id="weekSelect" data-select="week">'+rows('weeks').filter(w=>w.kind==='program').map(w=>option(w.id,'الأسبوع '+esc(w.code.slice(1))+' | '+w.title,state.week)).join('')+'</select>'}
 function selectFamilies(){return '<select id="familySelect" data-select="family">'+rows('families').map(f=>option(f.id,f.name,state.family)).join('')+'</select>'}
-function weekCard(w){return '<button class="week-tile '+(state.week===w.id?'active':'')+'" data-week="'+w.id+'"><div class="week-code">'+(w.kind==='prep'?'التحضير':w.kind==='break'?'الفاصل':'الأسبوع '+w.code.slice(1))+'</div><h3>'+esc(w.title)+'</h3><div class="small muted">'+date(w.starts_on)+' – '+date(w.ends_on)+'</div></button>'}
+const todayISO=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Riyadh'});
+const hijriDate=value=>{if(!value)return '—';try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(String(value).slice(0,10)+'T12:00:00Z'))}catch(e){return '—'}};
+const shortDate=value=>value?new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(String(value).slice(0,10)+'T12:00:00Z')):'—';
+const weekCurrent=w=>!!w&&w.starts_on<=todayISO()&&w.ends_on>=todayISO();
+const sortedWeeks=()=>[...rows('weeks')].sort((a,b)=>a.sort_order-b.sort_order);
+const visibleWeeks=()=>sortedWeeks().filter(w=>team()||w.kind!=='prep');
+const fixedRhythm=[
+'الورد اليومي: بقدر تتفق عليه الأسرة.',
+'المجلس ثم الدرس: ساعة ونصف عن بُعد للجماعة كلها.',
+'لقاء الأسرة: بعد المجلس بيومين أو ثلاثة، ساعة ونصف، تديره إحدى الأخوات بالتناوب.',
+'المهمة الثلاثية: في نفسي، وفي بيتي، وفي محيطي.',
+'المحاسبة: آخر الأسبوع في دفتر لا يُسلَّم لأحد، ولا تُكتب في المنصة.'
+];
+const eventVisible=e=>team()||!e.family_id||e.family_id===state.profile?.family_id;
+const eventDate=e=>e.starts_at?new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit',timeZone:'Asia/Riyadh'}).format(new Date(e.starts_at)):'يُحدَّد لاحقًا';
+function eventItems(list){return list.length?list.map(e=>'<div class="event-item"><span class="event-bullet">•</span><div><strong>'+esc(e.title)+'</strong><p class="muted small">'+esc(e.kind||'موعد')+' · '+esc(eventDate(e))+(e.place?' · '+esc(e.place):'')+'</p></div></div>').join(''):empty('لا توجد مواعيد مسجلة لهذه الفترة')}
+function weekCard(w){
+const current=weekCurrent(w),selected=state.week===w.id;
+const phase=w.kind==='prep'?'التحضير':w.kind==='break'?'ما بعدها':'الأسبوع '+esc(w.code?.replace(/^w/,'')||'');
+return '<button type="button" class="week-tile '+(current?'is-current ':'')+(selected?'active':'')+'" data-week="'+esc(w.id)+'" aria-label="فتح '+esc(w.title)+'"><div class="week-tile-top"><span class="week-code">'+phase+'</span>'+(current?'<span class="chip ok">الجاري الآن</span>':'')+'</div><h3>'+esc(w.title)+'</h3><p class="small muted">'+esc(shortDate(w.starts_on))+' — '+esc(shortDate(w.ends_on))+'</p>'+(w.reflection?'<p class="week-reflection">'+esc(w.reflection)+'</p>':'')+'<span class="week-open">تفاصيل الأسبوع ←</span></button>';
+}
 function dashboard(){
 const w=currentWeek(),people=rows('students').filter(s=>s.stage==='active'),follow=rows('followups').filter(f=>f.week_id===w?.id),waiting=rows('accounts').filter(a=>a.role==='pending');
 const present=follow.filter(f=>['present','late'].includes(f.majlis)).length,known=follow.filter(f=>f.majlis).length;
@@ -79,8 +99,35 @@ const avg=follow.filter(f=>f.wird_days!==null).reduce((a,b)=>a+Number(b.wird_day
 return '<div class="eyebrow">'+date(new Date())+'</div>'+heading('لوحة المتابعة','نظرة على الدفعة والمهام التي تحتاج رعاية')+'<div class="hero-card"><div class="eyebrow">الأسبوع الجاري أو القادم</div><h1>'+esc(w?.title||'البرنامج يستعد للانطلاق')+'</h1><p>'+esc(w?.reflection||'تتابع هنا بداية الأسابيع، ومهامها، ومواعيدها.')+'</p><p class="small" style="margin-top:12px">'+(w?date(w.starts_on)+' | '+date(w.ends_on):'')+'</p></div><div class="grid stats">'+[['الغارسات في البرنامج',people.length],['حضور المجلس',known?Math.round(present/known*100)+'٪':'—'],['متوسط أيام الورد',follow.length?avg.toFixed(1):'—'],['حسابات تنتظر',waiting.length]].map(([l,v])=>'<div class="card stat"><div class="value">'+v+'</div><div class="label">'+l+'</div></div>').join('')+'</div><div class="grid two"><section class="card"><h3>الأسر هذا الأسبوع</h3>'+rows('families').map(f=>{const members=people.filter(s=>s.family_id===f.id);return '<div class="list-row"><div><strong>'+esc(f.name)+'</strong><p class="muted">'+members.length+' غارسات</p></div><span class="chip">'+members.filter(s=>follow.some(x=>x.student_id===s.id)).length+' / '+members.length+' متابعة</span></div>'}).join('')+(rows('families').length?'':empty('أضيفي الأسر من صفحة الأسر'))+'</section><section class="card"><h3>يحتاج متابعة</h3>'+rows('questions').filter(q=>q.status==='open').slice(0,5).map(q=>'<div class="list-row"><span>'+esc(q.body.slice(0,75))+'</span><span class="chip warn">سؤال جديد</span></div>').join('')+waiting.slice(0,3).map(a=>'<div class="list-row">'+esc(a.name)+'<span class="chip warn">طلب حساب</span></div>').join('')+(!waiting.length&&!rows('questions').some(q=>q.status==='open')?empty('لا توجد أسئلة أو طلبات معلقة'):'')+'</section></div>';
 }
 function weeks(){
-const w=rows('weeks').find(x=>x.id===state.week)||currentWeek();
-return heading('البرنامج والأسابيع','خريطة المرحلة الأولى: التحضير، الأسابيع الثمانية، والفاصل')+'<div class="week-grid">'+rows('weeks').sort((a,b)=>a.sort_order-b.sort_order).map(weekCard).join('')+'</div>'+(w?'<div class="card" style="margin-top:20px"><div class="eyebrow">'+date(w.starts_on)+' – '+date(w.ends_on)+'</div><h2>'+esc(w.title)+'</h2>'+[['وقفة التدبر',w.reflection],['الدرس العلمي',w.lesson],['الأربعون',w.hadith],['جزء عمّ',w.tilawa],['رياض الصالحين',w.riyad],['في نفسي',w.task_self],['في بيتي',w.task_home],['في محيطي',w.task_community],['أسئلة مدارسة الأسرة',w.discussion],['نشاط الأسبوع',w.activity],...(team()?[['عمل الفريق',w.team_work],['ما يكون في اليد',w.deliverable]]:[])].filter(x=>x[1]).map(([t,v])=>'<div class="separator"></div><h3>'+t+'</h3><p class="text-content">'+esc(v)+'</p>').join('')+(team()?'<div class="form-actions">'+btn('editweek','تعديل الأسبوع')+' '+btn('newevent','إضافة موعد')+'</div>':'')+'</div>':'');
+const all=visibleWeeks(),upcoming=rows('events').filter(e=>eventVisible(e)&&(!e.starts_at||new Date(e.starts_at).getTime()>=Date.now())).sort((a,b)=>!a.starts_at?1:!b.starts_at?-1:new Date(a.starts_at)-new Date(b.starts_at)).slice(0,4);
+const blocks=[['prep','التحضير','تهيئة الفريق والأسر قبل الانطلاق'],['program','المرحلة','الأسابيع الثمانية للغرس والتعلّم'],['break','ما بعدها','الفاصل وما بعد ختام المرحلة']];
+const groups=blocks.filter(([kind])=>team()||kind!=='prep').map(([kind,title,desc])=>{
+const weeksIn=all.filter(w=>w.kind===kind);
+return weeksIn.length?'<section class="program-group"><div class="program-group-title"><div><h2>'+title+'</h2><p class="muted small">'+desc+'</p></div><span class="chip">'+weeksIn.length+' أسابيع</span></div><div class="week-grid">'+weeksIn.map(weekCard).join('')+'</div></section>':'';
+}).join('');
+return heading('البرنامج والأسابيع','خريطة المرحلة كاملة من التحضير إلى الختام، والمواعيد والإيقاع الثابت')+
+'<div class="program-layout"><div class="program-timeline">'+groups+'</div><aside class="program-aside"><div class="card"><div class="program-aside-title"><h3>المواعيد القادمة</h3>'+(team()?btn('newevent','+ موعد جديد','goldbtn smallbtn'):'')+'</div>'+eventItems(upcoming)+'</div><div class="card"><h3>الأسبوع في سطر</h3><p class="muted small">الإيقاع الثابت الذي يتكرر في أسابيع المرحلة</p><ol class="rhythm-list">'+fixedRhythm.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ol></div></aside></div>';
+}
+function weekDetails(){
+const list=visibleWeeks(),w=list.find(x=>x.id===state.week)||list.find(weekCurrent)||list[0];
+if(!w)return heading('صفحة الأسبوع','لا توجد أسابيع متاحة بعد')+empty('أضيفي أسابيع البرنامج أولًا');
+state.week=w.id;
+const index=list.findIndex(x=>x.id===w.id),prev=list[index-1],next=list[index+1];
+const section=(title,value)=>'<div class="week-content-block"><h3>'+esc(title)+'</h3><p class="text-content">'+esc(value||'لم يُدوّن بعد')+'</p></div>';
+const triple=[['في نفسي',w.task_self],['في بيتي',w.task_home],['في محيطي',w.task_community]];
+const meetingQuestions=['ماذا فهمت؟','ماذا يعني لي؟','ماذا سأعمل؟'];
+const meetings=rows('events').filter(e=>e.week_id===w.id&&eventVisible(e)).sort((a,b)=>(a.starts_at||'9999').localeCompare(b.starts_at||'9999'));
+return '<div class="week-details"><div class="week-details-toolbar">'+btn('backweeks','العودة إلى الخريطة','secondary smallbtn')+'<span class="chip '+(weekCurrent(w)?'ok':'')+'">'+esc(w.kind==='prep'?'التحضير':w.kind==='break'?'ما بعدها':'الأسبوع '+w.code.replace('w',''))+(weekCurrent(w)?' · الجاري':'')+'</span></div>'+
+'<div class="hero-card week-details-hero"><div class="eyebrow">صفحة الأسبوع</div><h1>'+esc(w.title)+'</h1><p>الميلادي: '+esc(date(w.starts_on))+' — '+esc(date(w.ends_on))+'</p><p>الهجري: '+esc(hijriDate(w.starts_on))+' — '+esc(hijriDate(w.ends_on))+'</p></div>'+
+'<section class="card week-detail-section"><h2>وقفة التدبر</h2><p class="text-content">'+esc(w.reflection||'لم تُدوّن الوقفة بعد')+'</p></section>'+
+'<section class="card week-detail-section"><h2>منهج الأسبوع</h2><div class="week-content-grid">'+[['الدرس العلمي',w.lesson],['الأربعون',w.hadith],['جزء عمّ',w.tilawa],['رياض الصالحين',w.riyad]].map(x=>section(...x)).join('')+'</div></section>'+
+'<section class="card week-detail-section"><h2>المهمة الثلاثية</h2><div class="week-content-grid triple-grid">'+triple.map(x=>section(...x)).join('')+'</div></section>'+
+'<section class="card week-detail-section"><h2>مدارسة الأسرة</h2><p class="muted small">الأسئلة الثلاثة الثابتة</p><div class="fixed-questions">'+meetingQuestions.map((q,i)=>'<div><span>'+(i+1)+'</span> '+esc(q)+'</div>').join('')+'</div><h3>أسئلة الأسبوع</h3><p class="text-content">'+esc(w.discussion||'لم تُضف أسئلة هذا الأسبوع بعد')+'</p></section>'+
+'<section class="card week-detail-section"><h2>نشاط الأسبوع</h2><p class="text-content">'+esc(w.activity||'لم يُسجَّل نشاط بعد')+'</p></section>'+
+(team()?'<section class="card week-detail-section team-only"><div class="eyebrow">خاص بالفريق</div><h2>ما يجري سوى الإيقاع الثابت</h2><p class="text-content">'+esc(w.team_work||'لم يُدوّن بعد')+'</p><div class="separator"></div><h2>ما يكون في اليد في آخره</h2><p class="text-content">'+esc(w.deliverable||'لم يُدوّن بعد')+'</p><div class="separator"></div><h2>مهام الفريق في هذا الأسبوع</h2>'+(()=>{const tasks=rows('tasks').filter(t=>t.week_id===w.id);return tasks.length?tasks.map(t=>'<div class="list-row"><span>'+esc(t.title||t.body||t.text||'مهمة')+'</span><span class="chip">'+(t.done?'منجزة':'قيد التنفيذ')+'</span></div>').join(''):empty('لا توجد مهام فريق مرتبطة بهذا الأسبوع')})()+'</section>':'')+
+'<section class="card week-detail-section"><div class="program-aside-title"><h2>مواعيد الأسبوع</h2>'+(team()?btn('newevent','+ موعد جديد','goldbtn smallbtn'):'')+'</div>'+eventItems(meetings)+'</section>'+
+'<div class="week-detail-actions">'+(team()?btn('editweek','تعديل الأسبوع','goldbtn')+' '+btn('go:followups','متابعة الأسبوع','secondary'):btn('reportthisweek','سجّلي تقريركِ لهذا الأسبوع','goldbtn'))+'</div>'+
+'<div class="week-detail-nav">'+(prev?'<button data-week="'+esc(prev.id)+'" class="btn secondary">→ السابق: '+esc(prev.title)+'</button>':'<span></span>')+(next?'<button data-week="'+esc(next.id)+'" class="btn secondary">التالي: '+esc(next.title)+' ←</button>':'<span></span>')+'</div></div>';
 }
 function students(){
 return heading('الغارسات','سجل المرشحات والدفعة والأسر',btn('newstudent','إضافة غارسة','goldbtn')+' '+btn('bulkstudents','إضافة قائمة'))+table(['الاسم','الحال','الأسرة','الجامعة','الهاتف','الإجراء'],rows('students').map(s=>'<tr><td>'+esc(s.name)+'</td><td><span class="chip">'+esc(({candidate:'مرشحة',accepted:'مقبولة',selected_not:'لم تختر',active:'في البرنامج',paused:'متوقفة مؤقتاً',withdrawn:'خرجت'})[s.stage]||s.stage)+'</span></td><td>'+esc(name('families',s.family_id))+'</td><td>'+esc(s.university)+'</td><td>'+esc(s.phone)+'</td><td>'+btn('editstudent:'+s.id,'تعديل','secondary smallbtn')+' '+btn('newgoal:'+s.id,'خطة','secondary smallbtn')+' '+btn('newobservation:'+s.id,'ملاحظة','secondary smallbtn')+'</td></tr>').join('')||'<tr><td colspan="6">'+empty('ابدئي بإضافة الغارسات إلى السجل')+'</td></tr>');
@@ -142,7 +189,7 @@ const p=state.profile||{};return heading('حسابي','بيانات التواص
 }
 function page(){
 switch(state.page){
-case 'dashboard':return dashboard();case 'weeks':case 'program':return weeks();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
+case 'dashboard':return dashboard();case 'weeks':case 'program':return weeks();case 'weekdetail':return weekDetails();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
 }
 function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');}
 function dialog(title,body,submit='حفظ'){const old=$('.dialog-backdrop');if(old)old.remove();const e=document.createElement('div');e.className='dialog-backdrop';e.innerHTML='<form id="modalForm" class="dialog"><div class="page-head"><h2>'+esc(title)+'</h2><button type="button" class="btn secondary smallbtn" data-action="close">إغلاق</button></div><div class="form-grid">'+body+'</div><div class="form-actions"><button class="btn" type="submit">'+esc(submit)+'</button></div></form>';document.body.appendChild(e)}
@@ -159,7 +206,7 @@ case 'newgoal':dialog('هدف في الخطة الفردية',field('الجان�
 case 'newobservation':dialog('ملاحظة المرافقة',field('نوع الملاحظة','kind','ملاحظة','text',true,['ملاحظة','لقاء فردي','حضور لقاء أسرة','لقاء الترشيح','تزكية','تعثر','ترشيح للإشراف',...(state.account.role==='murafiqa'?['حدود الستر']:[])].map(t=>[t,t]))+field('نص الملاحظة','note','','textarea',true)+(state.account.role==='murafiqa'?field('سرية الملاحظة','secret','false','text',true,[['false','غير سرية'],['true','سرية']]):''));break;
 case 'newfamily':dialog('إضافة أسرة',field('اسم الأسرة','name','','text',true)+field('يوم اللقاء','meeting_day')+field('ساعة اللقاء','meeting_time')+field('الرابط','meeting_url','','url'));break;
 case 'bulkstudents':dialog('إضافة قائمة',field('الأسماء، اسم في كل سطر (ثم الهاتف والجامعة مفصولة بفاصلة)','bulk','','textarea',true));break;
-case 'editweek':dialog('تعديل الأسبوع',field('عنوان الأسبوع','title',o.title)+field('وقفة التدبر','reflection',o.reflection,'textarea')+field('الدرس العلمي','lesson',o.lesson,'textarea')+field('مهمة في نفسي','task_self',o.task_self,'textarea')+field('مهمة في بيتي','task_home',o.task_home,'textarea')+field('مهمة في محيطي','task_community',o.task_community,'textarea')+field('أسئلة المدارسة','discussion',o.discussion,'textarea')+field('نشاط الأسبوع','activity',o.activity,'textarea'));break;
+case 'editweek':o=rows('weeks').find(w=>w.id===state.week)||{};dialog('تعديل جميع بيانات الأسبوع',field('رمز الأسبوع','code',o.code,'text',true)+field('العنوان','title',o.title,'text',true)+field('النوع','kind',o.kind,'text',true,[['prep','التحضير'],['program','المرحلة'],['break','ما بعدها']])+field('الترتيب','sort_order',o.sort_order,'number',true)+field('من','starts_on',o.starts_on,'date',true)+field('إلى','ends_on',o.ends_on,'date',true)+[['reflection','وقفة التدبر'],['lesson','الدرس العلمي'],['hadith','الأربعون'],['tilawa','جزء عمّ'],['riyad','رياض الصالحين'],['task_self','في نفسي'],['task_home','في بيتي'],['task_community','في محيطي'],['discussion','أسئلة مدارسة الأسرة'],['activity','نشاط الأسبوع'],['team_work','ما يجري سوى الإيقاع الثابت / عمل الفريق'],['deliverable','ما يكون في اليد في آخر الأسبوع']].map(([key,title])=>field(title,key,o[key],'textarea')).join(''));break;
 case 'followup':o=rows('followups').find(f=>f.student_id===id&&f.week_id===state.week)||{};dialog('متابعة '+name('students',id),field('المجلس','majlis',o.majlis||'','text',false,[['','لم يسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']])+field('لقاء الأسرة','family_meeting',o.family_meeting||'','text',false,[['','لم يسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']])+field('أيام الورد','wird_days',o.wird_days??'','number')+['triple_task','transferred_lesson','rotating_task'].map((k,i)=>field(['المهمة الثلاثية','الدرس المنقول','المهمة الدوارة'][i],k,o[k]||'','text',false,[['','لم يسجل'],['done','أنجزت'],['partial','بعضها'],['none','لم تنجز']])).join('')+field('ملاحظة','note',o.note,'textarea'));break;
 case 'card':o=rows('cards').filter(c=>c.student_id===id);dialog('تقييم جوانب الغارسة',aspects.map((aspect,i)=>field(aspect,'aspect'+i,o.find(c=>c.aspect===aspect&&c.stage===(team()?'first':'self'))?.level??0,'text',true,levels.map((t,n)=>[n,t]))).join(''));break;
 case 'newquestion':dialog('سؤال جديد',field('نوع السؤال','kind','general','text',true,[['fiqh','فقهي'],['fikr','فكري'],['general','عام']])+field('نص السؤال','body','','textarea',true));break;
@@ -172,7 +219,7 @@ case 'editaccount':dialog('مراجعة الحساب',field('الاسم','name',
 case 'doc':o=rows('docs_family').find(d=>d.family_id===state.family&&d.kind===id)||{};dialog('وثيقة الأسرة',field('نص الوثيقة','body',o.body,'textarea',true));break;
 case 'assignrole':dialog('توزيع مهمة دوارة',field('المهمة','task','munassiqa','text',true,[['munassiqa','المنسقة'],['fiqhiya','المسؤولة الفقهية'],['fikriya','المسؤولة الفكرية'],['ijtimaiya','المسؤولة الاجتماعية'],['ataa','مسؤولة العطاء']])+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name]))+field('الدورة','cycle',setting('current_cycle',1),'number',true));break;
 case 'assignleader':dialog('مديرة اللقاء',field('الأسبوع','week_id',state.week,'text',true,rows('weeks').filter(x=>x.kind==='program').map(x=>[x.id,x.title]))+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name])));break;
-case 'newevent':dialog('موعد جديد',field('عنوان الموعد','title','','text',true)+field('نوع الموعد','kind','مجلس الإدارة')+field('وقت الموعد','starts_at','','datetime-local')+field('المدة بالدقائق','duration_minutes',90,'number')+field('المكان أو الرابط','place')+field('ملاحظات','notes','','textarea'));break;
+case 'newevent':dialog('موعد جديد',field('عنوان الموعد','title','','text',true)+field('نوع الموعد','kind','مجلس','text',true,[['مجلس','مجلس'],['درس','درس'],['لقاء أسرة','لقاء أسرة'],['لقاء حضوري','لقاء حضوري'],['لقاء فردي','لقاء فردي'],['لقاء فريق','لقاء فريق'],['غيره','غيره']])+field('وقت الموعد (اختياري — يُحدّد لاحقًا)','starts_at','','datetime-local')+field('المدة بالدقائق','duration_minutes',90,'number')+field('الأسبوع','week_id',state.week||'','text',false,[['','غير مرتبط بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('الأسرة (اختياري)','family_id','','text',false,[['','للجميع'],...rows('families').map(f=>[f.id,f.name])])+field('المكان أو الرابط','place')+field('ملاحظات','notes','','textarea'));break;
 case 'newminute':dialog('محضر لقاء',field('تاريخ اللقاء','meeting_date',new Date().toISOString().slice(0,10),'date')+field('الأسبوع','week_id',state.week,'text',false,rows('weeks').filter(w=>w.kind==='program').map(w=>[w.id,w.title]))+field('عدد الحاضرات','attendance_count','','number')+field('الخلاصة','summary','','textarea')+field('التكليف والقرارات','decisions','','textarea'));break;
 default:return;
 }
@@ -184,7 +231,7 @@ else if(a==='newfamily')await save('families',x);else if(a==='newgoal'){if(rows(
 else if(a==='newobservation')await save('observations',{...x,student_id:id,secret:bo(x.secret),week_id:state.week,author_id:state.user.id});
 
 else if(a==='bulkstudents'){const arr=x.bulk.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(line=>{const [name,phone,university]=line.split(',');return{name:name.trim(),phone:phone?.trim(),university:university?.trim(),stage:'candidate'}});const{error}=await db.from('students').insert(arr);if(error)throw error;await read('students');flash('تمت إضافة '+arr.length+' غارسة')}
-else if(a==='editweek')await save('weeks',{...x,id:state.week});
+else if(a==='editweek'){x.sort_order=Number(x.sort_order);if(x.ends_on<x.starts_on)throw Error('تاريخ النهاية لا يمكن أن يسبق البداية');await save('weeks',{...x,id:state.week})}
 else if(a==='followup'){for(const k of ['majlis','family_meeting','triple_task','transferred_lesson','rotating_task'])x[k]||=null;x.wird_days=x.wird_days===''?null:Number(x.wird_days);await save('followups',{...x,student_id:id,week_id:state.week,recorded_by:state.user.id},'student_id,week_id')}
 else if(a==='card'){const objects=aspects.map((aspect,i)=>({student_id:id,aspect,stage:team()?'first':'self',level:Number(x['aspect'+i]),evaluator_id:state.user.id}));const{error}=await db.from('cards').upsert(objects,{onConflict:'student_id,aspect,stage'});if(error)throw error;await read('cards');flash('حُفظ التقييم')}
 else if(a==='newquestion')await save('questions',{...x,student_id:state.account.student_id});
@@ -197,7 +244,7 @@ else if(a==='editaccount'){const{error}=await db.from('accounts').update({...x,s
 else if(a==='doc')await save('docs_family',{...x,kind:id,family_id:state.family},'family_id,kind');
 else if(a==='assignrole')await save('roles_family',{family_id:state.family,student_id:x.student_id,task:x.task,cycle:Number(x.cycle)},'family_id,task,cycle');
 else if(a==='assignleader')await save('rota_leader',{family_id:state.family,week_id:x.week_id,student_id:x.student_id},'family_id,week_id');
-else if(a==='newevent')await save('events',{...x,starts_at:x.starts_at||null,duration_minutes:Number(x.duration_minutes||90),week_id:state.week,family_id:null});
+else if(a==='newevent')await save('events',{...x,starts_at:x.starts_at||null,duration_minutes:Number(x.duration_minutes||90),week_id:x.week_id||null,family_id:x.family_id||null});
 else if(a==='newminute')await save('minutes',{...x,family_id:state.family,attendance_count:x.attendance_count?Number(x.attendance_count):null,author_id:state.user.id});
 $('.dialog-backdrop')?.remove();state.editing=null;render();
 }
@@ -205,11 +252,13 @@ document.addEventListener('click',async e=>{
 const el=e.target.closest('[data-action],[data-page],[data-week]');
 if(!el)return;
 if(el.dataset.page){state.page=el.dataset.page;$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
-if(el.dataset.week){state.week=el.dataset.week;render();return}
+if(el.dataset.week){state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
 const action=el.dataset.action;
 try{
 if(action==='install'){if(deferredInstallPrompt){const prompt=deferredInstallPrompt;deferredInstallPrompt=null;await prompt.prompt()}else{alert('لإضافة الغارسات كشاشة تطبيق:\n• في آيفون: افتحي المنصة من Safari ← مشاركة ← إضافة إلى الشاشة الرئيسية.\n• في أندرويد: افتحي المنصة من Chrome ← القائمة ⋮ ← تثبيت التطبيق أو إضافة إلى الشاشة الرئيسية.')}}
 else if(action==='signin'||action==='signup'){state.authTab=action;render()}
+else if(action==='backweeks'){state.page=team()?'weeks':'program';render();window.scrollTo(0,0)}
+else if(action==='reportthisweek'){state.page='myreport';render();window.scrollTo(0,0)}
 else if(action==='logout'){await db.auth.signOut();state.user=null;state.account=null;render()}
 else if(action==='refresh')await start();
 else if(action==='reset'){const email=prompt('أدخلي بريدكِ الإلكتروني لإرسال رابط إعادة كلمة المرور');if(email){const{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;flash('إن كان البريد مسجلاً، سيصلك رابط إعادة كلمة المرور')}}
