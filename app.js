@@ -26,7 +26,7 @@ const staff=['students','followups','reports_self','cards','milestones','goals',
 const student=['students','followups','reports_self','cards','milestones','goals','questions','minutes','docs_family'];
 const tables=[...base,...(team()?staff:student),...(leadership()?['accounts','done_survey','responses_survey']:[])];
 await Promise.all(tables.map(t=>read(t).catch(err=>{console.warn(t,err.message);state.rows[t]=[]})));
-if(!team()&&state.account?.student_id){state.profile=rows('students').find(s=>s.id===state.account.student_id);const result=await db.rpc('family_directory');if(!result.error&&result.data){const own=rows('students');state.rows.students=[...own,...result.data.filter(s=>!own.some(m=>m.id===s.id))]}}
+if(!team()&&state.account?.student_id){state.profile=rows('students').find(s=>s.id===state.account.student_id);const result=await db.rpc('family_directory');if(!result.error&&result.data){const own=rows('students');state.rows.students=[...own,...result.data.filter(s=>!own.some(m=>m.id===s.id))]}const pub=await db.rpc('published_questions');if(!pub.error&&pub.data){const mine=rows('questions');state.rows.questions=[...mine,...pub.data.filter(q=>!mine.some(m=>m.id===q.id))]}}
 state.week ||= currentWeek()?.id;
 state.family ||= state.profile?.family_id||rows('families')[0]?.id;
 }
