@@ -168,7 +168,7 @@ else if(a==='newannouncement')await save('announcements',{...x,family_id:x.famil
 else if(a==='newresource')await save('resources',x);
 else if(a==='newtask')await save('tasks',{...x,due_on:x.due_on||null});
 else if(a==='newjournal')await save('journal',{...x,author_id:state.user.id});
-else if(a==='editaccount')await save('accounts',{...x,student_id:x.student_id||null,user_id:id});
+else if(a==='editaccount'){const{error}=await db.from('accounts').update({...x,student_id:x.student_id||null}).eq('user_id',id);if(error)throw error;await read('accounts');flash('حُفظت صلاحية الحساب')}
 else if(a==='doc')await save('docs_family',{...x,kind:id,family_id:state.family},'family_id,kind');
 else if(a==='newminute')await save('minutes',{...x,family_id:state.family,attendance_count:x.attendance_count?Number(x.attendance_count):null,author_id:state.user.id});
 $('.dialog-backdrop')?.remove();state.editing=null;render();
