@@ -22,13 +22,16 @@ jobs:
         run: node --input-type=module --check < app.js
       - name: Build a self-contained browser bundle
         run: |
-          npm install --no-save --no-package-lock @supabase/supabase-js@2.57.0 esbuild@0.25.12
+          npm install --no-save --no-package-lock @supabase/supabase-js@2.57.0 esbuild@0.25.12 sharp@0.34.5
           mkdir -p dist
           npx esbuild app.js --bundle --format=iife --platform=browser --target=es2020 --outfile=dist/app.bundle.js
-          cp index.html style.css dist/
+          node -e "const sharp=require('sharp');Promise.all([192,512].map(n=>sharp('icon.svg').resize(n,n).png().toFile('dist/icon-'+n+'.png'))).catch(e=>{console.error(e);process.exit(1)})"
+          cp index.html style.css manifest.webmanifest sw.js icon.svg dist/
           touch dist/.nojekyll
           test -s dist/app.bundle.js
           grep -q 'app.bundle.js' dist/index.html
+          test -s dist/icon-192.png && test -s dist/icon-512.png
+          test -s dist/manifest.webmanifest
       - uses: actions/configure-pages@v5
         with:
           enablement: true
