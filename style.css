@@ -369,3 +369,19 @@ td .btn{margin:2px;vertical-align:middle}
 .install-help p{font-size:.91rem;color:#455d68;margin:10px 0;line-height:1.85}
 .install-help .small{font-size:.79rem}
 .install-help-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+
+/* Shared outlined icon language across desktop, phone and dialogs */
+.ui-icon{display:inline-block;vertical-align:middle;flex:none;width:20px;height:20px;stroke-width:1.85;overflow:visible}
+.sidebar .nav-item .ui-icon{width:19px;height:19px;color:#bfd2d8;transition:color .2s}
+.sidebar .nav-item:hover .ui-icon{color:#fff}
+.sidebar .nav-item.active .ui-icon{color:#d9b989}
+.mobile-nav .ui-icon{width:22px;height:22px;stroke-width:1.8}
+.mobile-nav button.active .ui-icon{stroke-width:2.2}
+.mobile-icon{display:flex;align-items:center;justify-content:center;height:23px}
+.brandmark .ui-icon{width:26px;height:26px;stroke-width:1.8}
+.mobile-brand .brandmark .ui-icon{width:20px;height:20px}
+.btn .ui-icon{width:17px;height:17px}
+.install-notice-mark .ui-icon{width:21px;height:21px}
+.logout-dialog-icon .ui-icon{width:26px;height:26px;stroke-width:1.8}
+.logout-icon .ui-icon{width:21px;height:21px}
+@media(max-width:800px){.sidebar .ui-icon{width:20px;height:20px}}
