@@ -79,13 +79,39 @@ layer.innerHTML='<section class="logout-confirm" role="dialog" aria-modal="true"
 document.body.appendChild(layer);
 layer.querySelector('[data-action="cancelLogout"]').focus();
 }
-function shell(){
+function visibleNavigation(){
 const nav=team()?teamNav:studentNav.filter(x=>x[0]!=='myfollowup'||coordinator()).filter(x=>x[0]!=='survey'||setting('survey_open',false)===true);
-const visible=nav.filter(x=>x[0]!=='accounts'||leadership()).filter(x=>x[0]!=='survey'||state.account?.role!=='musaida');
+return nav.filter(x=>x[0]!=='accounts'||leadership()).filter(x=>x[0]!=='survey'||state.account?.role!=='musaida');
+}
+function closeMobileMore(){
+const overlay=document.querySelector('.mobile-more-overlay');
+if(overlay){overlay.remove();document.body.classList.remove('mobile-more-open')}
+}
+function showMobileMore(){
+closeMobileMore();
+const visible=visibleNavigation();
+const primary=visible.slice(0,4).map(([p])=>p);
+const groups=[
+['التنقل السريع',visible.filter(([p])=>primary.includes(p))],
+['بقية الصفحات',visible.filter(([p])=>!primary.includes(p))]
+].filter(([,items])=>items.length);
+const sections=groups.map(([title,items])=>'<section class="mobile-more-section"><h3>'+esc(title)+'</h3><div class="mobile-more-grid">'+items.map(([page,label])=>
+'<button type="button" class="mobile-more-link'+(state.page===page?' is-selected':'')+'" data-page="'+esc(page)+'"'+(state.page===page?' aria-current="page"':'')+'><span class="mobile-more-link-icon">'+iconSvg(icons[page])+'</span><span class="mobile-more-link-title">'+esc(label)+'</span>'+(state.page===page?'<span class="mobile-more-current">الحالية</span>':'')+'</button>'
+).join('')+'</div></section>').join('');
+const overlay=document.createElement('div');
+overlay.className='mobile-more-overlay';
+overlay.innerHTML='<div class="mobile-more-scrim" data-action="closeMore"></div><section class="mobile-more-sheet" role="dialog" aria-modal="true" aria-labelledby="mobile-more-heading" tabindex="-1"><div class="mobile-more-handle" aria-hidden="true"></div><header class="mobile-more-header"><div><span class="mobile-more-eyebrow">منصة الغارسات</span><h2 id="mobile-more-heading">القائمة الرئيسية</h2><p>اختاري الصفحة التي تريدين الانتقال إليها</p></div><button type="button" class="mobile-more-close" data-action="closeMore" aria-label="إغلاق القائمة">×</button></header><div class="mobile-more-scroll">'+sections+'</div><footer class="mobile-more-footer"><span>'+iconSvg('sprout')+' الغارسات</span><span>معهد التأسيس الشرعي</span></footer></section>';
+document.body.appendChild(overlay);
+document.body.classList.add('mobile-more-open');
+overlay.querySelector('.mobile-more-close').focus();
+}
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.querySelector('.mobile-more-overlay'))closeMobileMore()});
+function shell(){
+const visible=visibleNavigation();
 let main='';
 try{main=page()}catch(err){console.error(err);main='<div class="card"><p>تعذر عرض هذه الصفحة. حدّثي البيانات وحاولي مرة أخرى.</p></div>'}
 const top=team()?'الفريق':'الغارسة';
-return '<div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">'+iconSvg('sprout')+'</div><span>الغارسات<small style="display:block;font-weight:400;color:#acb5c3">معهد التأسيس الشرعي</small></span></div><div class="side-label">مساحة '+top+'</div>'+visible.map(([p,t])=>'<button class="nav-item '+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="width:20px;text-align:center;color:#b79867">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'</aside><main class="main"><header class="topbar"><div class="mobile-brand brand"><div class="brandmark" style="width:32px;height:32px">✦</div>الغارسات</div><div class="muted small user-title">منصة برنامج الغارسات | '+esc(setting('stage_name','المرحلة الأولى'))+'</div><div style="display:flex;align-items:center;gap:12px"><span class="small">'+esc(state.account?.name||'')+' <span class="muted">| '+esc(state.account?.title||top)+'</span></span><button type="button" data-action="logout" class="logout-icon" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header><div class="content">'+installNotice()+main+'</div></main><nav class="mobile-nav">'+visible.slice(0,4).map(([p,t])=>'<button class="'+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="font-size:20px">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'<button data-action="more"><span style="font-size:20px">☷</span>المزيد</button></nav></div>';
+return '<div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">'+iconSvg('sprout')+'</div><span>الغارسات<small style="display:block;font-weight:400;color:#acb5c3">معهد التأسيس الشرعي</small></span></div><div class="side-label">مساحة '+top+'</div>'+visible.map(([p,t])=>'<button class="nav-item '+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="width:20px;text-align:center;color:#b79867">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'</aside><main class="main"><header class="topbar"><div class="mobile-brand brand"><div class="brandmark" style="width:32px;height:32px">✦</div>الغارسات</div><div class="muted small user-title">منصة برنامج الغارسات | '+esc(setting('stage_name','المرحلة الأولى'))+'</div><div style="display:flex;align-items:center;gap:12px"><span class="small">'+esc(state.account?.name||'')+' <span class="muted">| '+esc(state.account?.title||top)+'</span></span><button type="button" data-action="logout" class="logout-icon" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header><div class="content">'+installNotice()+main+'</div></main><nav class="mobile-nav">'+visible.slice(0,4).map(([p,t])=>'<button class="'+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="font-size:20px">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'<button type="button" data-action="more" aria-haspopup="dialog" aria-label="فتح جميع الصفحات"><span class="mobile-icon">'+iconSvg('grid')+'</span>المزيد</button></nav></div>';
 }
 function heading(title,desc,action=''){return '<div class="page-head"><div><div class="eyebrow">مِن الغَرْسِ إلى الثَّمَر</div><h1>'+esc(title)+'</h1><p class="subtitle">'+esc(desc)+'</p></div>'+action+'</div>'}
 function empty(text){return '<div class="empty"><strong>لا توجد بيانات بعد</strong>'+esc(text)+'</div>'}
@@ -317,7 +343,7 @@ $('.dialog-backdrop')?.remove();state.editing=null;render();
 document.addEventListener('click',async e=>{
 const el=e.target.closest('[data-action],[data-page],[data-week]');
 if(!el)return;
-if(el.dataset.page){state.page=el.dataset.page;$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
+if(el.dataset.page){state.page=el.dataset.page;closeMobileMore();$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
 if(el.dataset.week){state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
 const action=el.dataset.action;
 try{
@@ -346,7 +372,8 @@ else if(action==='reset'){const email=prompt('أدخلي بريدكِ الإلك
 else if(action==='close')$('.dialog-backdrop')?.remove();
 else if(action==='print')window.print();
 else if(action==='shiftcalendar'){const newDate=$('#f_first_start')?.value;if(!newDate)throw Error('اختاري التاريخ الجديد');if(!confirm('ستتغير تواريخ جميع الأسابيع والمواعيد. هل تؤكدين؟'))return;const {data,error}=await db.rpc('shift_program',{p_first_week:newDate});if(error)throw error;await load();flash('تمت إزاحة التقويم بمقدار '+data+' يوم')}
-else if(action==='more'){const nav=team()?teamNav:studentNav;dialog('انتقلي إلى صفحة',nav.map(([key,label])=>'<button type="button" class="btn secondary" style="margin:3px" data-page="'+key+'">'+label+'</button>').join(''),'إغلاق')}
+else if(action==='more'){showMobileMore()}
+else if(action==='closeMore'){closeMobileMore()}
 else if(action.startsWith('go:')){state.page=action.split(':')[1];render()}
 else if(action==='changepassword'){const password=$('#f_newpassword').value;if(password.length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{error}=await db.auth.updateUser({password});if(error)throw error;flash('تغيرت كلمة المرور')}
 else if(action==='togglesurvey'){await save('settings',{key:'survey_open',value:!setting('survey_open',false)});render()}
