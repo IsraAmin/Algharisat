@@ -219,6 +219,9 @@ document.addEventListener('submit',async e=>{
 if(!['authForm','modalForm','reportForm','settingsForm','surveyForm','profileForm'].includes(e.target.id))return;
 e.preventDefault();
 const f=e.target,x=formData(f);
+const submit=f.querySelector('button[type="submit"]');
+if(submit?.disabled)return;
+if(submit)submit.disabled=true;
 try{
 if(f.id==='authForm'){
 if(state.authTab==='signup'){if((x.password||'').length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{error}=await db.auth.signUp({email:x.email,password:x.password,options:{data:{full_name:x.full_name,phone:x.phone}}});if(error)throw error;flash('وصل طلب التسجيل. راجعي بريدكِ إذا كان تأكيد البريد مفعلًا.')}
@@ -228,6 +231,6 @@ else if(f.id==='reportForm'){x.wird_days=Number(x.wird_days);x.thought_read=x.th
 else if(f.id==='settingsForm'){for(const [key,value] of Object.entries(x)){await save('settings',{key,value:key==='current_cycle'?Number(value):value})}render()}
 else if(f.id==='surveyForm'){const{error}=await db.rpc('submit_survey',{p_answers:[0,1,2,3,4].map(i=>x['q'+i]),p_round:'p1'});if(error)throw error;await read('done_survey');render();flash('جزاكِ الله خيرًا. وصلت إجابتكِ')}
 else if(f.id==='profileForm'){const{error}=await db.rpc('update_my_profile',{p_phone:x.phone,p_email:x.email,p_university:x.university,p_college:x.college,p_study_level:x.study_level,p_neighborhood:x.neighborhood});if(error)throw error;await load();flash('حُفظت بياناتكِ الشخصية')}
-}catch(err){console.error(err);flash(err.message||'تعذر الحفظ، تحققي من الاتصال',true)}
+}catch(err){console.error(err);const message=String(err?.message||'');const match=message.match(/(?:after|in)\s+(\d+)\s+seconds?/i);const throttled=err?.status===429||/for security purposes|rate limit|too many requests/i.test(message);flash(throttled?'تم إرسال طلب قبل قليل. انتظري '+(match?.[1]||'بضع')+' ثوانٍ ثم حاولي مرة واحدة.':message||'تعذر الحفظ، تحققي من الاتصال',true)}finally{if(submit)submit.disabled=false}
 });
 start().catch(err=>{console.error(err);$('#root').innerHTML='<div class="card" style="margin:30px"><h2>تعذر تحميل المنصة</h2><p>تحققي من الاتصال بالإنترنت ثم أعيدي تحميل الصفحة.</p></div>'});
