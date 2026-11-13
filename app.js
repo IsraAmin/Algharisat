@@ -224,7 +224,7 @@ if(submit?.disabled)return;
 if(submit)submit.disabled=true;
 try{
 if(f.id==='authForm'){
-if(state.authTab==='signup'){if((x.password||'').length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{error}=await db.auth.signUp({email:x.email,password:x.password,options:{data:{full_name:x.full_name,phone:x.phone}}});if(error)throw error;flash('وصل طلب التسجيل. راجعي بريدكِ إذا كان تأكيد البريد مفعلًا.')}
+if(state.authTab==='signup'){if((x.password||'').length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{data,error}=await db.auth.signUp({email:x.email,password:x.password,options:{data:{full_name:x.full_name,phone:x.phone}}});if(error)throw error;if(data.session){await start();flash('تم إنشاء الحساب وتسجيل الدخول. حسابك بانتظار موافقة الإدارة.')}else{flash('تم إرسال طلب التسجيل، لكن إعداد تأكيد البريد ما زال مفعلًا في Supabase. راجعي الإدارة لإيقافه.')}}
 else{const{error}=await db.auth.signInWithPassword({email:x.email,password:x.password});if(error)throw Error('تعذر الدخول، تحققي من البريد وكلمة المرور');await start()}}
 else if(f.id==='modalForm')await modalSave(f);
 else if(f.id==='reportForm'){x.wird_days=Number(x.wird_days);x.thought_read=x.thought_read==='true';await save('reports_self',{...x,student_id:state.account.student_id,week_id:state.week},'student_id,week_id')}
