@@ -3,7 +3,14 @@ const db=createClient('https://utlcejgzkrvdhojrnxcm.supabase.co','sb_publishable
 const safeUrl=v=>/^https?:\/\//i.test(String(v||''))?String(v):'#';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let deferredInstallPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});
+const pwaStorageRead=key=>{try{return localStorage.getItem(key)}catch(e){return null}};
+const pwaStorageWrite=(key,value)=>{try{localStorage.setItem(key,value)}catch(e){}};
+const installedMode=()=>window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true;
+const installFlag=()=>state.user?'algharisat-installed-'+state.user.id:'';
+const dismissedFlag=()=>state.user?'algharisat-install-dismissed-'+state.user.id:'';
+const shouldShowInstall=()=>!!state.user&&!installedMode()&&!pwaStorageRead('algharisat-installed')&&!pwaStorageRead(installFlag())&&!pwaStorageRead(dismissedFlag());
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(state.user)render()});
+window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;pwaStorageWrite('algharisat-installed','1');if(state.user)pwaStorageWrite(installFlag(),'1');if(state.user)render()});
 const state={user:null,account:null,profile:null,page:'dashboard',rows:{},week:null,family:null,editing:null,notice:'',authTab:'signin',period:'all'};
 const icons={dashboard:'◫',weeks:'▦',students:'♧',families:'⌂',followups:'☑',cards:'◈',milestones:'⚑',questions:'?',announcements:'✉',tasks:'☷',journal:'✎',reports:'▥',survey:'♡',accounts:'♙',settings:'⚙',myweek:'✦',myreport:'✎',myfamily:'⌂',myfollowup:'☑',mycard:'◈',program:'▦',myquestions:'?',notices:'✉',myaccount:'♙'};
 const teamNav=[['dashboard','اللوحة'],['weeks','البرنامج والأسابيع'],['students','الغارسات'],['families','الأسر'],['followups','المتابعة الأسبوعية'],['cards','بطاقة الغارسة'],['milestones','المخرجات'],['questions','الأسئلة'],['announcements','الإعلانات والمصادر'],['tasks','التحضير والتشغيل'],['journal','سجل التجربة'],['reports','التقارير'],['survey','صوت الغارسة'],['accounts','الحسابات'],['settings','الإعدادات']];
@@ -55,16 +62,28 @@ if(sequence===bootSequence)render();
 let loginInProgress=false;
 db.auth.onAuthStateChange((event)=>{if(!loginInProgress&&['SIGNED_IN','SIGNED_OUT','USER_UPDATED'].includes(event)){setTimeout(()=>start().catch(err=>{console.error(err);flash('تعذر تحديث حالة تسجيل الدخول، أعيدي تحميل الصفحة.',true)}),0)}});
 function auth(){
-return '<div class="auth"><section class="auth-hero"><div class="brand"><div class="brandmark">✦</div>معهد التأسيس الشرعي | منصة الغارسات</div><h1>الغارسات</h1><p class="verse">﴿كَزَرْعٍ أَخْرَجَ شَطْأَهُ فَآزَرَهُ فَاسْتَغْلَظَ فَاسْتَوَىٰ عَلَىٰ سُوقِهِ﴾</p><p style="margin-top:35px;color:#c8c7c6">مساحة تجمع الأسبوع، والأسرة، والمتابعة، والثمرة في مكان واحد.</p></section><section class="auth-panel"><div class="eyebrow">أهلًا بكِ في منصة الغارسات</div><h2 class="welcome">رحلة تُغرس فيها المعاني وتُرعى ثمارها.</h2><p class="muted">ادخلي إلى حسابك، أو أنشئي حسابًا جديدًا للمراجعة.</p><div class="tabs"><button data-action="signin" class="'+(state.authTab==='signin'?'active':'')+'">تسجيل الدخول</button><button data-action="signup" class="'+(state.authTab==='signup'?'active':'')+'">حساب جديد</button></div><form id="authForm">'+(state.authTab==='signup'?field('الاسم كاملًا','full_name','', 'text',true)+field('رقم الهاتف (واتساب)','phone','', 'tel',true):'')+field('البريد الإلكتروني','email','','email',true)+field('كلمة المرور','password','','password',true)+'<button class="btn" type="submit" style="width:100%;margin-top:15px">'+(state.authTab==='signup'?'إرسال طلب التسجيل':'دخول إلى المنصة')+'</button></form><button class="textbtn" data-action="reset">نسيتِ كلمة المرور؟</button> <button class="textbtn" data-action="install">إضافة الغارسات إلى الشاشة الرئيسية</button></section></div>';
+return '<div class="auth"><section class="auth-hero"><div class="brand"><div class="brandmark">✦</div>معهد التأسيس الشرعي | منصة الغارسات</div><h1>الغارسات</h1><p class="verse">﴿كَزَرْعٍ أَخْرَجَ شَطْأَهُ فَآزَرَهُ فَاسْتَغْلَظَ فَاسْتَوَىٰ عَلَىٰ سُوقِهِ﴾</p><p style="margin-top:35px;color:#c8c7c6">مساحة تجمع الأسبوع، والأسرة، والمتابعة، والثمرة في مكان واحد.</p></section><section class="auth-panel"><div class="eyebrow">أهلًا بكِ في منصة الغارسات</div><h2 class="welcome">رحلة تُغرس فيها المعاني وتُرعى ثمارها.</h2><p class="muted">ادخلي إلى حسابك، أو أنشئي حسابًا جديدًا للمراجعة.</p><div class="tabs"><button data-action="signin" class="'+(state.authTab==='signin'?'active':'')+'">تسجيل الدخول</button><button data-action="signup" class="'+(state.authTab==='signup'?'active':'')+'">حساب جديد</button></div><form id="authForm">'+(state.authTab==='signup'?field('الاسم كاملًا','full_name','', 'text',true)+field('رقم الهاتف (واتساب)','phone','', 'tel',true):'')+field('البريد الإلكتروني','email','','email',true)+field('كلمة المرور','password','','password',true)+'<button class="btn" type="submit" style="width:100%;margin-top:15px">'+(state.authTab==='signup'?'إرسال طلب التسجيل':'دخول إلى المنصة')+'</button></form><button class="textbtn" data-action="reset">نسيتِ كلمة المرور؟</button></section></div>';
 }
-function pending(){return '<div class="auth"><section class="auth-hero"><div class="brand">✦ معهد التأسيس الشرعي</div><h1>الغارسات</h1><p class="verse">لكل بذرة أوانها، ولكل غرس رعاية.</p></section><section class="auth-panel"><h2>'+(state.account?.role==='disabled'?'هذا الحساب موقوف':'وصل طلبكِ')+'</h2><p class="muted" style="margin:20px 0">'+(state.account?.role==='disabled'?'راجعي إدارة البرنامج إن ظننتِ أن هناك خطأ.':'طلب التسجيل في انتظار موافقة إدارة البرنامج. يمكنكِ العودة للتحقق من حالته.')+'</p>'+btn('refresh','تحديث حالة الحساب')+' '+btn('logout','تسجيل الخروج')+'</section></div>'}
+function pending(){return '<div class="auth"><section class="auth-hero"><div class="brand">✦ معهد التأسيس الشرعي</div><h1>الغارسات</h1><p class="verse">لكل بذرة أوانها، ولكل غرس رعاية.</p></section><section class="auth-panel"><h2>'+(state.account?.role==='disabled'?'هذا الحساب موقوف':'وصل طلبكِ')+'</h2><p class="muted" style="margin:20px 0">'+(state.account?.role==='disabled'?'راجعي إدارة البرنامج إن ظننتِ أن هناك خطأ.':'طلب التسجيل في انتظار موافقة إدارة البرنامج. يمكنكِ العودة للتحقق من حالته.')+'</p>'+btn('refresh','تحديث حالة الحساب')+' '+'<button type="button" class="logout-icon pending-logout" data-action="logout" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>'+installNotice()+'</section></div>'}
+function installNotice(){
+if(!shouldShowInstall())return '';
+return '<section class="install-notice" role="status" aria-label="اقتراح تثبيت الغارسات"><div class="install-notice-mark" aria-hidden="true">✦</div><div class="install-notice-copy"><strong>الغارسات على شاشة تلفونك</strong><p>أضيفي المنصة للشاشة الرئيسية وافتحيها بسهولة مثل التطبيق.</p></div><div class="install-notice-actions"><button type="button" class="btn goldbtn smallbtn" data-action="install">إضافة للشاشة الرئيسية</button><button type="button" class="install-notice-dismiss" data-action="dismissInstall" aria-label="إخفاء اقتراح التثبيت" title="إخفاء">×</button></div></section>';
+}
+function logoutConfirmDialog(){
+if(document.querySelector('.logout-confirm-backdrop'))return;
+const layer=document.createElement('div');
+layer.className='logout-confirm-backdrop';
+layer.innerHTML='<section class="logout-confirm" role="dialog" aria-modal="true" aria-labelledby="logout-dialog-title" aria-describedby="logout-dialog-description"><div class="logout-dialog-icon" aria-hidden="true">⎋</div><h2 id="logout-dialog-title">تأكيد تسجيل الخروج</h2><p id="logout-dialog-description">هل تريدين الخروج من حسابك في منصة الغارسات؟</p><div class="logout-dialog-actions"><button type="button" class="btn secondary" data-action="cancelLogout">إلغاء</button><button type="button" class="btn dangerbtn" data-action="confirmLogout">نعم، تسجيل الخروج</button></div></section>';
+document.body.appendChild(layer);
+layer.querySelector('[data-action="cancelLogout"]').focus();
+}
 function shell(){
 const nav=team()?teamNav:studentNav.filter(x=>x[0]!=='myfollowup'||coordinator()).filter(x=>x[0]!=='survey'||setting('survey_open',false)===true);
 const visible=nav.filter(x=>x[0]!=='accounts'||leadership()).filter(x=>x[0]!=='survey'||state.account?.role!=='musaida');
 let main='';
 try{main=page()}catch(err){console.error(err);main='<div class="card"><p>تعذر عرض هذه الصفحة. حدّثي البيانات وحاولي مرة أخرى.</p></div>'}
 const top=team()?'الفريق':'الغارسة';
-return '<div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">✦</div><span>الغارسات<small style="display:block;font-weight:400;color:#acb5c3">معهد التأسيس الشرعي</small></span></div><div class="side-label">مساحة '+top+'</div>'+visible.map(([p,t])=>'<button class="nav-item '+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="width:20px;text-align:center;color:#b79867">'+icons[p]+'</span>'+t+'</button>').join('')+'</aside><main class="main"><header class="topbar"><div class="mobile-brand brand"><div class="brandmark" style="width:32px;height:32px">✦</div>الغارسات</div><div class="muted small user-title">منصة برنامج الغارسات | '+esc(setting('stage_name','المرحلة الأولى'))+'</div><div style="display:flex;align-items:center;gap:12px"><span class="small">'+esc(state.account?.name||'')+' <span class="muted">| '+esc(state.account?.title||top)+'</span></span><button data-action="install" class="btn secondary smallbtn install-btn" title="إضافة الغارسات إلى الشاشة الرئيسية">تثبيت</button><button data-action="logout" class="btn secondary smallbtn">خروج</button></div></header><div class="content">'+main+'</div></main><nav class="mobile-nav">'+visible.slice(0,4).map(([p,t])=>'<button class="'+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="font-size:20px">'+icons[p]+'</span>'+t+'</button>').join('')+'<button data-action="more"><span style="font-size:20px">☷</span>المزيد</button></nav></div>';
+return '<div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">✦</div><span>الغارسات<small style="display:block;font-weight:400;color:#acb5c3">معهد التأسيس الشرعي</small></span></div><div class="side-label">مساحة '+top+'</div>'+visible.map(([p,t])=>'<button class="nav-item '+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="width:20px;text-align:center;color:#b79867">'+icons[p]+'</span>'+t+'</button>').join('')+'</aside><main class="main"><header class="topbar"><div class="mobile-brand brand"><div class="brandmark" style="width:32px;height:32px">✦</div>الغارسات</div><div class="muted small user-title">منصة برنامج الغارسات | '+esc(setting('stage_name','المرحلة الأولى'))+'</div><div style="display:flex;align-items:center;gap:12px"><span class="small">'+esc(state.account?.name||'')+' <span class="muted">| '+esc(state.account?.title||top)+'</span></span><button type="button" data-action="logout" class="logout-icon" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header><div class="content">'+installNotice()+main+'</div></main><nav class="mobile-nav">'+visible.slice(0,4).map(([p,t])=>'<button class="'+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="font-size:20px">'+icons[p]+'</span>'+t+'</button>').join('')+'<button data-action="more"><span style="font-size:20px">☷</span>المزيد</button></nav></div>';
 }
 function heading(title,desc,action=''){return '<div class="page-head"><div><div class="eyebrow">مِن الغَرْسِ إلى الثَّمَر</div><h1>'+esc(title)+'</h1><p class="subtitle">'+esc(desc)+'</p></div>'+action+'</div>'}
 function empty(text){return '<div class="empty"><strong>لا توجد بيانات بعد</strong>'+esc(text)+'</div>'}
@@ -106,7 +125,7 @@ const weeksIn=all.filter(w=>w.kind===kind);
 return weeksIn.length?'<section class="program-group"><div class="program-group-title"><div><h2>'+title+'</h2><p class="muted small">'+desc+'</p></div><span class="chip">'+weeksIn.length+' أسابيع</span></div><div class="week-grid">'+weeksIn.map(weekCard).join('')+'</div></section>':'';
 }).join('');
 return heading('البرنامج والأسابيع','خريطة المرحلة كاملة من التحضير إلى الختام، والمواعيد والإيقاع الثابت')+
-'<div class="program-layout"><div class="program-timeline">'+groups+'</div><aside class="program-aside"><div class="card"><div class="program-aside-title"><h3>المواعيد القادمة</h3>'+(team()?btn('newevent','+ موعد جديد','goldbtn smallbtn'):'')+'</div>'+eventItems(upcoming)+'</div><div class="card"><h3>الأسبوع في سطر</h3><p class="muted small">الإيقاع الثابت الذي يتكرر في أسابيع المرحلة</p><ol class="rhythm-list">'+fixedRhythm.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ol></div></aside></div>';
+'<div class="program-layout"><div class="program-timeline">'+groups+'</div><aside class="program-aside"><div class="card"><div class="program-aside-title"><h3>المواعيد القادمة</h3>'+(team()?btn('newevent','+ موعد جديد','goldbtn smallbtn'):'')+'</div>'+eventItems(upcoming)+'</div><div class="card"><h3>تفاصيل الأسبوع</h3><p class="muted small">الإيقاع الثابت الذي يتكرر في أسابيع المرحلة</p><ol class="rhythm-list">'+fixedRhythm.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ol></div></aside></div>';
 }
 function weekDetails(){
 const list=visibleWeeks(),w=list.find(x=>x.id===state.week)||list.find(weekCurrent)||list[0];
@@ -255,11 +274,23 @@ if(el.dataset.page){state.page=el.dataset.page;$('.dialog-backdrop')?.remove();r
 if(el.dataset.week){state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
 const action=el.dataset.action;
 try{
-if(action==='install'){if(deferredInstallPrompt){const prompt=deferredInstallPrompt;deferredInstallPrompt=null;await prompt.prompt()}else{alert('لإضافة الغارسات كشاشة تطبيق:\n• في آيفون: افتحي المنصة من Safari ← مشاركة ← إضافة إلى الشاشة الرئيسية.\n• في أندرويد: افتحي المنصة من Chrome ← القائمة ⋮ ← تثبيت التطبيق أو إضافة إلى الشاشة الرئيسية.')}}
+if(action==='install'){
+if(deferredInstallPrompt){
+const prompt=deferredInstallPrompt;deferredInstallPrompt=null;
+await prompt.prompt();
+const choice=await prompt.userChoice;
+if(choice?.outcome==='accepted'){pwaStorageWrite('algharisat-installed','1');pwaStorageWrite(installFlag(),'1');render()}
+}else{
+alert('لإضافة الغارسات إلى الشاشة الرئيسية:\\n• آيفون: افتحي المنصة من Safari ثم مشاركة ثم إضافة إلى الشاشة الرئيسية.\\n• أندرويد: افتحي المنصة من Chrome ثم القائمة ⋮ ثم تثبيت التطبيق أو إضافة إلى الشاشة الرئيسية.');
+}
+}
+else if(action==='dismissInstall'){pwaStorageWrite(dismissedFlag(),'1');render()}
+else if(action==='cancelLogout'){document.querySelector('.logout-confirm-backdrop')?.remove()}
+else if(action==='confirmLogout'){el.disabled=true;try{const{error}=await db.auth.signOut();if(error)throw error;document.querySelector('.logout-confirm-backdrop')?.remove();state.user=null;state.account=null;render()}finally{el.disabled=false}}
 else if(action==='signin'||action==='signup'){state.authTab=action;render()}
 else if(action==='backweeks'){state.page=team()?'weeks':'program';render();window.scrollTo(0,0)}
 else if(action==='reportthisweek'){state.page='myreport';render();window.scrollTo(0,0)}
-else if(action==='logout'){await db.auth.signOut();state.user=null;state.account=null;render()}
+else if(action==='logout'){logoutConfirmDialog()}
 else if(action==='refresh')await start();
 else if(action==='reset'){const email=prompt('أدخلي بريدكِ الإلكتروني لإرسال رابط إعادة كلمة المرور');if(email){const{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;flash('إن كان البريد مسجلاً، سيصلك رابط إعادة كلمة المرور')}}
 else if(action==='close')$('.dialog-backdrop')?.remove();
