@@ -214,7 +214,7 @@ else if(f.id==='modalForm')await modalSave(f);
 else if(f.id==='reportForm'){x.wird_days=Number(x.wird_days);x.thought_read=x.thought_read==='true';await save('reports_self',{...x,student_id:state.account.student_id,week_id:state.week},'student_id,week_id')}
 else if(f.id==='settingsForm'){for(const [key,value] of Object.entries(x)){await save('settings',{key,value:key==='current_cycle'?Number(value):value})}render()}
 else if(f.id==='surveyForm'){const{error}=await db.rpc('submit_survey',{p_answers:[0,1,2,3,4].map(i=>x['q'+i]),p_round:'p1'});if(error)throw error;await read('done_survey');render();flash('جزاكِ الله خيرًا. وصلت إجابتكِ')}
-else if(f.id==='profileForm'){const p={phone:x.phone,university:x.university,college:x.college,study_level:x.study_level,neighborhood:x.neighborhood};throw Error('تعديل الملف الشخصي ينتظر تفعيل خدمة التعديل الآمن؛ راجعي الإدارة مؤقتًا')}
+else if(f.id==='profileForm'){const{error}=await db.rpc('update_my_profile',{p_phone:x.phone,p_email:x.email,p_university:x.university,p_college:x.college,p_study_level:x.study_level,p_neighborhood:x.neighborhood});if(error)throw error;await load();flash('حُفظت بياناتكِ الشخصية')}
 }catch(err){console.error(err);flash(err.message||'تعذر الحفظ، تحققي من الاتصال',true)}
 });
 start().catch(err=>{console.error(err);$('#root').innerHTML='<div class="card" style="margin:30px"><h2>تعذر تحميل المنصة</h2><p>تحققي من الاتصال بالإنترنت ثم أعيدي تحميل الصفحة.</p></div>'});
