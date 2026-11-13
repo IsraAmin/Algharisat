@@ -281,3 +281,51 @@ td .btn{margin:2px;vertical-align:middle}
   .hero-card h1,.hero-card p{color:#111!important}
   .content{max-width:none;padding:0}
 }
+
+/* Program map and standalone week detail */
+.program-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(265px,310px);align-items:start;gap:24px}
+.program-timeline{min-width:0;display:grid;gap:28px}
+.program-group{min-width:0}
+.program-group-title{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 15px;padding:0 3px 12px;border-bottom:1px solid var(--line)}
+.program-group-title h2{font-size:1.2rem;color:var(--navy)}
+.program-group-title p{margin:3px 0 0}
+.program-timeline .week-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.program-timeline .week-tile{min-height:166px;display:flex;flex-direction:column;align-items:stretch}
+.week-tile-top{display:flex;justify-content:space-between;align-items:center;gap:7px}
+.week-tile .week-reflection{color:#53697a;font-size:.79rem;line-height:1.7;margin:10px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.week-tile .week-open{color:#956f41;font-size:.75rem;font-weight:700;margin-top:auto;padding-top:10px}
+.week-tile.is-current{border-color:#81aa9c;background:#f8fdfb}
+.week-tile.is-current:before{background:#448e78}
+.program-aside{display:grid;gap:18px;position:sticky;top:94px;min-width:0}
+.program-aside .card{padding:21px}
+.program-aside-title{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:15px}
+.program-aside-title h3,.program-aside-title h2{margin:0}
+.event-item{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)}
+.event-item:last-child{border:0;padding-bottom:0}
+.event-item strong{font-size:.86rem;color:var(--ink);font-weight:700;line-height:1.6}
+.event-item p{margin:3px 0 0;line-height:1.7}
+.event-bullet{flex:none;color:#ae8c58;font-size:1.3rem;line-height:1.2}
+.rhythm-list{margin:14px 0 0;padding-inline-start:24px;color:var(--ink-2)}
+.rhythm-list li{padding:5px 0;line-height:1.85;font-size:.82rem}
+.rhythm-list li::marker{color:#ad8551;font-weight:700}
+.week-details{max-width:1150px;margin:auto;display:grid;gap:18px}
+.week-details-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.week-details-hero{margin:0}
+.week-details-hero p{font-size:.88rem}
+.week-detail-section{padding:25px}
+.week-detail-section h2{margin-bottom:13px}
+.week-content-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.week-content-block{border:1px solid #e8ece9;background:#fafbf9;border-radius:14px;padding:17px}
+.week-content-block h3{margin:0 0 7px;color:var(--navy);font-size:.9rem}
+.week-content-block p{font-size:.86rem;color:var(--ink-2);line-height:1.95}
+.triple-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.fixed-questions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:15px 0 22px}
+.fixed-questions>div{background:#f5f3eb;padding:13px;border-radius:12px;font-weight:600;font-size:.84rem}
+.fixed-questions span{display:inline-grid;place-items:center;width:25px;height:25px;background:#eadcc7;border-radius:50%;margin-inline-end:6px;color:#76542c}
+.team-only{border-inline-start:4px solid #c2a575}
+.week-detail-actions{display:flex;gap:10px;flex-wrap:wrap}
+.week-detail-nav{display:flex;gap:12px;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:18px}
+.week-detail-nav .btn{max-width:49%;text-align:center}
+@media(max-width:1120px){.program-layout{grid-template-columns:minmax(0,1fr) 265px;gap:16px}.program-timeline .week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.program-layout{grid-template-columns:1fr}.program-aside{position:static;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
+@media(max-width:600px){.program-timeline .week-grid{grid-template-columns:1fr}.program-aside{grid-template-columns:1fr}.program-group-title h2{font-size:1.1rem}.week-tile{min-height:0!important}.week-detail-section{padding:18px}.week-content-grid,.triple-grid,.fixed-questions{grid-template-columns:1fr}.week-detail-nav .btn{max-width:49%;font-size:.78rem;padding:8px}.week-details{gap:13px}}
