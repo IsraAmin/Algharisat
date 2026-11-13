@@ -139,56 +139,81 @@ const current=weekCurrent(w),selected=state.week===w.id;
 const phase=w.kind==='prep'?'التحضير':w.kind==='break'?'ما بعدها':'الأسبوع '+esc(w.code?.replace(/^w/,'')||'');
 return '<button type="button" class="week-tile '+(current?'is-current ':'')+(selected?'active':'')+'" data-week="'+esc(w.id)+'" aria-label="فتح '+esc(w.title)+'"><div class="week-tile-top"><span class="week-code">'+phase+'</span>'+(current?'<span class="chip ok">الجاري الآن</span>':'')+'</div><h3>'+esc(w.title)+'</h3><p class="small muted">'+esc(shortDate(w.starts_on))+' — '+esc(shortDate(w.ends_on))+'</p>'+(w.reflection?'<p class="week-reflection">'+esc(w.reflection)+'</p>':'')+'<span class="week-open">تفاصيل الأسبوع ←</span></button>';
 }
+
 function dashboard(){
-const programWeeks=sortedWeeks().filter(w=>w.kind==='program');
-const firstProgram=programWeeks[0];
-const inPreparation=!!firstProgram&&todayISO()<firstProgram.starts_on;
-const prepWeeks=sortedWeeks().filter(w=>w.kind==='prep');
-const prepWeek=prepWeeks.find(weekCurrent)||prepWeeks.find(w=>w.starts_on>todayISO())||prepWeeks.at(-1)||null;
+const today=todayISO(),allWeeks=sortedWeeks(),programWeeks=allWeeks.filter(w=>w.kind==='program');
+const firstProgram=programWeeks[0],inPreparation=!!firstProgram&&today<firstProgram.starts_on;
+const prepWeeks=allWeeks.filter(w=>w.kind==='prep');
+const prepWeek=prepWeeks.find(weekCurrent)||prepWeeks.find(w=>w.starts_on>today)||prepWeeks.at(-1)||null;
 const w=inPreparation?prepWeek:currentWeek();
 const people=rows('students').filter(s=>s.stage==='active');
 const candidates=rows('students').filter(s=>s.stage==='candidate');
-const follow=rows('followups').filter(f=>f.week_id===w?.id);
-const waiting=rows('accounts').filter(a=>a.role==='pending');
-const openQuestions=rows('questions').filter(q=>q.status==='open');
-const known=follow.filter(f=>!!f.majlis);
-const present=known.filter(f=>['present','late'].includes(f.majlis));
+const waiting=leadership()?rows('accounts').filter(a=>a.role==='pending'):[];
+const pendingQuestionCount=rows('questions').filter(q=>q.status==='open').length;
+const follow=rows('followups').filter(f=>f.week_id===w?.id&&people.some(s=>s.id===f.student_id));
+const known=follow.filter(f=>!!f.majlis),present=known.filter(f=>['present','late'].includes(f.majlis));
 const wirdRecords=follow.filter(f=>f.wird_days!==null&&f.wird_days!==undefined);
-const avg=wirdRecords.length?wirdRecords.reduce((a,b)=>a+Number(b.wird_days||0),0)/wirdRecords.length:null;
-const weeklyTasks=rows('tasks').filter(t=>t.section==='task'&&t.week_id===w?.id);
-const launchTasks=rows('tasks').filter(t=>t.section==='launch');
-const countDone=items=>items.filter(t=>t.done===true).length;
-const taskCount=items=>items.length?countDone(items)+' / '+items.length:'—';
-const weekLabel=inPreparation?'أسبوع التحضير الجاري أو القادم':'الأسبوع الجاري أو القادم';
-const summary=[
-['الغارسات في البرنامج',people.length,'ومعهن '+candidates.length+' مرشحة'],
+const avg=wirdRecords.length?wirdRecords.reduce((total,f)=>total+Number(f.wird_days),0)/wirdRecords.length:null;
+const tasks=rows('tasks'),weeklyTasks=tasks.filter(t=>t.section==='task'&&t.week_id===w?.id).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+const launchTasks=tasks.filter(t=>t.section==='launch').sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+const completed=arr=>arr.filter(t=>t.done===true).length;
+const fraction=arr=>arr.length?completed(arr)+' / '+arr.length:'—';
+const weeksForAlerts=programWeeks.filter(x=>x.starts_on<=today);
+const reasons=[];
+if(!inPreparation){
+for(const student of people){
+const relevant=rows('followups').filter(f=>f.student_id===student.id&&weeksForAlerts.some(x=>x.id===f.week_id));
+const recent=weeksForAlerts.slice(-2);
+const consecutive=recent.length===2?recent.map(week=>relevant.find(f=>f.week_id===week.id)): [];
+const issues=[];
+if(consecutive.length===2&&consecutive.every(f=>f&&f.majlis==='absent'))issues.push('غياب المجلس أسبوعين متتاليين');
+if(consecutive.length===2&&consecutive.every(f=>f&&f.family_meeting==='absent'))issues.push('غياب لقاء الأسرة أسبوعين متتاليين');
+const latestRecorded=relevant.filter(f=>f.wird_days!==null&&f.wird_days!==undefined).sort((a,b)=>weeksForAlerts.findIndex(x=>x.id===b.week_id)-weeksForAlerts.findIndex(x=>x.id===a.week_id))[0];
+if(latestRecorded&&Number(latestRecorded.wird_days)<=2)issues.push('ورد '+Number(latestRecorded.wird_days)+' من ٧ أيام');
+if(issues.length)reasons.push({student,issues});
+}
+}
+const activeFamilies=rows('families');
+const familyCards=activeFamilies.map(f=>{
+const members=people.filter(student=>student.family_id===f.id);
+const ids=new Set(members.map(x=>x.id));
+const registered=follow.filter(x=>ids.has(x.student_id));
+const attendance=registered.filter(x=>!!x.majlis);
+const attended=attendance.filter(x=>['present','late'].includes(x.majlis));
+const reports=rows('reports_self').filter(r=>r.week_id===w?.id&&ids.has(r.student_id));
+const sentCount=new Set(reports.map(r=>r.student_id)).size;
+const percent=attendance.length?Math.round(attended.length/attendance.length*100)+'٪':'—';
+return '<article class="dashboard-family-card"><div class="dashboard-family-name"><span class="dashboard-family-icon">'+iconSvg('house')+'</span><div><h3>'+esc(f.name)+'</h3><p class="small muted">'+members.length+' غارسات في البرنامج</p></div></div><div class="dashboard-family-metrics"><div><strong>'+registered.length+' / '+members.length+'</strong><span>المتابعة المسجلة</span></div><div><strong>'+percent+'</strong><span>حضور المجلس</span><small>'+attendance.length+' سجل حضور</small></div><div><strong>'+sentCount+' / '+members.length+'</strong><span>التقارير المرسلة</span></div></div><p class="dashboard-family-footnote">الحضور من '+attendance.length+' سجلات معروفة · المتأخرة تُحسب حاضرة</p></article>';
+}).join('');
+const upcoming=rows('events').filter(e=>e.starts_at&&new Date(e.starts_at).getTime()>=Date.now()&&!Number.isNaN(new Date(e.starts_at).getTime())).sort((a,b)=>new Date(a.starts_at)-new Date(b.starts_at)).slice(0,4);
+const accountPanel=leadership()?'<section class="card dashboard-queue"><div class="dashboard-panel-head"><h3>حسابات جديدة تنتظر</h3>'+btn('go:accounts','صفحة الحسابات','secondary smallbtn')+'</div>'+(waiting.length?waiting.slice(0,6).map(a=>'<div class="list-row"><span>'+esc(a.name)+'</span><span class="chip warn">بانتظار الموافقة</span></div>').join(''):empty('ما في حسابات جديدة تنتظر الموافقة'))+'</section>':'';
+const alertPanel='<section class="card dashboard-alerts"><div class="dashboard-panel-head"><h3>تنبيهات المتابعة</h3><span class="chip '+(reasons.length?'warn':'ok')+'">'+reasons.length+' تنبيهات</span></div>'+
+(inPreparation?empty('تبدأ تنبيهات الغياب والورد بعد بدء أسابيع المرحلة الأساسية'):reasons.length?reasons.map(({student,issues})=>
+'<div class="dashboard-alert-row"><span class="dashboard-alert-icon">'+iconSvg('clipboard-check')+'</span><div><button type="button" class="dashboard-student-link" data-action="viewstudent:'+esc(student.id)+'">'+esc(student.name)+'</button><p class="muted small">'+esc(name('families',student.family_id))+'</p><p class="dashboard-alert-reasons">'+issues.map(issue=>'<span>'+esc(issue)+'</span>').join('')+'</p></div></div>').join(''):empty('لا توجد تنبيهات متابعة وفق السجلات المتاحة'))+'</section>';
+const statEntries=[
+['الغارسات في البرنامج',people.length,'المرشحات: '+candidates.length],
 ...(inPreparation?[
-['مهام الأسبوع المنجزة',taskCount(weeklyTasks),w?'مرتبطة بأسبوع '+w.title:'لم يبدأ التحضير بعد'],
-['شروط الانطلاق المنجزة',taskCount(launchTasks),launchTasks.length?'من شروط الانطلاق المسجلة':'لم تُسجل شروط الانطلاق بعد']
+['مهام الأسبوع المنجزة',fraction(weeklyTasks),weeklyTasks.length?'من مهام أسبوع التحضير':'لم تُدخل مهام لهذا الأسبوع'],
+['شروط الانطلاق المنجزة',fraction(launchTasks),launchTasks.length?'من شروط الانطلاق':'لم تُدخل شروط الانطلاق']
 ]:[
-['حضور المجلس',known.length?Math.round(present.length/known.length*100)+'٪':'—',known.length?'سُجّل لـ '+known.length+' من '+people.length:'لم تُسجّل متابعة بعد'],
-['متوسط أيام الورد',avg===null?'—':avg.toFixed(1),wirdRecords.length?'من '+wirdRecords.length+' تقارير مسجلة':'لم تُسجّل أيام الورد بعد']
+['حضور المجلس',known.length?Math.round(present.length/known.length*100)+'٪':'—','سُجّل لـ '+known.length+' من '+people.length],
+['متوسط أيام الورد',avg===null?'—':avg.toFixed(1),wirdRecords.length?'من '+wirdRecords.length+' سجلات متابعة':'لا توجد بيانات ورد مسجلة']
 ]),
-['الحسابات المنتظرة',waiting.length,'بانتظار مراجعة الإدارة']
+['الأسئلة التي تنتظر',pendingQuestionCount,'أسئلة لم تُجب بعد'],
+...(leadership()?[['الحسابات التي تنتظر',waiting.length,'بانتظار موافقة الإدارة أو المرافقة']]:[])
 ];
-const summaryHtml=summary.map(([label,value,hint])=>'<div class="card stat"><div class="value">'+esc(value)+'</div><div class="label">'+esc(label)+'</div><p class="small muted dashboard-stat-note">'+esc(hint)+'</p></div>').join('');
-const prepPanel=inPreparation?
-'<div class="grid two dashboard-prep-panels"><section class="card"><div class="dashboard-panel-head"><h3>مهام أسبوع التحضير</h3>'+btn('go:tasks','التحضير والتشغيل','secondary smallbtn')+'</div>'+
-(weeklyTasks.length?weeklyTasks.map(t=>'<div class="list-row"><span>'+esc(t.body)+'</span><span class="chip '+(t.done?'ok':'warn')+'">'+(t.done?'منجزة':'لم تنجز')+'</span></div>').join(''):empty('لا توجد مهام مربوطة بهذا الأسبوع. أضيفي المهام من التحضير والتشغيل واختاري الأسبوع.'))+
-'</section><section class="card"><div class="dashboard-panel-head"><h3>شروط الانطلاق</h3><span class="chip '+(launchTasks.length&&launchTasks.every(t=>t.done)?'ok':'warn')+'">'+(launchTasks.length&&launchTasks.every(t=>t.done)?'مكتملة':launchTasks.length?'تحتاج استكمالًا':'لم تُسجّل')+'</span></div>'+
-(launchTasks.length?launchTasks.map(t=>'<div class="list-row"><span>'+esc(t.body)+'</span><span class="chip '+(t.done?'ok':'warn')+'">'+(t.done?'منجز':'غير منجز')+'</span></div>').join(''):empty('أضيفي شروط الانطلاق إلى التحضير والتشغيل لعرض الجاهزية الفعلية.'))+
-'<div class="notice dashboard-launch-note">لا يُعقد لقاء التأسيس قبل اكتمال جميع شروط الانطلاق.</div></section></div>':
-'<div class="grid two"><section class="card"><h3>الأسر هذا الأسبوع</h3>'+rows('families').map(f=>{const members=people.filter(s=>s.family_id===f.id);return '<div class="list-row"><div><strong>'+esc(f.name)+'</strong><p class="muted">'+members.length+' غارسات</p></div><span class="chip">'+members.filter(s=>follow.some(x=>x.student_id===s.id)).length+' / '+members.length+' متابعة</span></div>'}).join('')+(rows('families').length?'':empty('أضيفي الأسر من صفحة الأسر'))+'</section><section class="card"><h3>يحتاج متابعة</h3>'+openQuestions.slice(0,5).map(q=>'<div class="list-row"><span>'+esc(q.body.slice(0,75))+'</span><span class="chip warn">سؤال جديد</span></div>').join('')+waiting.slice(0,3).map(a=>'<div class="list-row">'+esc(a.name)+'<span class="chip warn">طلب حساب</span></div>').join('')+(!waiting.length&&!openQuestions.length?empty('لا توجد أسئلة أو طلبات معلقة'):'')+'</section></div>';
-return '<div class="eyebrow">'+esc(date(new Date()))+' · '+esc(hijriDate(todayISO()))+'</div>'+
-heading('لوحة المتابعة',inPreparation?'الاستعداد للانطلاق: المهام والجاهزية الفعلية':'نظرة على الدفعة والمهام التي تحتاج رعاية')+
-'<div class="hero-card"><div class="eyebrow">'+weekLabel+'</div><h1>'+esc(w?.title||'البرنامج يستعد للانطلاق')+'</h1><p>'+esc(w?.reflection||'تتابع هنا بداية الأسابيع، ومهامها، ومواعيدها.')+'</p><p class="small" style="margin-top:12px">'+(w?esc(date(w.starts_on))+' | '+esc(date(w.ends_on)):'')+'</p></div>'+
-'<div class="grid stats">'+summaryHtml+'</div>'+
-(inPreparation?'<div class="dashboard-prep-info">مرحلة التحضير · تظهر مؤشرات الإنجاز والجاهزية حتى بداية أول أسبوع أساسي في '+esc(date(firstProgram.starts_on))+'</div>':'')+
-prepPanel+
-'<div class="card dashboard-bottom-activity"><div class="dashboard-panel-head"><h3>الأسئلة والحسابات المنتظرة</h3>'+(leadership()?btn('go:accounts','مراجعة الحسابات','secondary smallbtn'):'')+'</div>'+
-openQuestions.slice(0,3).map(q=>'<div class="list-row"><span>'+esc(q.body.slice(0,75))+'</span><span class="chip warn">سؤال جديد</span></div>').join('')+
-waiting.slice(0,4).map(a=>'<div class="list-row"><span>'+esc(a.name)+'</span><span class="chip warn">حساب ينتظر</span></div>').join('')+
-(!waiting.length&&!openQuestions.length?empty('لا توجد طلبات أو أسئلة جديدة'):'')+'</div>';
+const summary='<div class="grid stats dashboard-stats">'+statEntries.map(([label,value,note])=>'<div class="card stat"><div class="value">'+esc(value)+'</div><div class="label">'+esc(label)+'</div><p class="small muted dashboard-stat-note">'+esc(note)+'</p></div>').join('')+'</div>';
+const launchPanel=inPreparation?'<section class="card dashboard-launch"><div class="dashboard-panel-head"><h3>شروط الانطلاق</h3>'+btn('go:tasks','التحضير والتشغيل','secondary smallbtn')+'</div>'+(launchTasks.length?launchTasks.map(t=>'<div class="list-row"><span>'+esc(t.body)+'</span><span class="chip '+(t.done?'ok':'warn')+'">'+(t.done?'منجز':'غير منجز')+'</span></div>').join(''):empty('أضيفي شروط الانطلاق من صفحة التحضير والتشغيل'))+'<p class="notice dashboard-launch-note">لا يُعقد لقاء التأسيس قبل اكتمال شروط الانطلاق.</p></section>':'';
+const familySection='<section class="card dashboard-families"><div class="dashboard-panel-head"><div><h2>الأسر هذا الأسبوع</h2><p class="small muted">'+esc(w?.title||'الأسبوع الحالي')+' · سجلات المتابعة والتقارير الذاتية</p></div>'+btn('go:followups','المتابعة الأسبوعية','secondary smallbtn')+'</div><div class="dashboard-family-grid">'+(familyCards||empty('ما في أسر مسجلة بعد'))+'</div></section>';
+const taskSection='<section class="card dashboard-week-tasks"><div class="dashboard-panel-head"><h3>مهام الأسبوع</h3>'+btn('go:tasks','التحضير والتشغيل','secondary smallbtn')+'</div>'+(weeklyTasks.length?weeklyTasks.map(t=>'<div class="dashboard-task-row"><span class="dashboard-task-status '+(t.done?'done':'')+'">'+iconSvg(t.done?'clipboard-check':'list-todo')+'</span><div><strong class="'+(t.done?'dashboard-done':'')+'">'+esc(t.body)+'</strong><p class="small muted">'+esc(t.owner||'غير محدد المسؤول')+(t.due_on?' · '+esc(date(t.due_on)):'')+'</p></div><span class="chip '+(t.done?'ok':'warn')+'">'+(t.done?'منجزة':'قيد الإنجاز')+'</span></div>').join(''):empty('لا توجد مهام مرتبطة بهذا الأسبوع؛ أضيفيها من التحضير والتشغيل'))+'</section>';
+const eventSection='<section class="card dashboard-upcoming"><div class="dashboard-panel-head"><h3>المواعيد القادمة</h3>'+btn('go:weeks','البرنامج والأسابيع','secondary smallbtn')+'</div>'+eventItems(upcoming)+'</section>';
+return '<div class="dashboard-overview"><div class="dashboard-heading"><div><div class="eyebrow">'+esc(date(new Date()))+' · '+esc(hijriDate(today))+'</div><h1>'+esc(setting('program_name','الغارسات'))+'</h1><p class="muted">'+esc(setting('stage_name','المرحلة الأولى'))+' · لوحة المتابعة اليومية</p></div><span class="dashboard-phase">'+(inPreparation?'مرحلة التحضير':'المرحلة الأساسية')+'</span></div>'+
+'<div class="hero-card dashboard-hero"><div class="eyebrow">'+(inPreparation?'أسبوع التحضير الجاري أو القادم':'الأسبوع الجاري أو القادم')+'</div><h2>'+esc(w?.title||'البرنامج يستعد للانطلاق')+'</h2><p>'+esc(w?.reflection||'لا توجد وقفة تدبر مكتوبة لهذا الأسبوع بعد')+'</p><p class="small dashboard-week-dates">'+(w?esc(date(w.starts_on))+' — '+esc(date(w.ends_on)):'')+'</p></div>'+
+summary+
+(inPreparation?'<div class="dashboard-prep-info">تظهر مؤشرات التحضير حتى بداية أول أسبوع أساسي في '+esc(date(firstProgram.starts_on))+'</div>':'')+
+'<div class="dashboard-primary-grid">'+accountPanel+alertPanel+'</div>'+
+launchPanel+familySection+
+'<div class="dashboard-secondary-grid">'+taskSection+eventSection+'</div></div>';
 }
 function weeks(){
 const all=visibleWeeks(),upcoming=rows('events').filter(e=>eventVisible(e)&&(!e.starts_at||new Date(e.starts_at).getTime()>=Date.now())).sort((a,b)=>!a.starts_at?1:!b.starts_at?-1:new Date(a.starts_at)-new Date(b.starts_at)).slice(0,4);
