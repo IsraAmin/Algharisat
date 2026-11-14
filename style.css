@@ -1533,3 +1533,33 @@ body{overflow-x:clip}
 .password-visibility-toggle.is-visible{color:var(--ink)}
 [data-theme="dark"] .auth-password-field .password-visibility-toggle{color:#d5e1ea!important;background:transparent}
 [data-theme="dark"] .auth-password-field .password-visibility-toggle:hover,[data-theme="dark"] .auth-password-field .password-visibility-toggle:focus-visible{background:#344a5e!important;color:#fff!important}
+
+/* Desktop authentication layout: stationary visual panel, scroll only the form. */
+@media (min-width:801px){
+  .auth{
+    height:100vh;
+    height:100dvh;
+    min-height:0;
+    overflow:hidden;
+    align-items:stretch;
+  }
+  .auth-hero{
+    height:100%;
+    min-height:0;
+    overflow:hidden;
+  }
+  .auth-panel{
+    height:100%;
+    min-height:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
+    justify-content:safe center;
+    scrollbar-width:thin;
+    scrollbar-color:var(--line-strong) transparent;
+  }
+}
+@media (max-width:800px){
+  .auth{height:auto;min-height:100svh;overflow:visible}
+  .auth-hero,.auth-panel{height:auto;overflow:visible}
+}
