@@ -62,7 +62,7 @@ test('mobile fields do not trigger iOS focus zoom and manual zoom remains availa
 
 test('password visibility control works in sign-in and sign-up without changing the submitted value',()=>{
  assert.match(app,/function authPasswordField\(/);
- assert.match(app,/authPasswordField\(\)\+'<button/);
+ assert.match(app,/authPasswordField\(\)\+\(state\.authTab==='signup'/);
  assert.match(app,/data-action="togglePassword"/);
  assert.match(app,/input\.type=visible\?'text':'password'/);
  assert.match(app,/aria-pressed/);
