@@ -164,3 +164,43 @@ test('option menus show actual branded options in light and dark mode',()=>{
  assert.match(app,/role','listbox/);
  assert.match(app,/aria-selected/);
 });
+
+
+test('comprehensive reports show all required guide sections and period headers',()=>{
+ for(const text of ['تقرير موحّد للأسر','تاريخ الإعداد','من — إلى','ملخص الدفعة','أداء الأسر','بطاقة الغارسة — الجوانب الستة','إنجاز علامات الغارسات','الوثائق والمحاضر','قائمة الختام','ملاحظات المرافقة غير السرية','طريقة الحساب والمصادر']){
+  assert.ok(app.includes(text),'missing report section '+text);
+ }
+ for(const label of ["month1","month2","all"])assert.ok(app.includes("period==='"+label+"'"),'missing period '+label);
+ assert.match(app,/function reportPeriodWeeks\(period\)/);
+ assert.match(app,/sortedWeeks\(\)\.filter\(w=>w\.kind==='program'/);
+ assert.match(app,/periodIds=new Set\(allWeeks\.map\(w=>w\.id\)\)/);
+});
+test('weekly report statistics exclude empty/unrecorded values',()=>{
+ assert.match(app,/function reportAttendance\(records,key\)/);
+ assert.ok(app.includes("['present','late','excused','absent']"));
+ assert.match(app,/r\[key\]==='present'\|\|r\[key\]==='late'/);
+ assert.match(app,/function reportTask\(records,key\)/);
+ assert.ok(app.includes("['done','partial','none']"));
+ assert.match(app,/reportRatio\(eligible,r=>r\[key\]==='done'\)/);
+ assert.match(app,/function reportWird\(records\)/);
+ assert.match(app,/r\.wird_days!==null&&r\.wird_days!==undefined/);
+ assert.match(app,/items\.length\?reportValue\(items\.filter\(predicate\)\.length\/items\.length\*100,0\)\+'٪':'—'/);
+});
+test('report cards honor stage rules and milestone guardian exception',()=>{
+ assert.match(app,/period==='month1'\?\['self'\]:\['fourth','third','second','first'\]/);
+ assert.match(app,/cardEntries\.filter\(r=>r\.student_id===studentId&&r\.aspect===aspect/);
+ assert.match(app,/code!=='guardian'\|\|s\.under_twenty/);
+ assert.match(app,/new Set\(familyMinutes\.filter\(m=>m\.family_id===familyId\)\.map\(m=>m\.week_id\)\)/);
+});
+test('private observations never appear in printable reports',()=>{
+ assert.match(app,/leadership\(\)\?rows\('observations'\)\.filter\(o=>o\.secret===false&&o\.kind!=='حدود الستر'/);
+ assert.match(app,/esc\(o\.note\|\|''\)/);
+});
+test('print report is self contained and dark mode uses readable panels',()=>{
+ assert.match(css,/\.professional-report-page\{display:grid/);
+ assert.match(css,/\.report-sheet\{/);
+ assert.match(css,/\.report-table-scroll\{/);
+ assert.match(css,/html\[data-theme="dark"\] \.report-sheet\{/);
+ assert.match(css,/@page\{size:A4;margin:14mm 12mm\}/);
+ assert.match(css,/\.professional-report-page>\.page-head,\.professional-report-page>\.report-toolbar/);
+});

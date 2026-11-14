@@ -778,10 +778,117 @@ function tasks(){
 return heading('التحضير والتشغيل','القرارات والمهام وشروط الانطلاق وقائمة الختام',btn('newtask','إضافة مهمة','goldbtn'))+['decision','task','launch','closing'].map((key,i)=>'<div class="card" style="margin-bottom:15px"><h3>'+['القرارات','المهام','شروط الانطلاق','قائمة الختام'][i]+'</h3>'+rows('tasks').filter(t=>t.section===key).map(t=>'<div class="list-row"><div><strong>'+esc(t.body)+'</strong><p class="muted">'+esc(t.owner||'')+' '+(t.due_on?'| '+date(t.due_on):'')+'</p></div><input style="width:20px;min-height:20px" type="checkbox" data-task="'+t.id+'" '+(t.done?'checked':'')+'/></div>').join('')+(!rows('tasks').some(t=>t.section===key)?empty('لم تُدخل بنود هذا القسم بعد'):'')+'</div>').join('');
 }
 function journal(){return heading('سجل التجربة','ما نجح، وما تعثر، وما تقرر في كل أسبوع',btn('newjournal','تدوين أسبوع','goldbtn'))+rows('journal').map(j=>'<div class="card" style="margin-bottom:12px"><h3>'+esc(weekName(j.week_id))+'</h3><p><strong>نجح:</strong> '+esc(j.success)+'</p><p><strong>تعثر:</strong> '+esc(j.obstacle)+'</p><p><strong>القرار:</strong> '+esc(j.decision)+'</p></div>').join('')||empty('لا توجد تدوينات بعد')}
-function reports(){
-const periodWeeks=rows('weeks').filter(w=>w.kind==='program'&&(state.period==='all'||(state.period==='month1'&&Number(w.code.slice(1))<=4)||(state.period==='month2'&&Number(w.code.slice(1))>=5))).map(w=>w.id);const reports=rows('followups').filter(f=>periodWeeks.includes(f.week_id)),known=reports.filter(x=>x.majlis),present=known.filter(x=>['present','late'].includes(x.majlis)),families=rows('families');
-return heading('التقارير','المؤشرات المستخرجة من المتابعة المحفوظة',btn('print','طباعة / حفظ PDF','secondary no-print'))+'<div class="toolbar no-print"><select data-select="period">'+[['all','المرحلة كلها'],['month1','الشهر الأول (الأسابيع ١–٤)'],['month2','الشهر الثاني (الأسابيع ٥–٨)']].map(x=>option(x[0],x[1],state.period)).join('')+'</select></div><div class="grid stats">'+[['عدد الأسر',families.length],['الحضور',known.length?Math.round(present.length/known.length*100)+'٪':'—'],['متوسط الورد',reports.filter(x=>x.wird_days!==null).length?(reports.reduce((a,x)=>a+Number(x.wird_days||0),0)/reports.filter(x=>x.wird_days!==null).length).toFixed(1):'—'],['المخرجات المنجزة',rows('milestones').filter(m=>m.done).length]].map(([label,v])=>'<div class="card stat"><div class="value">'+v+'</div><div class="label">'+label+'</div></div>').join('')+'</div><div class="card"><h3>ملخص الأسر</h3>'+families.map(f=>'<div class="list-row"><strong>'+esc(f.name)+'</strong><span class="muted">'+rows('students').filter(s=>s.family_id===f.id&&s.stage==='active').length+' غارسات</span></div>').join('')+'</div>';
+
+/* Report calculations follow section 6 of the Algharisat build guide.
+   A missing entry is not an absence or a failed task. */
+const reportValue=(n,decimals=0)=>Number(n).toLocaleString('ar-SA',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+const reportRatio=(items,predicate)=>items.length?reportValue(items.filter(predicate).length/items.length*100,0)+'٪':'—';
+const reportDate=value=>value?new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(String(value).slice(0,10)+'T12:00:00Z')):'—';
+function reportPeriodWeeks(period){
+ return sortedWeeks().filter(w=>w.kind==='program'&&(period==='all'||(period==='month1'&&Number(w.code.slice(1))<=4)||(period==='month2'&&Number(w.code.slice(1))>=5))).sort((a,b)=>a.sort_order-b.sort_order);
 }
+function reportAttendance(records,key){
+ const eligible=records.filter(r=>['present','late','excused','absent'].includes(r[key]));
+ return {recorded:eligible.length,value:reportRatio(eligible,r=>r[key]==='present'||r[key]==='late')};
+}
+function reportTask(records,key){
+ const eligible=records.filter(r=>['done','partial','none'].includes(r[key]));
+ return {recorded:eligible.length,value:reportRatio(eligible,r=>r[key]==='done')};
+}
+function reportWird(records){
+ const eligible=records.filter(r=>r.wird_days!==null&&r.wird_days!==undefined&&Number.isFinite(Number(r.wird_days)));
+ return {recorded:eligible.length,value:eligible.length?reportValue(eligible.reduce((sum,r)=>sum+Number(r.wird_days),0)/eligible.length,1):'—'};
+}
+function reportMetric(label,metric,note=''){
+ const value=typeof metric==='object'?metric.value:metric;
+ const count=typeof metric==='object'?'على أساس '+reportValue(metric.recorded)+' سجل':'';
+ return '<div class="report-metric"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong><small>'+esc(note||count)+'</small></div>';
+}
+function reportTable(headings,records,emptyMessage){
+ return '<div class="report-table-scroll"><table class="report-table"><thead><tr>'+headings.map(h=>'<th scope="col">'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+(records||'<tr><td colspan="'+headings.length+'" class="report-empty">'+esc(emptyMessage||'لا توجد بيانات لهذه المدة')+'</td></tr>')+'</tbody></table></div>';
+}
+function reports(){
+ const period=state.period==='month1'||state.period==='month2'?state.period:'all';
+ const allWeeks=reportPeriodWeeks(period),periodIds=new Set(allWeeks.map(w=>w.id));
+ const periodName=period==='month1'?'الشهر الأول (الأسابيع ١–٤)':period==='month2'?'الشهر الثاني (الأسابيع ٥–٨)':'المرحلة كلها (الأسابيع ١–٨)';
+ const start=allWeeks[0]?.starts_on,end=allWeeks[allWeeks.length-1]?.ends_on;
+ const periodText=start&&end?reportDate(start)+' — '+reportDate(end):'لم تُحدّد تواريخ الفترة';
+ const families=rows('families').slice().sort((a,b)=>(a.sort_order??999)-(b.sort_order??999)||a.name.localeCompare(b.name,'ar'));
+ const members=rows('students').filter(s=>s.stage==='active');
+ const activeIds=new Set(members.map(s=>s.id));
+ const followups=rows('followups').filter(r=>periodIds.has(r.week_id)&&activeIds.has(r.student_id));
+ const familyOf=id=>members.find(s=>s.id===id)?.family_id;
+ const familyMinutes=rows('minutes').filter(m=>periodIds.has(m.week_id)&&families.some(f=>f.id===m.family_id));
+ const expectedWeeks=allWeeks.length;
+ const minutesCount=familyId=>new Set(familyMinutes.filter(m=>m.family_id===familyId).map(m=>m.week_id)).size;
+ const monthNumber=period==='month1'?'الأول':period==='month2'?'الثاني':'المرحلة';
+ const programName=String(setting('program_name','الغارسات')),stageName=String(setting('stage_name','المرحلة الأولى'));
+ const summary=[
+  reportMetric('الأسر',reportValue(families.length),'عدد الأسر المسجلة'),
+  reportMetric('الغارسات في البرنامج',reportValue(members.length),'سجلات الغارسات النشطة'),
+  reportMetric('حضور المجلس',reportAttendance(followups,'majlis')),
+  reportMetric('حضور لقاء الأسرة',reportAttendance(followups,'family_meeting')),
+  reportMetric('متوسط أيام الورد',reportWird(followups),'من ٧ أيام، للمسجّلات فقط'),
+  reportMetric('محاضر الأسر',reportValue(familyMinutes.length?new Set(familyMinutes.map(m=>m.family_id+'|'+m.week_id)).size:0),'من '+reportValue(families.length*expectedWeeks)+' أسبوع-أسرة')
+ ].join('');
+ const familyRows=families.map(f=>{
+  const records=followups.filter(r=>familyOf(r.student_id)===f.id);
+  const cells=[
+    f.name,
+    reportValue(members.filter(s=>s.family_id===f.id).length),
+    reportAttendance(records,'majlis').value,
+    reportAttendance(records,'family_meeting').value,
+    reportWird(records).value,
+    reportTask(records,'triple_task').value,
+    reportTask(records,'transferred_lesson').value,
+    reportTask(records,'rotating_task').value,
+    reportValue(minutesCount(f.id))+' / '+reportValue(expectedWeeks)
+  ];
+  return '<tr>'+cells.map((v,i)=>(i===0?'<th scope="row">':'<td>')+esc(v)+(i===0?'</th>':'</td>')).join('')+'</tr>';
+ }).join('');
+ const stages=period==='month1'?['self']:['fourth','third','second','first'];
+ const stageLabel=period==='month1'?'التقييم الذاتي': 'آخر تقييم مسجّل (الأول أو ما بعده)';
+ const cardEntries=rows('cards').filter(r=>activeIds.has(r.student_id)&&stages.includes(r.stage));
+ const stageRank=key=>stages.indexOf(key);
+ const reportAssessment=(studentId,aspect)=>cardEntries.filter(r=>r.student_id===studentId&&r.aspect===aspect&&Number.isInteger(Number(r.level))&&Number(r.level)>=0&&Number(r.level)<=3).sort((a,b)=>stageRank(a.stage)-stageRank(b.stage)||String(b.updated_at||'').localeCompare(String(a.updated_at||'')))[0];
+ const cardRows=aspects.map(aspect=>{
+  const levelsCount=[0,0,0,0];let assessed=0;
+  for(const student of members){const entry=reportAssessment(student.id,aspect);if(entry){levelsCount[Number(entry.level)]++;assessed++}}
+  return '<tr><th scope="row">'+esc(aspect)+'</th>'+levelsCount.map((n,i)=>'<td><span class="report-level level-'+i+'">'+reportValue(n)+'</span></td>').join('')+'<td>'+reportValue(assessed)+'</td><td>'+reportValue(members.length-assessed)+'</td></tr>';
+ }).join('');
+ const milestoneEntries=rows('milestones').filter(r=>activeIds.has(r.student_id));
+ const milestoneRows=milestoneNames.map(([code,label])=>{
+  const eligible=members.filter(s=>code!=='guardian'||s.under_twenty);
+  const unique=new Set(milestoneEntries.filter(m=>m.code===code&&m.done&&eligible.some(s=>s.id===m.student_id)).map(m=>m.student_id));
+  return '<tr><th scope="row">'+esc(label)+'</th><td>'+reportValue(unique.size)+'</td><td>'+reportValue(eligible.length)+'</td><td>'+(eligible.length?reportValue(unique.size/eligible.length*100)+'٪':'غير مطلوب')+'</td></tr>';
+ }).join('');
+ const familyDocs=rows('docs_family');
+ const docsRows=families.map(f=>{
+  const ready=familyMilestoneDocs.filter(([kind])=>familyDocs.some(d=>d.family_id===f.id&&d.kind===kind&&String(d.body||'').trim())).length;
+  return '<tr><th scope="row">'+esc(f.name)+'</th><td>'+reportValue(ready)+' / ٤</td><td>'+reportValue(minutesCount(f.id))+' / '+reportValue(expectedWeeks)+'</td></tr>';
+ }).join('');
+ const closing=rows('tasks').filter(t=>t.section==='closing'&&(!t.week_id||periodIds.has(t.week_id)));
+ const closingRows=closing.map(t=>'<div class="report-closing-row"><span class="report-state '+(t.done?'is-done':'is-pending')+'">'+(t.done?'مكتمل':'لم يكتمل')+'</span><div><strong>'+esc(t.body)+'</strong>'+(t.owner?'<small>المسؤولة: '+esc(t.owner)+'</small>':'')+(t.result?'<p>'+esc(t.result)+'</p>':'')+'</div></div>').join('');
+ const notes=leadership()?rows('observations').filter(o=>o.secret===false&&o.kind!=='حدود الستر'&&activeIds.has(o.student_id)&&(!o.week_id||periodIds.has(o.week_id))):[];
+ const noteRows=notes.slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).map(o=>{
+  const student=members.find(s=>s.id===o.student_id);
+  return '<div class="report-note"><strong>'+esc(student?.name||'غارسة')+'</strong><span class="report-note-kind">'+esc(o.kind||'ملاحظة')+'</span><p>'+esc(o.note||'')+'</p></div>';
+ }).join('');
+ const noteHint=leadership()?'لا توجد ملاحظات غير سرية لهذه الفترة.':'هذا القسم لا يظهر إلا للإدارة والمرافقة؛ ولا يضم ملاحظات سرية.';
+ const footer='<div class="report-method"><h3>طريقة الحساب والمصادر</h3><p>الحضور = (حاضرة + متأخرة) ÷ عدد من سُجّل لهن حضور. إنجاز المهام = «أنجزت» ÷ عدد من سُجّل لهن مستوى إنجاز. متوسط الورد = مجموع الأيام ÷ عدد سجلات الورد. المحاضر = عدد أسابيع الفترة التي يوجد لها محضر، دون تكرار الأسبوع داخل الأسرة. تُستبعد الخانات الفارغة من المقامات، وتظهر علامة (—) عند غياب البيانات.</p><p>التقييم للشهر الأول ذاتي؛ وللشهر الثاني والمرحلة كلها يُستخدم أحدث مستوى تقييم مسجّل لكل غارسة في كل جانب. «تعريف ولي الأمر» يحسب للغارسات دون العشرين فقط. تُعرض الملاحظات غير السرية وحدها للإدارة والمرافقة.</p></div>';
+ return '<div class="professional-report-page">'+heading('التقارير','تقرير موحّد للأسر، والمتابعة، والبطاقات، والمخرجات، وختام المرحلة',btn('print','طباعة التقرير / حفظ PDF','secondary no-print'))+
+ '<div class="report-toolbar no-print"><div><label for="reportPeriodSelect">المدة</label><select id="reportPeriodSelect" data-select="period">'+[['all','المرحلة كلها (الأسابيع ١–٨)'],['month1','الشهر الأول (١–٤)'],['month2','الشهر الثاني (٥–٨)']].map(([v,l])=>option(v,l,period)).join('')+'</select></div><span class="muted small">تُعرض النسب من الأسابيع التي حُفظت لها بيانات فقط.</span></div>'+
+ '<article class="report-sheet" dir="rtl"><header class="report-cover"><div class="report-brand">منصة الغارسات <span>من الغرس إلى الثمر</span></div><h2>تقرير '+esc(programName)+' — '+esc(stageName)+'</h2><div class="report-meta"><div><span>الفترة</span><strong>'+esc(periodName)+'</strong></div><div><span>من — إلى</span><strong>'+esc(periodText)+'</strong></div><div><span>تاريخ الإعداد</span><strong>'+esc(reportDate(todayISO()))+'</strong></div></div></header>'+
+ '<section class="report-section"><div class="report-section-head"><div><span>01 / المؤشرات</span><h3>ملخص الدفعة</h3></div></div><div class="report-metrics">'+summary+'</div></section>'+
+ '<section class="report-section"><div class="report-section-head"><div><span>02 / المتابعة</span><h3>أداء الأسر خلال '+esc(monthNumber)+'</h3></div><p>المؤشرات من سجلّات المتابعة الفعلية فقط.</p></div>'+reportTable(['الأسرة','الغارسات','المجلس','لقاء الأسرة','متوسط الورد','الثلاثية','المنقول','الدوّارة','المحاضر'],familyRows,'لم تُضف أسر')+'</section>'+
+ '<section class="report-section"><div class="report-section-head"><div><span>03 / التقييم</span><h3>بطاقة الغارسة — الجوانب الستة</h3></div><p>'+esc(stageLabel)+'</p></div>'+reportTable(['الجانب','لم تبدأ','في الطريق','متحققة','متميزة','تم تقييمهن','لم يُقيّمن'],cardRows)+'</section>'+
+ '<section class="report-section"><div class="report-section-head"><div><span>04 / المخرجات</span><h3>إنجاز علامات الغارسات</h3></div><p>العدد من الغارسات المؤهلات لكل علامة.</p></div>'+reportTable(['العلامة','أنجزت','المطلوب منهن','النسبة'],milestoneRows)+'</section>'+
+ '<section class="report-section"><div class="report-section-head"><div><span>05 / توثيق الأسر</span><h3>الوثائق والمحاضر</h3></div></div>'+reportTable(['الأسرة','الوثائق المكتوبة','المحاضر في الفترة'],docsRows)+'</section>'+
+ '<section class="report-section"><div class="report-section-head"><div><span>06 / الختام</span><h3>قائمة الختام</h3></div><p>'+reportValue(closing.filter(t=>t.done).length)+' من '+reportValue(closing.length)+' بنود مكتملة</p></div>'+(closingRows||'<p class="report-empty">لم تُدخل بنود قائمة الختام بعد.</p>')+'</section>'+
+ '<section class="report-section"><div class="report-section-head"><div><span>07 / الملاحظات</span><h3>ملاحظات المرافقة غير السرية</h3></div></div>'+(noteRows||'<p class="report-empty">'+noteHint+'</p>')+'</section>'+
+ footer+'<footer class="report-footer">الغارسات | تقرير مستخرج من سجلات المنصة في '+esc(reportDate(todayISO()))+'</footer></article></div>';
+}
+
 function survey(){
 const round=String(setting('survey_round','p1')),isOpen=setting('survey_open',false)===true;
 const questions=['ما الذي نفعكِ في هذه المرحلة أكثر من غيره؟','ما الذي أثقل عليكِ؟','هل كان حمل الأسبوع مناسبًا لدراستكِ وبيتكِ؟ وأين زاد؟','كيف وجدتِ أسرتكِ ولقاءها؟','ماذا تقترحين للمرحلة الثانية؟'];
