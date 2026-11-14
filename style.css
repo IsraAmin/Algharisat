@@ -1524,3 +1524,12 @@ html,body,#root{max-width:100%;min-width:0}
 body{overflow-x:clip}
 .app,.main,.content,.card,.table-wrap,.followup-panel,.followup-dashboard{min-width:0}
 .table-wrap,.followup-table-scroll,.batch-table-scroll,.outcomes-scroll{max-width:100%;overscroll-behavior-x:contain}
+
+/* Show/hide password without shifting the form or auto-zooming on mobile. */
+.auth-password-field{position:relative}
+.auth-password-field input{padding-inline-end:55px}
+.password-visibility-toggle{position:absolute;inset-inline-end:9px;bottom:6px;display:grid;place-items:center;width:38px;height:34px;padding:0;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink-2);cursor:pointer;z-index:1;touch-action:manipulation}
+.password-visibility-toggle:hover,.password-visibility-toggle:focus-visible{background:var(--gold-light);color:var(--ink);border-color:var(--line)}
+.password-visibility-toggle.is-visible{color:var(--ink)}
+[data-theme="dark"] .auth-password-field .password-visibility-toggle{color:#d5e1ea!important;background:transparent}
+[data-theme="dark"] .auth-password-field .password-visibility-toggle:hover,[data-theme="dark"] .auth-password-field .password-visibility-toggle:focus-visible{background:#344a5e!important;color:#fff!important}
