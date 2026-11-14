@@ -93,3 +93,10 @@ test('desktop auth keeps verse panel stationary and scrolls the account form onl
  assert.match(css,/\.auth-panel\{\s*height:100%;\s*min-height:0;\s*overflow-x:hidden;\s*overflow-y:auto/);
  assert.match(css,/@media \(max-width:800px\)\{\s*\.auth\{height:auto;min-height:100svh;overflow:visible\}/);
 });
+
+test('dark authentication submit buttons are gold with white labels',()=>{
+ assert.match(css,/html\[data-theme="dark"\] \.auth-panel #authForm button\[type="submit"\]\.btn\{/);
+ assert.match(css,/background:#97713e!important/);
+ assert.match(css,/color:#fff!important/);
+ assert.match(css,/html\[data-theme="dark"\] \.auth-panel #authForm button\[type="submit"\]\.btn:hover:not\(:disabled\)/);
+});
