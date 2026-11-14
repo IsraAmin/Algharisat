@@ -11,7 +11,7 @@ const dismissedFlag=()=>state.user?'algharisat-install-dismissed-'+state.user.id
 const shouldShowInstall=()=>!!state.user&&(window.matchMedia?.('(max-width: 800px)')?.matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))&&!installedMode()&&!pwaStorageRead('algharisat-installed')&&!pwaStorageRead(installFlag())&&!pwaStorageRead(dismissedFlag());
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(state.user)render()});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;pwaStorageWrite('algharisat-installed','1');if(state.user)pwaStorageWrite(installFlag(),'1');if(state.user)render()});
-const state={user:null,account:null,profile:null,page:'dashboard',rows:{},week:null,family:null,editing:null,notice:'',authTab:'signin',period:'all'};
+const state={user:null,account:null,profile:null,page:'dashboard',rows:{},week:null,family:null,editing:null,notice:'',authTab:'signin',period:'all',studentsTab:'all',studentsSearch:'',studentsFamily:''};
 const iconPaths={"layout-dashboard":"<rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/>","calendar-days":"<path d=\"M8 2v4M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01\"/>","users-round":"<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75\"/>","house":"<path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z\"/><path d=\"M9 21v-8h6v8\"/>","clipboard-check":"<rect x=\"5\" y=\"4\" width=\"14\" height=\"18\" rx=\"2\"/><rect x=\"9\" y=\"2\" width=\"6\" height=\"4\" rx=\"1\"/><path d=\"m9 14 2 2 4-4\"/>","id-card":"<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"8\" cy=\"11\" r=\"2\"/><path d=\"M4 17a4 4 0 0 1 8 0M15 10h4M15 14h4\"/>","flag":"<path d=\"M4 22V4m0 1c4-4 8 4 12 0v12c-4 4-8-4-12 0\"/>","message-circle-question":"<path d=\"M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z\"/><path d=\"M10 9a2 2 0 1 1 3 1.7c-.7.4-1 1-1 1.8M12 16h.01\"/>","megaphone":"<path d=\"m3 11 18-5v12L3 13z\"/><path d=\"M11 14.5 13 21H8l-2-7\"/>","list-todo":"<rect x=\"3\" y=\"5\" width=\"6\" height=\"6\" rx=\"1\"/><path d=\"m4 8 2 2 3-4M13 8h8M3 17h6M13 17h8\"/>","notebook-pen":"<path d=\"M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9M8 2v20M12 13h4\"/><path d=\"m14 7 5-5 3 3-5 5-4 1z\"/>","chart-column-increasing":"<path d=\"M3 3v18h18M7 16v-4M12 16V9M17 16V5\"/>","heart":"<path d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z\"/>","shield-check":"<path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z\"/><path d=\"m9 12 2 2 4-4\"/>","settings":"<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.65 1.65 0 0 0 .3 1.8l-1.9 1.9A1.65 1.65 0 0 0 16 18.4a1.65 1.65 0 0 0-1.1.6V21h-2.7a1.65 1.65 0 0 0-1.1-1.6 1.65 1.65 0 0 0-1.8.3l-1.9-1.9A1.65 1.65 0 0 0 7.6 16a1.65 1.65 0 0 0-.6-1.1H5v-2.7a1.65 1.65 0 0 0 1.6-1.1 1.65 1.65 0 0 0-.3-1.8l1.9-1.9A1.65 1.65 0 0 0 10 7.6a1.65 1.65 0 0 0 1.1-.6V5h2.7a1.65 1.65 0 0 0 1.1 1.6 1.65 1.65 0 0 0 1.8-.3l1.9 1.9A1.65 1.65 0 0 0 18.4 10c.3.3.5.6.6 1.1H21v2.7a1.65 1.65 0 0 0-1.6 1.2z\"/>","sprout":"<path d=\"M12 22v-9\"/><path d=\"M12 13C7 13 4 10 4 5c5 0 8 3 8 8z\"/><path d=\"M12 17c0-6 3-9 9-9 0 6-3 9-9 9z\"/>","user-round":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/>","grid":"<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/>","logout":"<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><path d=\"m16 17 5-5-5-5M21 12H9\"/>","download":"<path d=\"M12 3v12m-4-4 4 4 4-4\"/><path d=\"M5 17v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3\"/>"};
 const icons={"dashboard":"layout-dashboard","weeks":"calendar-days","students":"users-round","families":"house","followups":"clipboard-check","cards":"id-card","milestones":"flag","questions":"message-circle-question","announcements":"megaphone","tasks":"list-todo","journal":"notebook-pen","reports":"chart-column-increasing","survey":"heart","accounts":"shield-check","settings":"settings","myweek":"sprout","myreport":"notebook-pen","myfamily":"house","myfollowup":"clipboard-check","mycard":"id-card","program":"calendar-days","myquestions":"message-circle-question","notices":"megaphone","myaccount":"user-round"};
 const iconSvg=(name,cls='ui-icon')=>'<svg class="'+cls+'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(iconPaths[name]||iconPaths.grid)+'</svg>';
@@ -271,8 +271,66 @@ return '<div class="week-details"><div class="week-details-toolbar">'+btn('backw
 '<div class="week-detail-actions">'+(team()?btn('editweek','تعديل الأسبوع','goldbtn')+' '+btn('go:followups','متابعة الأسبوع','secondary'):btn('reportthisweek','سجّلي تقريركِ لهذا الأسبوع','goldbtn'))+'</div>'+
 '<div class="week-detail-nav">'+(prev?'<button data-week="'+esc(prev.id)+'" class="btn secondary">→ السابق: '+esc(prev.title)+'</button>':'<span></span>')+(next?'<button data-week="'+esc(next.id)+'" class="btn secondary">التالي: '+esc(next.title)+' ←</button>':'<span></span>')+'</div></div>';
 }
+const studentStageNames={candidate:'مرشحة',accepted:'مقبولة',selected_not:'لم تُختر',active:'في البرنامج',paused:'متوقفة مؤقتًا',withdrawn:'خرجت'};
+const studentStageGroups={batch:['accepted','active','paused'],candidates:['candidate'],inactive:['selected_not','withdrawn']};
+const normalizeStudentSearch=value=>String(value??'').toLowerCase().normalize('NFKD').replace(/[\u064b-\u065f\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[٠-٩]/g,ch=>String(ch.charCodeAt(0)-1632)).replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+function studentMatchesTab(student,tab){
+return tab==='all'||(studentStageGroups[tab]||[]).includes(student.stage);
+}
+function updateStudentsView(){
+const container=document.querySelector('.students-register');
+if(!container)return;
+const text=normalizeStudentSearch(state.studentsSearch||''),tokens=text?text.split(/\s+/).filter(Boolean):[];
+let visible=0;
+container.querySelectorAll('[data-student-id]').forEach(element=>{
+const stage=element.dataset.stage, family=element.dataset.family;
+const match=studentMatchesTab({stage},state.studentsTab||'all')&&(!state.studentsFamily||family===state.studentsFamily)&&tokens.every(t=>(element.dataset.search||'').includes(t));
+element.hidden=!match;
+if(match)visible++;
+});
+const count=container.querySelector('[data-students-result-count]');
+if(count)count.textContent=visible+' من '+rows('students').length+' سجل';
+const noResults=container.querySelector('.students-empty-results');
+if(noResults)noResults.hidden=visible!==0;
+container.querySelectorAll('[data-students-tab]').forEach(el=>{
+const active=el.dataset.studentsTab===(state.studentsTab||'all');
+el.classList.toggle('active',active);
+el.setAttribute('aria-pressed',String(active));
+});
+}
 function students(){
-return heading('الغارسات','سجل المرشحات والدفعة والأسر',btn('newstudent','إضافة غارسة','goldbtn')+' '+btn('bulkstudents','إضافة قائمة'))+table(['الاسم','الحال','الأسرة','الجامعة','الهاتف','الإجراء'],rows('students').map(s=>'<tr><td>'+esc(s.name)+'</td><td><span class="chip">'+esc(({candidate:'مرشحة',accepted:'مقبولة',selected_not:'لم تختر',active:'في البرنامج',paused:'متوقفة مؤقتاً',withdrawn:'خرجت'})[s.stage]||s.stage)+'</span></td><td>'+esc(name('families',s.family_id))+'</td><td>'+esc(s.university)+'</td><td>'+esc(s.phone)+'</td><td>'+btn('editstudent:'+s.id,'تعديل','secondary smallbtn')+' '+btn('newgoal:'+s.id,'خطة','secondary smallbtn')+' '+btn('newobservation:'+s.id,'ملاحظة','secondary smallbtn')+'</td></tr>').join('')||'<tr><td colspan="6">'+empty('ابدئي بإضافة الغارسات إلى السجل')+'</td></tr>');
+const all=rows('students');
+const linkedAccounts=leadership()?rows('accounts'):[];
+const stageLabel=stage=>studentStageNames[stage]||stage||'غير محدد';
+const accountFor=id=>linkedAccounts.find(a=>a.student_id===id);
+const tabs=[
+['all','الكل'],
+['batch','الدفعة'],
+['candidates','المرشحات'],
+['inactive','لم تُختر أو خرجت']
+];
+const familyChoices=[['','كل الأسر'],...rows('families').map(f=>[f.id,f.name])];
+const badge= (text,cls='')=>'<span class="chip '+cls+'">'+esc(text)+'</span>';
+const rowsHtml=all.map(student=>{
+const account=accountFor(student.id),linked=!!account;
+const fam=name('families',student.family_id);
+const info=normalizeStudentSearch([student.name,student.phone,student.email,student.university,student.college,student.study_level,student.neighborhood,fam,stageLabel(student.stage),studentStageGroups.batch.includes(student.stage)?'الدفعة':'',student.stage==='candidate'?'مرشحات':'',student.under_twenty?'دون العشرين اقل من عشرين':'',student.led_before?'قادت السابق':'',account?.email||'',linked?'مربوط مرتبط':'غير مربوط'].join(' '));
+const attributes=' data-student-id="'+esc(student.id)+'" data-stage="'+esc(student.stage)+'" data-family="'+esc(student.family_id||'')+'" data-search="'+esc(info)+'"';
+return '<tr'+attributes+'>'+
+'<td data-label="الاسم"><div class="students-name"><button type="button" class="students-name-link" data-action="viewstudent:'+esc(student.id)+'">'+esc(student.name)+'</button><div class="students-person-flags">'+(student.under_twenty?badge('دون العشرين','students-soft-tag'):'')+(student.led_before?badge('قادت السابق','students-soft-tag'):'')+'</div></div></td>'+
+'<td data-label="الأسرة">'+esc(fam)+'</td>'+
+'<td data-label="الجامعة">'+esc(student.university||'—')+'</td>'+
+'<td data-label="الهاتف"><span dir="ltr" class="students-phone">'+esc(student.phone||'—')+'</span></td>'+
+'<td data-label="الحال">'+badge(stageLabel(student.stage),student.stage==='active'?'ok':student.stage==='candidate'?'warn':'')+'</td>'+
+'<td data-label="الحساب">'+(leadership()?linked?'<div class="students-linked">'+iconSvg('shield-check')+'<span>مربوط</span></div><span class="small muted students-account-email">'+esc(account.email||'')+'</span>':'<span class="students-unlinked">غير مربوط</span>':'<span class="muted small">يظهر للقيادة فقط</span>')+'</td>'+
+'<td data-label="الإجراءات"><div class="students-row-actions"><button type="button" class="btn secondary smallbtn" data-action="viewstudent:'+esc(student.id)+'">الملف</button>'+btn('editstudent:'+student.id,'تعديل','secondary smallbtn')+(leadership()&&!linked?btn('studentaccounts:'+student.id,'ربط حساب','secondary smallbtn'):'')+'</div></td>'+
+'</tr>';
+}).join('');
+return '<div class="students-register">'+heading('الغارسات','سجل الدفعة والمرشحات، ومن لم تُختر أو خرجت، مع بيانات كل غارسة وحالة ربط حسابها',btn('newstudent','إضافة غارسة','goldbtn')+' '+btn('bulkstudents','إضافة قائمة','secondary'))+
+'<div class="students-tab-list" role="group" aria-label="تصنيف الغارسات">'+tabs.map(([key,title])=>'<button type="button" data-students-tab="'+key+'" class="students-tab'+((state.studentsTab||'all')===key?' active':'')+'" aria-pressed="'+String((state.studentsTab||'all')===key)+'"><span>'+esc(title)+'</span><span class="students-tab-count">'+all.filter(x=>studentMatchesTab(x,key)).length+'</span></button>').join('')+'</div>'+
+'<div class="students-filterbar"><label class="students-search-box"><span class="students-search-icon">'+iconSvg('grid')+'</span><input type="search" id="studentsSearch" autocomplete="off" placeholder="ابحثي بالاسم أو الهاتف أو الجامعة أو الأسرة أو الحال..." value="'+esc(state.studentsSearch||'')+'" aria-label="البحث في سجلات الغارسات"/></label><label class="students-family-choice"><span>الأسرة</span><select id="studentsFamilyFilter" data-select="studentsFamily">'+familyChoices.map(x=>option(x[0],x[1],state.studentsFamily||'')).join('')+'</select></label><button type="button" class="students-clear" data-action="clearstudents">مسح الفلاتر</button></div>'+
+'<div class="students-filter-summary"><span data-students-result-count aria-live="polite">'+all.length+' من '+all.length+' سجل</span><span class="muted small">يمكن البحث بأكثر من كلمة وبأي ترتيب</span></div>'+
+'<div class="card table-wrap students-table-wrap"><table class="students-table"><thead><tr>'+['الاسم','الأسرة','الجامعة','الهاتف','الحال','ربط الحساب','الإجراء'].map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table><div class="students-empty-results" hidden>'+empty('لا توجد غارسات تطابق البحث أو الفلاتر الحالية')+'</div></div></div>';
 }
 function families(){
 const fam=rows('families').find(f=>f.id===state.family),members=rows('students').filter(s=>s.family_id===fam?.id),isTeam=team();
@@ -333,7 +391,7 @@ function page(){
 switch(state.page){
 case 'dashboard':return dashboard();case 'dashboardStudent':return dashboardStudentFile();case 'weeks':case 'program':return weeks();case 'weekdetail':return weekDetails();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
 }
-function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');}
+function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');if(state.page==='students'&&team())updateStudentsView();}
 function dialog(title,body,submit='حفظ'){const old=$('.dialog-backdrop');if(old)old.remove();const e=document.createElement('div');e.className='dialog-backdrop';e.innerHTML='<form id="modalForm" class="dialog"><div class="page-head"><h2>'+esc(title)+'</h2><button type="button" class="btn secondary smallbtn" data-action="close">إغلاق</button></div><div class="form-grid">'+body+'</div><div class="form-actions"><button class="btn" type="submit">'+esc(submit)+'</button></div></form>';document.body.appendChild(e)}
 function formData(f){const o={};new FormData(f).forEach((v,k)=>o[k]=v);return o}
 async function save(t,obj,conflict){const q=db.from(t).upsert(obj,conflict?{onConflict:conflict}:{});const{error}=await q;if(error)throw error;await read(t);flash('حُفظت التغييرات بنجاح')}
@@ -343,7 +401,7 @@ if(a.startsWith('edit')){const tab={editstudent:'students',editweek:'weeks',edit
 const stSelect=[['','بلا أسرة'],...rows('families').map(x=>[x.id,x.name])];
 switch(a){
 case 'newstudent':case 'editstudent':
-dialog('بيانات الغارسة',field('الاسم كاملًا','name',o.name||'','text',true)+field('الهاتف','phone',o.phone||'','tel')+field('البريد','email',o.email||'','email')+field('الأسرة','family_id',o.family_id||'','text',false,stSelect)+field('الحال','stage',o.stage||'candidate','text',true,[['candidate','مرشحة'],['accepted','مقبولة'],['selected_not','لم تختر'],['active','في البرنامج'],['paused','متوقفة مؤقتاً'],['withdrawn','خرجت']])+field('الجامعة','university',o.university||'')+field('الكلية','college',o.college||'')+field('المستوى','study_level',o.study_level||'')+field('دون العشرين','under_twenty',String(!!o.under_twenty),'text',false,[['false','لا'],['true','نعم']])+field('اسم ولي الأمر','guardian_name',o.guardian_name||'')+field('هاتف ولي الأمر','guardian_phone',o.guardian_phone||''));break;
+dialog('بيانات الغارسة',field('الاسم كاملًا','name',o.name||'','text',true)+field('الهاتف','phone',o.phone||'','tel')+field('البريد','email',o.email||'','email')+field('الأسرة','family_id',o.family_id||'','text',false,stSelect)+field('الحال','stage',o.stage||'candidate','text',true,[['candidate','مرشحة'],['accepted','مقبولة'],['selected_not','لم تختر'],['active','في البرنامج'],['paused','متوقفة مؤقتاً'],['withdrawn','خرجت']])+field('الجامعة','university',o.university||'')+field('الكلية','college',o.college||'')+field('المستوى','study_level',o.study_level||'')+field('الحي','neighborhood',o.neighborhood||'')+field('الحالة الاجتماعية','marital_status',o.marital_status||'','text',false,[['','غير محددة'],['single','عزباء'],['engaged','مخطوبة'],['married','متزوجة']])+field('قادت البرنامج السابق','led_before',String(!!o.led_before),'text',false,[['false','لا'],['true','نعم']])+field('دون العشرين','under_twenty',String(!!o.under_twenty),'text',false,[['false','لا'],['true','نعم']])+field('اسم ولي الأمر','guardian_name',o.guardian_name||'')+field('هاتف ولي الأمر','guardian_phone',o.guardian_phone||''));break;
 case 'newgoal':dialog('هدف في الخطة الفردية',field('الجانب','aspect','الفقهي الشرعي','text',true,aspects.map(t=>[t,t]))+field('الهدف','goal','','textarea',true)+field('مقياس التحقق','measure','','textarea',true));break;
 case 'newobservation':dialog('ملاحظة المرافقة',field('نوع الملاحظة','kind','ملاحظة','text',true,['ملاحظة','لقاء فردي','حضور لقاء أسرة','لقاء الترشيح','تزكية','تعثر','ترشيح للإشراف',...(state.account.role==='murafiqa'?['حدود الستر']:[])].map(t=>[t,t]))+field('نص الملاحظة','note','','textarea',true)+(state.account.role==='murafiqa'?field('سرية الملاحظة','secret','false','text',true,[['false','غير سرية'],['true','سرية']]):''));break;
 case 'newfamily':dialog('إضافة أسرة',field('اسم الأسرة','name','','text',true)+field('يوم اللقاء','meeting_day')+field('ساعة اللقاء','meeting_time')+field('الرابط','meeting_url','','url'));break;
@@ -368,7 +426,7 @@ default:return;
 }
 async function modalSave(f){
 const {a,id}=state.editing||{};const x=formData(f),bo=v=>v==='true';
-if(['newstudent','editstudent'].includes(a)){x.family_id||=null;x.under_twenty=bo(x.under_twenty);if(a==='editstudent')x.id=id;await save('students',x)}
+if(['newstudent','editstudent'].includes(a)){x.family_id||=null;x.under_twenty=bo(x.under_twenty);x.led_before=bo(x.led_before);x.marital_status||=null;if(a==='editstudent')x.id=id;await save('students',x)}
 else if(a==='newfamily')await save('families',x);else if(a==='newgoal'){if(rows('goals').filter(g=>g.student_id===id).length>=3)throw Error('الحد الأقصى ثلاثة أهداف للغارسة');await save('goals',{...x,student_id:id,done:false})}
 else if(a==='newobservation')await save('observations',{...x,student_id:id,secret:bo(x.secret),week_id:state.week,author_id:state.user.id});
 
@@ -393,6 +451,7 @@ $('.dialog-backdrop')?.remove();state.editing=null;render();
 document.addEventListener('click',async e=>{
 const el=e.target.closest('[data-action],[data-page],[data-week]');
 if(!el)return;
+if(el.dataset.studentsTab){state.studentsTab=el.dataset.studentsTab;updateStudentsView();return}
 if(el.dataset.page){state.page=el.dataset.page;closeMobileMore();$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
 if(el.dataset.week){state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
 const action=el.dataset.action;
@@ -422,6 +481,8 @@ else if(action==='reset'){const email=prompt('أدخلي بريدكِ الإلك
 else if(action==='close')$('.dialog-backdrop')?.remove();
 else if(action==='print')window.print();
 else if(action==='shiftcalendar'){const newDate=$('#f_first_start')?.value;if(!newDate)throw Error('اختاري التاريخ الجديد');if(!confirm('ستتغير تواريخ جميع الأسابيع والمواعيد. هل تؤكدين؟'))return;const {data,error}=await db.rpc('shift_program',{p_first_week:newDate});if(error)throw error;await load();flash('تمت إزاحة التقويم بمقدار '+data+' يوم')}
+else if(action==='clearstudents'){state.studentsSearch='';state.studentsFamily='';state.studentsTab='all';render();updateStudentsView()}
+else if(action.startsWith('studentaccounts:')){if(!leadership())throw Error('ربط الحسابات متاح للإدارة والمرافقة فقط');state.studentToLink=action.split(':')[1];state.page='accounts';render();window.scrollTo(0,0)}
 else if(action==='more'){showMobileMore()}
 else if(action==='closeMore'){closeMobileMore()}
 else if(action.startsWith('viewstudent:')){state.dashboardStudent=action.split(':')[1];state.page='dashboardStudent';render();window.scrollTo(0,0)}
@@ -431,10 +492,12 @@ else if(action==='togglesurvey'){await save('settings',{key:'survey_open',value:
 else await modal(action);
 }catch(err){flash(err.message||'تعذر تنفيذ الإجراء',true)}
 });
+document.addEventListener('input',event=>{if(event.target?.id==='studentsSearch'){state.studentsSearch=event.target.value;updateStudentsView()}});
 document.addEventListener('change',async e=>{
 const el=e.target;
 try{
-if(el.dataset.select==='week'){state.week=el.value;render()}
+if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView()}
+else if(el.dataset.select==='week'){state.week=el.value;render()}
 else if(el.dataset.select==='period'){state.period=el.value;render()}
 else if(el.dataset.select==='family'){state.family=el.value;render()}
 else if(el.dataset.milestone){const[student_id,code]=el.dataset.milestone.split(':');await save('milestones',{student_id,code,done:el.checked,done_at:el.checked?new Date().toISOString():null},'student_id,code')}
