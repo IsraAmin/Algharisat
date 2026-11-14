@@ -27,7 +27,7 @@ test('legacy browser confirmations are replaced by themed accessible dialogs',()
  assert.match(app,/function appConfirm\(/);
  assert.match(app,/role="alertdialog"/);
  assert.match(app,/await confirmFollowupLeave\(\)/);
- assert.match(app,/title:'تأكيد إزاحة التقويم'/);
+ assert.match(app,/title:'تأكيد '\+verb\+' التقويم'/);
  assert.match(app,/title:'استعادة كلمة المرور'/);
  assert.doesNotMatch(app,/window\.confirm\(/);
  assert.doesNotMatch(app,/const email=prompt\(/);
