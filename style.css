@@ -1087,3 +1087,60 @@ td .btn{margin:2px;vertical-align:middle}
  .outcomes-table tbody th{grid-column:1}
  .outcomes-total-grid{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Questions centre — private authorship, answered/public and reference workflows */
+.questions-page{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;max-width:1250px;margin:0 auto;width:100%;min-width:0}
+.questions-page>.page-head{margin-bottom:0}
+.questions-intro{display:flex;align-items:center;gap:16px;background:#fff;border:1px solid var(--line);border-radius:19px;padding:21px 23px;box-shadow:var(--shadow-sm)}
+.questions-intro-icon{flex:none;display:grid;place-items:center;width:51px;height:51px;border-radius:15px;color:#25516e;background:#ebf2f8}
+.questions-intro-icon .ui-icon{width:27px;height:27px}
+.questions-intro>div:nth-child(2){flex:1;min-width:0}
+.questions-intro h2{font-size:1.12rem;margin:0 0 7px;color:var(--navy)}
+.questions-intro p{font-size:.82rem;line-height:1.8;color:#6a7a88;margin:0}
+.questions-intro>.btn{flex:none;white-space:nowrap}
+.questions-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px;background:#edf1f6;border:1px solid #dce5ed;border-radius:15px}
+.questions-tabs button{display:inline-flex;align-items:center;gap:10px;border:0;border-radius:11px;background:transparent;padding:11px 15px;color:#617489;font-weight:760;font-size:.83rem;cursor:pointer}
+.questions-tabs button:hover{background:#f9fbfd;color:var(--navy)}
+.questions-tabs button.active{background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(21,48,72,.11)}
+.questions-tab-count{display:grid;place-items:center;min-width:25px;height:25px;border-radius:9px;background:#dce5ee;padding:0 6px;font-variant-numeric:tabular-nums;font-size:.74rem}
+.questions-tabs button.active .questions-tab-count{background:#e7edf3;color:#294960}
+.questions-results-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.questions-results-header h3{margin:0;color:var(--navy);font-size:1.04rem}
+.questions-list{display:grid;gap:13px;min-width:0}
+.question-item{background:#fff;border:1px solid #e0e7ed;border-radius:16px;padding:20px 22px;box-shadow:0 2px 12px rgba(19,44,65,.03);min-width:0;display:grid;gap:13px}
+.question-item-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.question-pills{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.question-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid transparent;border-radius:8px;font-size:.72rem;font-weight:780;white-space:nowrap}
+.question-pill.kind-fiqh{color:#315b85;background:#eaf1f9;border-color:#d9e6f3}
+.question-pill.kind-fikr{color:#765a92;background:#f3edf9;border-color:#e7d9f3}
+.question-pill.kind-general{color:#586a79;background:#edf0f3;border-color:#e2e7eb}
+.question-pill.state-open{color:#9a6829;background:#fcf3e5;border-color:#f0dfc3}
+.question-pill.state-sent{color:#7e5ba1;background:#f2ecf9;border-color:#e7d8f4}
+.question-pill.state-answered,.question-pill.state-published{color:#317354;background:#eaf5ee;border-color:#d6e9dd}
+.question-time{font-size:.76rem;color:#8694a3;font-variant-numeric:tabular-nums}
+.question-item-meta{font-size:.78rem;color:#687b8c}
+.question-owner{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.question-owner>span,.question-anonymous{display:inline-flex;align-items:center;gap:5px;line-height:1.65}
+.question-owner .ui-icon,.question-anonymous .ui-icon{width:15px;height:15px}
+.question-anonymous{color:#39735d}
+.question-own-indicator{color:#486d87;font-weight:700}
+.question-body{color:#253d51;font-size:.94rem;font-weight:660;line-height:2;white-space:pre-wrap;overflow-wrap:anywhere}
+.question-answer{border-radius:12px;background:#f4f8f5;border-inline-start:3px solid #6a997d;padding:14px 17px}
+.question-answer-title{display:flex;align-items:center;gap:8px;color:#2c7051;font-size:.82rem;font-weight:800;margin-bottom:6px}
+.question-answer-title .ui-icon{width:16px;height:16px}
+.question-answer p{margin:0;color:#385b4a;font-size:.85rem;line-height:1.95;white-space:pre-wrap;overflow-wrap:anywhere}
+.question-reference-hint{font-size:.8rem;color:#72558c;background:#f8f4fb;padding:11px 13px;border-radius:10px}
+.question-actions{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid #ecf0f3;padding-top:13px}
+.question-actions>.btn{font-size:.76rem}
+.question-delete{border:1px solid #ebc8c6!important;background:#fff7f6!important;color:#ae4545!important}
+.question-delete:hover{background:#ffefed!important}
+.questions-empty{min-height:190px;background:#fff;border:1px dashed #cfdae4;border-radius:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:20px}
+.questions-empty>.ui-icon{width:29px;height:29px;color:#879aad;margin-bottom:5px}
+.questions-empty strong{color:var(--navy)}
+.questions-empty p{margin:0}
+.questions-footnote{color:#647789;border-right:3px solid #b0bfd0;background:#f3f7fa;border-radius:9px;padding:13px 15px;font-size:.79rem;line-height:1.9;margin:0}
+.question-modal-intro{grid-column:1/-1;background:#f6f9fb;border:1px solid #e0e9ef;border-radius:13px;padding:14px;display:grid;justify-items:start;gap:10px}
+.question-modal-intro p{margin:0;color:var(--navy);line-height:2;font-size:.88rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.question-modal-help{grid-column:1/-1;line-height:1.9;padding:8px 11px;background:#f6f8fa;border-radius:8px}
+@media(max-width:740px){.questions-intro{display:grid;grid-template-columns:auto minmax(0,1fr);padding:17px;gap:11px}.questions-intro>.btn{grid-column:1/-1;width:100%}.questions-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.questions-tabs button{justify-content:space-between;padding:10px}.question-item{padding:16px}.question-body{font-size:.87rem}.question-actions>.btn{flex:1}.question-item-head{align-items:flex-start}}
+@media(max-width:440px){.questions-page{gap:12px}.questions-tabs button{font-size:.75rem;padding:9px 8px}.question-tab-count{min-width:22px}.question-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.question-actions>.btn{white-space:normal;min-width:0}.questions-intro h2{font-size:.99rem}.questions-intro p{font-size:.75rem}}
