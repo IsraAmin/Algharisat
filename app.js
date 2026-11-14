@@ -39,7 +39,7 @@ const date=v=>v?new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'long',year
 const currentWeek=()=>rows('weeks').find(w=>w.kind==='program'&&w.starts_on<=new Date().toISOString().slice(0,10)&&w.ends_on>=new Date().toISOString().slice(0,10))||rows('weeks').filter(w=>w.kind==='program').find(w=>w.starts_on>new Date().toISOString().slice(0,10))||rows('weeks').find(w=>w.code==='w8');
 const field=(label,key,value='',type='text',required=false,opts=null)=>'<div class="field"><label for="f_'+esc(key)+'">'+esc(label)+'</label>'+(opts?'<select id="f_'+esc(key)+'" name="'+esc(key)+'">'+opts.map(o=>option(o[0],o[1],value)).join('')+'</select>':type==='textarea'?'<textarea id="f_'+esc(key)+'" name="'+esc(key)+'">'+esc(value)+'</textarea>':'<input id="f_'+esc(key)+'" name="'+esc(key)+'" type="'+esc(type)+'" value="'+esc(value)+'" '+(required?'required':'')+'/>')+'</div>';
 const btn=(action,text,cls='secondary',extra='')=>'<button class="btn '+cls+'" data-action="'+esc(action)+'" '+extra+'>'+esc(text)+'</button>';
-function flash(text,error=false){state.notice=text;render();setTimeout(()=>{if(state.notice===text){state.notice='';const el=$('.toast');if(el)el.remove()}},5000)}
+function flash(text,error=false){state.notice=text;state.noticeError=error;render();setTimeout(()=>{if(state.notice===text){state.notice='';const el=$('.toast');if(el)el.remove()}},5000)}
 async function read(t){const{data,error}=await db.from(t).select('*').limit(2000);if(error)throw error;state.rows[t]=data||[]}
 async function load(){
 const base=['settings','weeks','families','events','announcements','resources','roles_family','rota_leader'];
@@ -117,6 +117,21 @@ return '<section class="install-notice" role="status" aria-label="اقتراح �
 }
 // All permanent deletion flows must pass through this confirmation dialog.
 let deletePending=null;
+
+let activeConfirmDialog=null;
+function appConfirm({title='تأكيد الإجراء',message='',confirmText='تأكيد',danger=false,input=false,placeholder=''}={}){
+ if(activeConfirmDialog)activeConfirmDialog(false);
+ return new Promise(resolve=>{
+  const previous=document.activeElement;
+  const layer=document.createElement('div');layer.className='app-confirm-backdrop';
+  layer.innerHTML='<div class="app-confirm-scrim"></div><section class="app-confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="app-confirm-title" aria-describedby="app-confirm-description"><div class="app-confirm-symbol" aria-hidden="true">'+(danger?'!':'✓')+'</div><h2 id="app-confirm-title">'+esc(title)+'</h2><p id="app-confirm-description">'+esc(message)+'</p>'+(input?'<label class="app-confirm-label" for="appConfirmInput">البريد الإلكتروني</label><input id="appConfirmInput" type="email" autocomplete="email" required placeholder="'+esc(placeholder)+'" />':'')+'<div class="app-confirm-actions"><button type="button" class="btn secondary" data-choice="cancel">إلغاء</button><button type="button" class="btn '+(danger?'dangerbtn':'goldbtn')+'" data-choice="confirm">'+esc(confirmText)+'</button></div></section>';
+  const finish=value=>{if(!activeConfirmDialog)return;activeConfirmDialog=null;layer.remove();document.removeEventListener('keydown',onKey,true);if(previous?.isConnected)previous.focus();resolve(value)};
+  activeConfirmDialog=finish;
+  const onKey=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();finish(false)}else if(e.key==='Tab'){const controls=[...layer.querySelectorAll('button,input')];const i=controls.indexOf(document.activeElement);if(e.shiftKey&&i===0){e.preventDefault();controls[controls.length-1].focus()}else if(!e.shiftKey&&i===controls.length-1){e.preventDefault();controls[0].focus()}}else if(e.key==='Enter'&&input&&document.activeElement?.id==='appConfirmInput'){e.preventDefault();layer.querySelector('[data-choice="confirm"]').click()}};
+  layer.addEventListener('click',e=>{const choice=e.target.closest('[data-choice]')?.dataset.choice;if(!choice){if(e.target.classList.contains('app-confirm-scrim'))finish(false);return}if(choice==='cancel')return finish(false);if(input){const field=layer.querySelector('#appConfirmInput');if(!field.reportValidity())return;return finish(field.value.trim())}finish(true)});
+  document.addEventListener('keydown',onKey,true);document.body.appendChild(layer);(input?layer.querySelector('input'):layer.querySelector('[data-choice="cancel"]')).focus();
+ });
+}
 function closeDeleteConfirmation(){document.querySelector('.delete-confirm-backdrop')?.remove();deletePending=null}
 function openDeleteConfirmation(item){
 closeDeleteConfirmation();deletePending=item;
@@ -457,7 +472,7 @@ return heading(isTeam?'الأسر':'أسرتي','الأخوات، والمهام
 const followAttendanceOptions=[['','لم يُسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']];
 const followTaskOptions=[['','لم يُسجل'],['done','أنجزت'],['partial','أنجزت بعضها'],['none','لم تنجز']];
 function followupDirty(){return document.querySelector('#followupForm')?.dataset.dirty==='true'}
-function confirmFollowupLeave(){return !followupDirty()||window.confirm('عندك تعديلات في المتابعة لم تُحفظ. هل تريدين الانتقال بدون حفظها؟')}
+async function confirmFollowupLeave(){return !followupDirty()||await appConfirm({title:'تغييرات غير محفوظة',message:'هناك تعديلات في المتابعة الأسبوعية لم تُحفظ. هل تريدين مغادرة الصفحة دون حفظها؟',confirmText:'مغادرة دون حفظ',danger:true})}
 function markFollowupDirty(){const form=document.querySelector('#followupForm');if(!form)return;form.dataset.dirty='true';const note=form.querySelector('[data-followup-save-state]');if(note){note.textContent='هناك تغييرات لم تُحفظ بعد';note.classList.add('pending')}}
 function followups(){
 const weeks=sortedWeeks().filter(w=>w.kind==='program').slice(0,8);
@@ -800,7 +815,7 @@ function page(){
 switch(state.page){
 case 'dashboard':return dashboard();case 'dashboardStudent':return dashboardStudentFile();case 'studentReport':return studentReportDetail();case 'weeks':case 'program':return weeks();case 'weekdetail':return weekDetails();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
 }
-function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');if(state.page==='students'&&team())updateStudentsView();if((state.page==='announcements'||state.page==='notices')&&state.communicationTab!=='resources'){markAnnouncementsRead();refreshAnnouncementIndicators()}rememberCurrentPage();}
+function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast app-toast '+(state.noticeError?'is-error':'is-success')+'" role="'+(state.noticeError?'alert':'status')+'"><span class="app-toast-icon" aria-hidden="true">'+(state.noticeError?'!':'✓')+'</span><div class="app-toast-content"><strong>'+(state.noticeError?'تنبيه':'تم بنجاح')+'</strong><p>'+esc(state.notice)+'</p></div><button type="button" data-action="dismissToast" class="app-toast-dismiss" aria-label="إغلاق الرسالة">×</button></div>':'');if(state.page==='students'&&team())updateStudentsView();if((state.page==='announcements'||state.page==='notices')&&state.communicationTab!=='resources'){markAnnouncementsRead();refreshAnnouncementIndicators()}rememberCurrentPage();}
 function dialog(title,body,submit='حفظ'){const old=$('.dialog-backdrop');if(old)old.remove();const e=document.createElement('div');e.className='dialog-backdrop';e.innerHTML='<form id="modalForm" class="dialog"><div class="page-head"><h2>'+esc(title)+'</h2><button type="button" class="btn secondary smallbtn" data-action="close">إغلاق</button></div><div class="form-grid">'+body+'</div><div class="form-actions"><button class="btn" type="submit">'+esc(submit)+'</button></div></form>';document.body.appendChild(e)}
 // Refresh the small notification signal without refreshing a user's in-progress form.
 setInterval(async()=>{
@@ -987,11 +1002,11 @@ if(el.dataset.commsTab){if(!['announcements','resources'].includes(el.dataset.co
 if(el.dataset.questionTab){state.questionsTab=el.dataset.questionTab;render();return}
 if(el.dataset.studentsTab){state.studentsTab=el.dataset.studentsTab;updateStudentsView();rememberCurrentPage();return}
 if(el.dataset.profileTab){state.studentProfileTab=el.dataset.profileTab;render();return}
-if(el.dataset.followWeek){if(el.dataset.followWeek===state.week)return;if(!confirmFollowupLeave())return;state.week=el.dataset.followWeek;render();return}
+if(el.dataset.followWeek){if(el.dataset.followWeek===state.week)return;if(!(await confirmFollowupLeave()))return;state.week=el.dataset.followWeek;render();return}
 if(el.hasAttribute('data-follow-all')){const form=document.querySelector('#followupForm');if(!form)return;form.querySelectorAll('[data-followup-field="majlis"],[data-followup-field="family_meeting"]').forEach(select=>{select.value='present'});markFollowupDirty();return}
-if(el.hasAttribute('data-followup-reset')){if(!confirmFollowupLeave())return;render();return}
-if(el.dataset.page){if(!confirmFollowupLeave())return;state.page=el.dataset.page;closeMobileMore();$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
-if(el.dataset.week){if(!confirmFollowupLeave())return;state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
+if(el.hasAttribute('data-followup-reset')){if(!(await confirmFollowupLeave()))return;render();return}
+if(el.dataset.page){if(!(await confirmFollowupLeave()))return;state.page=el.dataset.page;closeMobileMore();$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
+if(el.dataset.week){if(!(await confirmFollowupLeave()))return;state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
 const action=el.dataset.action;
 try{
 if(action==='install'){
@@ -1010,16 +1025,17 @@ else if(action==='closeInstallHelp'){document.querySelector('.install-help-backd
 else if(action==='installedManually'){pwaStorageWrite('algharisat-installed','1');pwaStorageWrite(installFlag(),'1');document.querySelector('.install-help-backdrop')?.remove();render()}
 else if(action==='cancelLogout'){document.querySelector('.logout-confirm-backdrop')?.remove()}
 else if(action==='confirmLogout'){el.disabled=true;try{const{error}=await db.auth.signOut();if(error)throw error;document.querySelector('.logout-confirm-backdrop')?.remove();state.user=null;state.account=null;render()}finally{el.disabled=false}}
+else if(action==='dismissToast'){state.notice='';render()}
 else if(action==='toggleTheme'){toggleTheme()}
 else if(action==='signin'||action==='signup'){state.authTab=action;render()}
 else if(action==='backweeks'){state.page=team()?'weeks':'program';render();window.scrollTo(0,0)}
 else if(action==='reportthisweek'){state.page='myreport';render();window.scrollTo(0,0)}
 else if(action==='logout'){logoutConfirmDialog()}
 else if(action==='refresh')await start();
-else if(action==='reset'){const email=prompt('أدخلي بريدكِ الإلكتروني لإرسال رابط إعادة كلمة المرور');if(email){const{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;flash('إن كان البريد مسجلاً، سيصلك رابط إعادة كلمة المرور')}}
+else if(action==='reset'){const email=await appConfirm({title:'استعادة كلمة المرور',message:'أدخلي بريدكِ الإلكتروني لإرسال رابط إعادة التعيين.',input:true,placeholder:'name@example.com',confirmText:'إرسال الرابط'});if(email){const{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;flash('إن كان البريد مسجلاً، سيصلك رابط إعادة كلمة المرور')}}
 else if(action==='close')$('.dialog-backdrop')?.remove();
 else if(action==='print')window.print();
-else if(action==='shiftcalendar'){const newDate=$('#f_first_start')?.value;if(!newDate)throw Error('اختاري التاريخ الجديد');if(!confirm('ستتغير تواريخ جميع الأسابيع والمواعيد. هل تؤكدين؟'))return;const {data,error}=await db.rpc('shift_program',{p_first_week:newDate});if(error)throw error;await load();flash('تمت إزاحة التقويم بمقدار '+data+' يوم')}
+else if(action==='shiftcalendar'){const newDate=$('#f_first_start')?.value;if(!newDate)throw Error('اختاري التاريخ الجديد');if(!(await appConfirm({title:'تأكيد إزاحة التقويم',message:'سيتم تغيير تواريخ جميع الأسابيع والمواعيد المرتبطة بها. هل تريدين المتابعة؟',confirmText:'نعم، تطبيق الإزاحة',danger:true})))return;const {data,error}=await db.rpc('shift_program',{p_first_week:newDate});if(error)throw error;await load();flash('تمت إزاحة التقويم بمقدار '+data+' يوم')}
 else if(action==='clearstudents'){state.studentsSearch='';state.studentsFamily='';state.studentsTab='all';render();updateStudentsView()}
 else if(action.startsWith('studentaccounts:')){if(!leadership())throw Error('ربط الحسابات متاح للإدارة والمرافقة فقط');state.studentToLink=action.split(':')[1];state.page='accounts';render();window.scrollTo(0,0)}
 else if(action==='more'){try{await read('announcements');refreshAnnouncementIndicators()}catch(error){console.warn('تعذر تحديث الإعلانات قبل فتح القائمة',error)}showMobileMore()}
@@ -1101,10 +1117,10 @@ if(el.closest('#followupForm')&&el.matches('[data-followup-field]')){markFollowu
 if(el.id==='resourceCoverMode'){const field=document.querySelector('#resourceCoverUpload');if(field)field.hidden=el.value!=='upload';return}
 if(el.dataset.select==='resourceWeekFilter'){state.resourceWeekFilter=el.value;render();return}
 if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView();rememberCurrentPage()}
-else if(el.dataset.select==='week'){if(!confirmFollowupLeave()){el.value=state.week;return}state.week=el.value;render()}
+else if(el.dataset.select==='week'){if(!(await confirmFollowupLeave())){el.value=state.week;return}state.week=el.value;render()}
 else if(el.dataset.select==='cardStage'){state.cardStage=el.value;render()}
 else if(el.dataset.select==='period'){state.period=el.value;render()}
-else if(el.dataset.select==='family'){if(!confirmFollowupLeave()){el.value=state.family||'';return}state.family=el.value;render()}
+else if(el.dataset.select==='family'){if(!(await confirmFollowupLeave())){el.value=state.family||'';return}state.family=el.value;render()}
 else if(el.dataset.cardGoal){if(!team())throw Error('تعديل إنجاز الأهداف للفريق فقط');const goalId=el.dataset.cardGoal,studentId=el.dataset.cardStudent;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',studentId);if(error)throw error;await read('goals');render()}
 else if(el.dataset.profileGoal){if(!team())throw Error('تعديل الأهداف للفريق فقط');const goalId=el.dataset.profileGoal;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',state.dashboardStudent);if(error)throw error;await read('goals');render()}
 else if(el.dataset.milestone){

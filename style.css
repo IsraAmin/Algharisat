@@ -1357,3 +1357,109 @@ td .btn{margin:2px;vertical-align:middle}
 [data-theme="dark"] .auth-theme-control .theme-toggle{color:var(--ink)}
 [data-theme="dark"] .sidebar :is(.brand,.side-label,.sidebar-section-title){color:#ead2a6}
 [data-theme="dark"] .btn.goldbtn,[data-theme="dark"] .btn.goldbtn:hover:not(:disabled){color:#fff!important}
+
+
+/* Universal dark-surface audit: operational modules, nested cards and tables.
+   The source contains legacy literal light backgrounds and navy text; override
+   those here without changing the appearance of light mode. */
+:root[data-theme="dark"]{--ink:#f0f4f8;--ink-2:#d5e1ea;--muted:#b6c5d3;--paper:#1c2a39;--canvas:#101a26;--soft:#253748;--line:#3d5265;--line-strong:#647c90;--gold-light:#3b4439;color-scheme:dark}
+[data-theme="dark"] :is(
+ .week-content-block,.fixed-questions>div,.fixed-questions span,
+ .dashboard-prep-info,.dashboard-launch-note,.dashboard-alert-row,.dashboard-alert-icon,.dashboard-family-icon,.dashboard-family-metrics>div,.dashboard-task-status,.dashboard-student-details>div,
+ .students-tab,.students-tab-count,.students-filter-summary,.students-filterbar,.students-table tr,.students-soft-tag,.students-unlinked,.students-clear,.students-row-actions,
+ .student-file-chips .chip,.student-file-tabs,.student-file-details>div,.student-file-mentor,.student-file-goal,.student-file-milestone,.student-file-weekly-table,
+ .card-stage-picker,.card-waiting,.card-aspect,.card-aspect.is-unassessed,.card-aspect-meter,.card-goals-meter,.card-goal-item,.card-plan-empty,.card-milestone-summary,
+ .batch-summary-card,.batch-summary-meter,.batch-family,.batch-family-heading,.batch-rubric-item,.batch-rubric-grid>div,.batch-rubric-source,
+ .outcomes-surface,.outcomes-help,.outcomes-mobile-totals,.outcomes-total-grid>div,.outcome-not-required,
+ .questions-intro,.questions-tabs,.question-item,.question-answer,.question-reference-hint,.questions-empty,.questions-footnote,.question-modal-intro,.question-modal-help,
+ .comms-metrics>div,.comms-announcement,.comms-resource,.comms-empty,.communications-page .resource-cover,.resource-cover-upload,.communications-page .communications-tabs,
+ .followup-panel-footer,.followup-settings,.followup-overview>div,.followup-table-scroll,.followup-edit-table .followup-name-cell,
+ .dialog .form-actions,.toolbar select,.mobile-more-link,.mobile-more-footer,.mobile-more-header,.install-notice,.resource-cover-field
+){background:var(--paper)!important;color:var(--ink)!important;border-color:var(--line)!important}
+[data-theme="dark"] :is(
+ .student-file-tabs,.questions-tabs,.communications-page .communications-tabs,
+ .dashboard-family-metrics>div,.dashboard-student-details>div,.card-goal-item,
+ .batch-rubric-grid>div,.batch-rubric-source,.outcomes-total-grid>div,
+ .comms-metrics>div,.questions-footnote,.followup-panel-footer,
+ .question-answer,.questions-empty
+){background:var(--soft)!important}
+[data-theme="dark"] :is(
+ .batch-table thead th,.batch-table tbody tr,.batch-table tbody tr:nth-child(even),
+ .outcomes-table thead th,.outcomes-table tbody tr,.outcomes-table tbody tr:nth-child(even),
+ .outcomes-students-table thead th:first-child,.outcomes-students-table tbody th.outcomes-student-name,
+ .outcomes-students-table tbody tr:nth-child(even) th.outcomes-student-name,
+ .outcomes-students-table tfoot th,.outcomes-students-table tfoot td,
+ .students-table tr,.students-table td,.students-table th
+){background:var(--paper)!important;color:var(--ink)!important;border-color:var(--line)!important}
+[data-theme="dark"] :is(
+ .batch-table tbody tr:nth-child(even),.outcomes-table tbody tr:nth-child(even),
+ .outcomes-students-table tbody tr:nth-child(even) th.outcomes-student-name,
+ .students-table tbody tr:nth-child(even)
+){background:var(--soft)!important}
+[data-theme="dark"] :is(.batch-table tr:hover td,.outcomes-table tr:hover td,.students-table tbody tr:hover td){background:#354c5f!important}
+[data-theme="dark"] .content :is(
+ h1,h2,h3,h4,h5,h6,legend,summary,label,strong,
+ .dashboard-student-link,.students-name-link,.students-filter-summary,.student-file-section>h2,.student-file-section>h3,
+ .student-file-goal label,.student-file-details strong,.card-aspect-top>span:first-child,
+ .batch-student-name,.question-body,.question-answer p,.question-answer-title,.question-anonymous,
+ .questions-intro p,.questions-footnote,.question-modal-intro p,
+ .comms-section-header p,.comms-open-link,.communications-page .comms-resource-filter label,
+ .resource-cover-upload label,.followup-name-cell>strong,.outcome-check-date
+){color:var(--ink)!important}
+[data-theme="dark"] :is(
+ .content p,.content .muted,.content .subtitle,
+ .dashboard-family-metrics span,.followup-save-state,.followup-no-report,
+ .student-file-details span,.card-modal-hint,.batch-rubric-source p,
+ .questions-page .muted,.communications-page .muted
+){color:var(--muted)!important}
+[data-theme="dark"] :is(
+ .content .notice,.content .dashboard-phase,.content .dashboard-alert-reasons span,
+ .content .student-file-chips .chip,.content .students-soft-tag,
+ .content .batch-legend-value,.content .batch-level,
+ .content .card-aspect-level,.content .outcome-doc-status,
+ .content .question-pill,.content .comms-tag,
+ .content .students-linked,.content .students-unlinked
+){color:var(--ink)!important;background:#30465a!important;border-color:var(--line)!important}
+[data-theme="dark"] :is(.content .chip.ok,.content .outcome-doc-status.done,.content .question-pill.state-answered,.content .question-pill.state-published,.content .card-aspect-level.level-2,.content .batch-level.level-2){background:#23483e!important;color:#c7f5dc!important}
+[data-theme="dark"] :is(.content .chip.warn,.content .outcome-doc-status.pending,.content .question-pill.state-sent,.content .card-aspect-level.level-1,.content .batch-level.level-1){background:#544126!important;color:#ffe1a6!important}
+[data-theme="dark"] :is(.content .chip.danger,.content .question-pill.state-open,.content .card-aspect-level.level-0,.content .batch-level.level-0){background:#57363a!important;color:#ffd0ce!important}
+[data-theme="dark"] :is(.content .card-aspect-level.level-3,.content .batch-level.level-3){background:#2d4567!important;color:#d0e3ff!important}
+[data-theme="dark"] :is(.content button:not(.btn),.content .students-tab,.content .student-file-tabs button){color:var(--ink)}
+[data-theme="dark"] :is(.content .students-tab.active,.content .student-file-tabs button.active,.content .questions-tabs button.active,.content .communications-tab.is-active){background:#38536a!important;color:#fff!important}
+[data-theme="dark"] :is(.content a,.content .comms-open-link){color:#b9dfff!important}
+[data-theme="dark"] .content :is(.btn:not(.secondary),.btn.goldbtn){color:#fff!important}
+[data-theme="dark"] :is(.content input,.content select,.content textarea,.dialog input,.dialog select,.dialog textarea){background:#162535!important;color:#f0f4f8!important;border-color:#5d7287!important}
+[data-theme="dark"] .content :is(.progress,.card-aspect-meter,.card-goals-meter,.batch-summary-meter){background:#3e5365!important}
+[data-theme="dark"] :is(.followup-panel,.batch-family,.outcomes-surface,.question-item,.comms-announcement,.comms-resource,.student-file-section,.student-file-goal){box-shadow:0 3px 15px rgba(0,0,0,.14)!important}
+[data-theme="dark"] .sidebar :is(.nav-item,.sidebar-section-links .nav-item){color:#d6e4ef}
+[data-theme="dark"] .sidebar .nav-item.active{color:#fff}
+[data-theme="dark"] .content .followup-edit-table tbody tr:nth-child(even) .followup-name-cell{background:var(--soft)!important}
+[data-theme="dark"] .content .followup-edit-table thead th{color:var(--ink)!important;background:#2f4355!important}
+[data-theme="dark"] .content .followup-edit-table :is(td,th){border-color:var(--line)!important}
+[data-theme="dark"] :is(.logout-confirm h2,.install-help h2,.mobile-more-header h2){color:var(--ink)!important}
+[data-theme="dark"] :is(.dialog,.logout-confirm,.delete-confirm,.install-help,.mobile-more-sheet){color:var(--ink)!important;background:var(--paper)!important;border-color:var(--line)!important}
+/* Accessible confirmation and input dialogs. */
+.app-confirm-backdrop{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:18px}
+.app-confirm-scrim{position:absolute;inset:0;background:rgba(5,15,26,.72);backdrop-filter:blur(5px)}
+.app-confirm-box{position:relative;isolation:isolate;width:min(450px,100%);padding:27px;border-radius:22px;background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:0 25px 90px rgba(0,0,0,.25);display:grid;gap:12px;line-height:1.8}
+.app-confirm-symbol{width:48px;height:48px;display:grid;place-items:center;font-size:1.6rem;font-weight:800;border-radius:14px;background:var(--gold-light);color:var(--ink)}
+.app-confirm-box h2{font-size:1.27rem;color:var(--ink);margin:0}
+.app-confirm-box p{color:var(--muted);font-size:.92rem;margin:0;line-height:1.9}
+.app-confirm-box input{width:100%;background:var(--soft);color:var(--ink);border:1px solid var(--line-strong)}
+.app-confirm-label{color:var(--ink-2);font-size:.82rem;font-weight:700}
+.app-confirm-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px}
+.app-confirm-actions button{min-width:115px}
+.app-confirm-actions .dangerbtn{background:#a83c3a!important;color:#fff!important;border-color:#a83c3a!important}
+@media(max-width:430px){.app-confirm-box{padding:22px}.app-confirm-actions{display:grid;grid-template-columns:1fr 1fr}.app-confirm-actions button{min-width:0}}
+/* Compact polished success/error pop-ups; unlike confirmation modals, they don't block saving. */
+.toast.app-toast{position:fixed;z-index:250;bottom:22px;left:22px;max-width:min(420px,calc(100vw - 32px));min-width:min(300px,calc(100vw - 32px));display:flex;align-items:start;gap:12px;padding:14px 16px;border-radius:16px;background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:0 16px 50px rgba(0,0,0,.24)}
+.app-toast-icon{display:grid;place-items:center;flex:none;width:33px;height:33px;border-radius:10px;background:#ddefe5;color:#226a4a;font-weight:900}
+.app-toast.is-error .app-toast-icon{background:#fce6e3;color:#ab3c36}
+.app-toast-content{min-width:0;flex:1}.app-toast-content strong{font-size:.87rem;display:block;margin-bottom:2px}.app-toast-content p{color:var(--muted);font-size:.82rem;line-height:1.7;margin:0;overflow-wrap:anywhere}
+.app-toast-dismiss{background:transparent;border:0;color:var(--muted);font-size:1.4rem;padding:0 3px;line-height:1.2;cursor:pointer}
+[data-theme="dark"] .app-toast-icon{background:#264f42;color:#d1fbe8}
+[data-theme="dark"] .app-toast.is-error .app-toast-icon{background:#59373b;color:#ffdbd6}
+[data-theme="dark"] :is(.app-confirm-box,.toast.app-toast){background:#1f2e3d!important;color:#f0f4f8!important;border-color:#566d81!important}
+[data-theme="dark"] :is(.app-confirm-box h2,.app-toast-content strong){color:#f0f4f8!important}
+[data-theme="dark"] :is(.app-confirm-box p,.app-toast-content p){color:#bdcbd7!important}
+@media(max-width:650px){.toast.app-toast{left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));max-width:none;min-width:0}}
