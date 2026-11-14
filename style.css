@@ -705,7 +705,7 @@ td .btn{margin:2px;vertical-align:middle}
 @media(max-width:600px){.followup-dashboard{gap:12px}.followup-week-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.followup-week-pill{min-height:41px;padding:7px 3px;font-size:.7rem}.followup-overview{gap:7px}.followup-overview>div{padding:10px 12px}.followup-overview strong{font-size:.84rem}.followup-panel-header{padding:16px 14px 13px}.followup-panel-footer{padding:15px 14px}.followup-panel-actions{width:100%}.followup-panel-actions .btn{flex:1}.followup-edit-table thead th:first-child{width:215px}.followup-table-scroll{overscroll-behavior-x:contain}}
 
 /* True responsive weekly follow-up: one editable card per student, no horizontal scrolling */
-@media(max-width:1020px){
+@media(max-width:1320px){
   .followup-dashboard,.followup-settings,.followup-panel,.followup-overview,
   #followupForm{min-width:0;max-width:100%;box-sizing:border-box}
   .followup-panel{overflow:hidden}
@@ -782,9 +782,57 @@ td .btn{margin:2px;vertical-align:middle}
   .followup-table-scroll::-webkit-scrollbar-track{background:#f2f5f8}
   .followup-table-scroll::-webkit-scrollbar-thumb{background:#a8b8c8;border-radius:10px}
 }
-@media(max-width:1020px){
+@media(max-width:1320px){
   .followup-overview{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .followup-edit-table{width:100%;min-width:0!important;max-width:100%}
   .followup-table-scroll{overflow-x:visible;overflow-y:visible}
 }
 @media(max-width:600px){.followup-overview{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+/* Laptop fit fix: never crop the student name or hide columns in a 1366/1440px layout. */
+@media(min-width:1321px){
+  .followup-table-scroll{
+    overflow-x:visible;
+    overflow-y:visible;
+    width:100%;
+    max-width:100%;
+  }
+  .followup-edit-table{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    table-layout:fixed;
+  }
+  .followup-edit-table thead th{
+    white-space:normal;
+    overflow-wrap:break-word;
+    line-height:1.55;
+    font-size:.7rem;
+    padding:12px 5px;
+  }
+  .followup-edit-table thead th:nth-child(1){width:18%}
+  .followup-edit-table thead th:nth-child(2),
+  .followup-edit-table thead th:nth-child(3){width:12%}
+  .followup-edit-table thead th:nth-child(4){width:7%}
+  .followup-edit-table thead th:nth-child(5),
+  .followup-edit-table thead th:nth-child(6),
+  .followup-edit-table thead th:nth-child(7){width:13%}
+  .followup-edit-table thead th:nth-child(8){width:12%}
+  .followup-edit-table tbody td,
+  .followup-edit-table tbody th{padding:11px 5px;min-width:0}
+  .followup-edit-table input,
+  .followup-edit-table select{width:100%;max-width:100%;min-width:0;box-sizing:border-box;font-size:.72rem;padding:6px 5px}
+  .followup-edit-table .followup-name-cell{
+    position:static;
+    box-shadow:none;
+    overflow-wrap:anywhere;
+  }
+  .followup-edit-table .followup-name-cell strong{font-size:.78rem}
+  .followup-student-report,.followup-no-report{overflow-wrap:anywhere}
+}
+/* At smaller laptop/tablet widths use two-column student cards, not a clipped table. */
+@media(min-width:601px) and (max-width:1320px){
+  .followup-edit-table tbody tr{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .followup-edit-table .followup-name-cell,
+  .followup-edit-table .followup-note-cell{grid-column:1/-1}
+}
