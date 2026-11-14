@@ -62,7 +62,7 @@ test('mobile fields do not trigger iOS focus zoom and manual zoom remains availa
 
 test('password visibility control works in sign-in and sign-up without changing the submitted value',()=>{
  assert.match(app,/function authPasswordField\(/);
- assert.match(app,/authPasswordField\(\)\+'<button/);
+ assert.match(app,/authPasswordField\(\)\+\(state\.authTab==='signup'/);
  assert.match(app,/data-action="togglePassword"/);
  assert.match(app,/input\.type=visible\?'text':'password'/);
  assert.match(app,/aria-pressed/);
@@ -77,4 +77,19 @@ test('family coordinator never sees other family selector and may only edit assi
  assert.match(app,/aria-label="الأسرة المسندة لكِ"/);
  assert.match(app,/if\(!team\(\)\)\{el\.value=ownFamilyId\(\)\|\|''/);
  assert.match(app,/familyId!==ownFamily/);
+});
+
+test('signup requires a matching confirmed password, with independently accessible reveal buttons',()=>{
+ assert.match(app,/authPasswordField\('password_confirm','تأكيد كلمة المرور'\)/);
+ assert.match(app,/if\(x\.password!==x\.password_confirm\)throw Error\('كلمة المرور وتأكيدها غير متطابقتين'\)/);
+ assert.match(app,/el\.getAttribute\('aria-controls'\)/);
+ assert.match(app,/input\.id==='f_password_confirm'/);
+ assert.match(app,/authPasswordField\(key='password',label='كلمة المرور'\)/);
+});
+
+test('desktop auth keeps verse panel stationary and scrolls the account form only',()=>{
+ assert.match(css,/@media \(min-width:801px\)/);
+ assert.match(css,/\.auth\{\s*height:100vh;\s*height:100dvh;\s*min-height:0;\s*overflow:hidden/);
+ assert.match(css,/\.auth-panel\{\s*height:100%;\s*min-height:0;\s*overflow-x:hidden;\s*overflow-y:auto/);
+ assert.match(css,/@media \(max-width:800px\)\{\s*\.auth\{height:auto;min-height:100svh;overflow:visible\}/);
 });
