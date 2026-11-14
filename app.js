@@ -422,9 +422,85 @@ function families(){
 const fam=rows('families').find(f=>f.id===state.family),members=rows('students').filter(s=>s.family_id===fam?.id),isTeam=team();
 return heading(isTeam?'الأسر':'أسرتي','الأخوات، والمهام الدوارة، ولقاءات الأسرة',isTeam?btn('newfamily','إضافة أسرة','goldbtn')+' '+btn('assignrole','توزيع المهام')+' '+btn('assignleader','مديرات اللقاء'):'')+'<div class="toolbar">'+(isTeam?selectFamilies():'')+'</div>'+(fam?'<div class="grid two"><div class="card"><h3>'+esc(fam.name)+'</h3><p class="muted">موعد اللقاء: '+esc(fam.meeting_day||'لم يحدد')+' '+esc(fam.meeting_time||'')+'</p>'+(fam.meeting_url?'<p><a target="_blank" rel="noopener noreferrer" href="'+esc(safeUrl(fam.meeting_url))+'">رابط اللقاء</a></p>':'')+'<div class="separator"></div>'+members.map(s=>'<div class="list-row"><div><strong>'+esc(s.name)+'</strong><p class="muted">'+esc(rows('roles_family').find(r=>r.student_id===s.id&&r.cycle===Number(setting('current_cycle',1)))?.task||'لم توزع المهمة')+'</p></div>'+(s.phone?'<a class="btn secondary smallbtn" href="https://wa.me/'+encodeURIComponent(s.phone.replace(/[^0-9]/g,''))+'" target="_blank" rel="noopener">واتساب</a>':'')+'</div>').join('')+'</div><div class="card"><h3>وثائق الأسرة</h3>'+[['wird','قدر الورد'],['page_need','صفحة الحاجة'],['initiative','المبادرة'],['charter','الميثاق']].map(([key,t])=>'<div class="list-row"><span>'+t+'</span>'+btn('doc:'+key,rows('docs_family').some(d=>d.kind===key&&d.family_id===fam.id)?'عرض وتعديل':'كتابة','secondary smallbtn')+'</div>').join('')+'<div class="separator"></div><h3>محاضر اللقاءات</h3>'+rows('minutes').filter(m=>m.family_id===fam.id).map(m=>'<div class="list-row">'+date(m.meeting_date)+' | '+esc(m.summary?.slice(0,45))+'</div>').join('')+btn('newminute','إضافة محضر','goldbtn')+'</div></div>':empty('أضيفي أسرة أولًا'));
 }
+const followAttendanceOptions=[['','لم يُسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']];
+const followTaskOptions=[['','لم يُسجل'],['done','أنجزت'],['partial','أنجزت بعضها'],['none','لم تنجز']];
+function followupDirty(){return document.querySelector('#followupForm')?.dataset.dirty==='true'}
+function confirmFollowupLeave(){return !followupDirty()||window.confirm('عندك تعديلات في المتابعة لم تُحفظ. هل تريدين الانتقال بدون حفظها؟')}
+function markFollowupDirty(){const form=document.querySelector('#followupForm');if(!form)return;form.dataset.dirty='true';const note=form.querySelector('[data-followup-save-state]');if(note){note.textContent='هناك تغييرات لم تُحفظ بعد';note.classList.add('pending')}}
 function followups(){
-const week=state.week,students=rows('students').filter(s=>s.family_id===state.family&&s.stage==='active'),c=team()||coordinator();
-return heading('المتابعة الأسبوعية','حضور المجلس ولقاء الأسرة والورد والمهام')+'<div class="toolbar">'+selectWeeks()+(team()?selectFamilies():'')+'</div>'+(!c?'<div class="notice">هذه الصفحة متاحة لمنسقة الأسرة في الدورة الجارية.</div>':table(['الغارسة','المجلس','لقاء الأسرة','الورد','الثلاثية','المنقول','الدوارة',''],students.map(s=>{const f=rows('followups').find(x=>x.student_id===s.id&&x.week_id===week)||{};return '<tr><td>'+esc(s.name)+'</td><td>'+esc(({present:'حاضرة',late:'متأخرة',excused:'بعذر',absent:'غائبة'})[f.majlis]||'—')+'</td><td>'+esc(({present:'حاضرة',late:'متأخرة',excused:'بعذر',absent:'غائبة'})[f.family_meeting]||'—')+'</td><td>'+esc(f.wird_days??'—')+'</td><td>'+esc(f.triple_task||'—')+'</td><td>'+esc(f.transferred_lesson||'—')+'</td><td>'+esc(f.rotating_task||'—')+'</td><td>'+btn('followup:'+s.id,'تسجيل','secondary smallbtn')+'</td></tr>'}).join('')||'<tr><td colspan="8">'+empty('لا توجد غارسات نشطات في هذه الأسرة')+'</td></tr>'));
+const weeks=sortedWeeks().filter(w=>w.kind==='program').slice(0,8);
+const selected=weeks.find(w=>w.id===state.week)||weeks.find(weekCurrent)||weeks[0];
+if(selected)state.week=selected.id;
+const canEdit=team()||coordinator();
+const familyId=team()?state.family:state.profile?.family_id;
+const families=rows('families');
+const family=families.find(f=>f.id===familyId);
+const members=rows('students').filter(s=>s.family_id===familyId&&s.stage==='active').sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+const existing=rows('followups'),studentReports=rows('reports_self');
+const attSelect=(studentId,field,value)=>'<select data-followup-field="'+field+'" aria-label="'+(field==='majlis'?'حضور المجلس':'حضور لقاء الأسرة')+' · '+esc(studentId)+'">'+followAttendanceOptions.map(([valueKey,label])=>option(valueKey,label,value||'')).join('')+'</select>';
+const taskSelect=(field,value)=>'<select data-followup-field="'+field+'" aria-label="'+esc(({triple_task:'المهمة الثلاثية',transferred_lesson:'الدرس المنقول',rotating_task:'المهمة الدوّارة'})[field])+'">'+followTaskOptions.map(([key,label])=>option(key,label,value||'')).join('')+'</select>';
+const weekNav='<div class="followup-week-nav" role="group" aria-label="اختيار أسبوع المتابعة">'+weeks.map((w,i)=>'<button type="button" data-follow-week="'+esc(w.id)+'" class="followup-week-pill'+(w.id===selected?.id?' active':'')+'" aria-pressed="'+(w.id===selected?.id?'true':'false')+'">الأسبوع '+(i+1)+'</button>').join('')+'</div>';
+const familyChoice=team()?'<label class="followup-family-selector"><span>الأسرة</span><select data-select="family" aria-label="اختيار الأسرة"><option value="">اختاري الأسرة</option>'+families.map(f=>option(f.id,f.name,familyId)).join('')+'</select></label>':'<div class="followup-current-family"><span class="muted small">الأسرة</span><strong>'+esc(family?.name||'لم تُحدّد أسرتك بعد')+'</strong></div>';
+if(!canEdit)return heading('المتابعة الأسبوعية','متابعة الحضور والورد والمهام للأسابيع الثمانية')+
+'<div class="card followup-access"><h3>المتابعة مخصصة للفريق ومنسقة الأسرة</h3><p class="muted">إذا كنتِ منسقة الأسرة لهذه الدورة، فتأكدي من ربط حسابك بسجلك وتعيينك في المهمة الدوّارة.</p></div>';
+const activeCount=members.length,recordCount=members.filter(m=>existing.some(f=>f.student_id===m.id&&f.week_id===selected?.id&&f.majlis)).length;
+let lines=members.map(student=>{
+const previous=existing.find(f=>f.student_id===student.id&&f.week_id===selected?.id)||{};
+const self=studentReports.find(r=>r.student_id===student.id&&r.week_id===selected?.id);
+const triple=self?['task_self','task_home','task_community'].filter(key=>self[key]==='done').length:null;
+const tripleLabel=self?('المهام الثلاثية: '+triple+' من ٣ منجزة'):'';
+const summary=self?'<div class="followup-student-report"><span class="followup-report-dot" aria-hidden="true"></span><span>تقرير الغارسة: الورد '+esc(self.wird_days??'—')+' / ٧ · '+tripleLabel+'</span></div>':'<div class="followup-no-report">لم يصل التقرير الذاتي لهذا الأسبوع</div>';
+return '<tr data-followup-student="'+esc(student.id)+'"><th scope="row" class="followup-name-cell"><strong>'+esc(student.name)+'</strong>'+summary+'</th>'+
+'<td>'+attSelect(student.id,'majlis',previous.majlis)+'</td>'+
+'<td>'+attSelect(student.id,'family_meeting',previous.family_meeting)+'</td>'+
+'<td><input data-followup-field="wird_days" type="number" inputmode="numeric" min="0" max="7" step="1" value="'+esc(previous.wird_days??'')+'" placeholder="—" aria-label="عدد أيام الورد" /></td>'+
+'<td>'+taskSelect('triple_task',previous.triple_task)+'</td>'+
+'<td>'+taskSelect('transferred_lesson',previous.transferred_lesson)+'</td>'+
+'<td>'+taskSelect('rotating_task',previous.rotating_task)+'</td>'+
+'<td><input data-followup-field="note" type="text" maxlength="220" value="'+esc(previous.note||'')+'" placeholder="ملاحظة قصيرة" aria-label="ملاحظة عن '+esc(student.name)+'" /></td></tr>';
+}).join('');
+const tableMarkup=members.length?'<div class="followup-table-scroll"><table class="followup-edit-table"><thead><tr><th scope="col">الغارسة والتقرير الذاتي</th><th scope="col">المجلس</th><th scope="col">لقاء الأسرة</th><th scope="col">الورد</th><th scope="col">المهمة الثلاثية</th><th scope="col">الدرس المنقول</th><th scope="col">المهمة الدوّارة</th><th scope="col">ملاحظة</th></tr></thead><tbody>'+lines+'</tbody></table></div>':empty(family?'لا توجد غارسات بحالة «في البرنامج» في هذه الأسرة':'اختاري الأسرة لعرض الغارسات');
+return heading('المتابعة الأسبوعية','متابعة الغارسات من الأسرة والأسبوع، مع حفظ جميع الصفوف دفعة واحدة')+
+'<section class="followup-dashboard"><div class="followup-settings"><div class="followup-week-group"><span class="followup-section-label">اختيار الأسبوع</span>'+weekNav+'</div>'+familyChoice+'</div>'+
+'<div class="followup-overview"><div><span>الأسبوع المختار</span><strong>'+esc(selected?.title||'لا توجد أسابيع للبرنامج')+'</strong></div><div><span>غارسات الأسرة</span><strong>'+activeCount+'</strong></div><div><span>تم تسجيل حضورهن</span><strong>'+recordCount+' / '+activeCount+'</strong></div></div>'+
+'<form id="followupForm" data-dirty="false" data-week-id="'+esc(selected?.id||'')+'" data-family-id="'+esc(familyId||'')+'">'+
+'<div class="followup-panel"><div class="followup-panel-header"><div><h2>جدول متابعة الأسرة</h2><p class="muted small">يمكنكِ تعديل جميع الخانات مباشرةً، والتقرير الذاتي يظهر تحت اسم الغارسة إن أرسلته.</p></div><button class="btn secondary smallbtn followup-attend-all" type="button" data-follow-all '+(!members.length?'disabled':'')+'>الكل حاضرات</button></div>'+
+tableMarkup+
+'<div class="followup-panel-footer"><p class="followup-save-state" data-followup-save-state role="status">التغييرات تُحفظ عند الضغط على «حفظ الجدول»</p><div class="followup-panel-actions"><button type="button" class="btn secondary" data-followup-reset '+(!members.length?'disabled':'')+'>تراجع عن التعديلات</button><button class="btn" type="submit" '+(!members.length||!selected?'disabled':'')+'>حفظ الجدول</button></div></div></div></form></section>';
+}
+async function saveFollowupTable(form){
+if(!(team()||coordinator()))throw Error('حفظ المتابعة للفريق ومنسقة الأسرة فقط');
+const weekId=form.dataset.weekId,familyId=form.dataset.familyId;
+if(!weekId||!sortedWeeks().some(w=>w.id===weekId&&w.kind==='program'))throw Error('اختاري أسبوعًا صحيحًا');
+const ownFamily=state.profile?.family_id;
+if(!team()&&(!ownFamily||familyId!==ownFamily))throw Error('يمكنكِ متابعة أسرتك فقط');
+const allowed=rows('students').filter(s=>s.family_id===familyId&&s.stage==='active');
+const validIds=new Set(allowed.map(x=>x.id));
+const entries=[];
+for(const row of form.querySelectorAll('[data-followup-student]')){
+const studentId=row.dataset.followupStudent;
+if(!validIds.has(studentId))throw Error('تغيرت عضوية الأسرة، حدّثي الصفحة وحاولي مجددًا');
+const value=key=>row.querySelector('[data-followup-field="'+key+'"]')?.value??'';
+const rawWird=value('wird_days').trim();
+const wird=rawWird===''?null:Number(rawWird);
+if(wird!==null&&(!Number.isInteger(wird)||wird<0||wird>7))throw Error('الورد يجب أن يكون عدد أيام صحيحًا من ٠ إلى ٧ للغارسة '+allowed.find(s=>s.id===studentId)?.name);
+const fields={};
+for(const key of ['majlis','family_meeting']){
+const status=value(key);if(!followAttendanceOptions.some(([k])=>k===status))throw Error('اختاري قيمة صحيحة للحضور');
+fields[key]=status||null;
+}
+for(const key of ['triple_task','transferred_lesson','rotating_task']){
+const completion=value(key);if(!followTaskOptions.some(([k])=>k===completion))throw Error('اختاري قيمة صحيحة للمهام');
+fields[key]=completion||null;
+}
+entries.push({student_id:studentId,week_id:weekId,wird_days:wird,...fields,note:value('note').trim().slice(0,220)||null,recorded_by:state.user.id});
+}
+if(!entries.length)throw Error('لا توجد غارسات لحفظ متابعتهن');
+const{error}=await db.from('followups').upsert(entries,{onConflict:'student_id,week_id'});
+if(error)throw error;
+await read('followups');
+render();
+flash('حُفظ جدول المتابعة بالكامل بنجاح ('+entries.length+' غارسات)');
 }
 const aspects=['الفقهي الشرعي','التربوي التزكوي','الفكري','التنظيمي','الاجتماعي','البيت المسلم وصناعة الجيل'];
 const levels=['لم تبدأ','في الطريق','متحققة','متميزة'];
@@ -535,12 +611,15 @@ else if(a==='newminute')await save('minutes',{...x,family_id:state.family,attend
 $('.dialog-backdrop')?.remove();state.editing=null;render();
 }
 document.addEventListener('click',async e=>{
-const el=e.target.closest('[data-action],[data-page],[data-week],[data-students-tab],[data-profile-tab]');
+const el=e.target.closest('[data-action],[data-page],[data-week],[data-students-tab],[data-profile-tab],[data-follow-week],[data-follow-all],[data-followup-reset]');
 if(!el)return;
 if(el.dataset.studentsTab){state.studentsTab=el.dataset.studentsTab;updateStudentsView();rememberCurrentPage();return}
 if(el.dataset.profileTab){state.studentProfileTab=el.dataset.profileTab;render();return}
-if(el.dataset.page){state.page=el.dataset.page;closeMobileMore();$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
-if(el.dataset.week){state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
+if(el.dataset.followWeek){if(el.dataset.followWeek===state.week)return;if(!confirmFollowupLeave())return;state.week=el.dataset.followWeek;render();return}
+if(el.hasAttribute('data-follow-all')){const form=document.querySelector('#followupForm');if(!form)return;form.querySelectorAll('[data-followup-field="majlis"],[data-followup-field="family_meeting"]').forEach(select=>{select.value='present'});markFollowupDirty();return}
+if(el.hasAttribute('data-followup-reset')){if(!confirmFollowupLeave())return;render();return}
+if(el.dataset.page){if(!confirmFollowupLeave())return;state.page=el.dataset.page;closeMobileMore();$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
+if(el.dataset.week){if(!confirmFollowupLeave())return;state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
 const action=el.dataset.action;
 try{
 if(action==='install'){
@@ -594,21 +673,22 @@ else if(action==='togglesurvey'){await save('settings',{key:'survey_open',value:
 else await modal(action);
 }catch(err){flash(err.message||'تعذر تنفيذ الإجراء',true)}
 });
-document.addEventListener('input',event=>{if(event.target?.id==='studentsSearch'){state.studentsSearch=event.target.value;updateStudentsView();rememberCurrentPage()}});
+document.addEventListener('input',event=>{if(event.target?.id==='studentsSearch'){state.studentsSearch=event.target.value;updateStudentsView();rememberCurrentPage()}if(event.target?.closest('#followupForm')&&event.target?.matches('[data-followup-field]'))markFollowupDirty()});
 document.addEventListener('change',async e=>{
 const el=e.target;
 try{
+if(el.closest('#followupForm')&&el.matches('[data-followup-field]')){markFollowupDirty();return}
 if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView();rememberCurrentPage()}
-else if(el.dataset.select==='week'){state.week=el.value;render()}
+else if(el.dataset.select==='week'){if(!confirmFollowupLeave()){el.value=state.week;return}state.week=el.value;render()}
 else if(el.dataset.select==='period'){state.period=el.value;render()}
-else if(el.dataset.select==='family'){state.family=el.value;render()}
+else if(el.dataset.select==='family'){if(!confirmFollowupLeave()){el.value=state.family||'';return}state.family=el.value;render()}
 else if(el.dataset.profileGoal){if(!team())throw Error('تعديل الأهداف للفريق فقط');const goalId=el.dataset.profileGoal;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',state.dashboardStudent);if(error)throw error;await read('goals');render()}
 else if(el.dataset.milestone){const[student_id,code]=el.dataset.milestone.split(':');await save('milestones',{student_id,code,done:el.checked,done_at:el.checked?new Date().toISOString():null},'student_id,code')}
 else if(el.dataset.task){const{error}=await db.from('tasks').update({done:el.checked,done_at:el.checked?new Date().toISOString():null}).eq('id',el.dataset.task);if(error)throw error;await read('tasks');render()}
 }catch(err){flash(err.message||'تعذر الحفظ',true)}
 });
 document.addEventListener('submit',async e=>{
-if(!['authForm','modalForm','reportForm','settingsForm','surveyForm','profileForm'].includes(e.target.id))return;
+if(!['authForm','modalForm','reportForm','settingsForm','surveyForm','profileForm','followupForm'].includes(e.target.id))return;
 e.preventDefault();
 const f=e.target,x=formData(f);
 const submit=f.querySelector('button[type="submit"]');
@@ -637,6 +717,7 @@ load().then(()=>render()).catch(err=>{console.error(err);flash('دخلتِ حس�
 finally{loginInProgress=false}
 }}
 else if(f.id==='modalForm')await modalSave(f);
+else if(f.id==='followupForm')await saveFollowupTable(f);
 else if(f.id==='reportForm'){if(!state.account?.student_id)throw Error('حسابك غير مربوط بسجل الغارسة؛ أعيدي فتح المنصة بعد تحديث الصفحة');if(!state.week)throw Error('اختاري الأسبوع أولًا');x.wird_days=Number(x.wird_days);x.thought_read=x.thought_read==='true';await save('reports_self',{...x,student_id:state.account.student_id,week_id:state.week},'student_id,week_id')}
 else if(f.id==='settingsForm'){for(const [key,value] of Object.entries(x)){await save('settings',{key,value:key==='current_cycle'?Number(value):value})}render()}
 else if(f.id==='surveyForm'){const{error}=await db.rpc('submit_survey',{p_answers:[0,1,2,3,4].map(i=>x['q'+i]),p_round:'p1'});if(error)throw error;await read('done_survey');render();flash('جزاكِ الله خيرًا. وصلت إجابتكِ')}
