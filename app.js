@@ -779,8 +779,24 @@ return '<div class="communications-page">'+heading('الإعلانات والم�
 '<section class="comms-section" id="comms-panel-announcements" role="tabpanel" aria-labelledby="comms-tab-announcements"'+(activeTab==='announcements'?'':' hidden')+'><div class="comms-section-header"><div class="comms-section-heading"><span class="comms-heading-icon">'+iconSvg('megaphone')+'</span><div><h2>الإعلانات</h2><p>المواعيد والتنبيهات المهمة للدفعة وللأسر</p></div></div><span class="comms-section-count">'+announcementsSorted.length+' إعلان</span></div><div class="comms-announcements">'+(itemsA||'<div class="comms-empty">'+iconSvg('megaphone')+'<strong>لا توجد إعلانات بعد</strong><p>ستظهر هنا إعلانات البرنامج حين تنشرها عضوة الفريق.</p></div>')+'</div></section>'+
 '<section class="comms-section" id="comms-panel-resources" role="tabpanel" aria-labelledby="comms-tab-resources"'+(activeTab==='resources'?'':' hidden')+'><div class="comms-section-header"><div class="comms-section-heading"><span class="comms-heading-icon">'+iconSvg('book-open')+'</span><div><h2>المصادر</h2><p>تسجيلات وملفات وروابط مرتبة بحسب أولويتها</p></div></div><span class="comms-section-count">'+filteredResources.length+' من '+resourcesSorted.length+' مصدر</span></div>'+resourceFilter+'<div class="comms-resources">'+(itemsR||'<div class="comms-empty">'+iconSvg('book-open')+'<strong>لا توجد مصادر بعد</strong><p>'+(resourcesSorted.length?'لا توجد مصادر لهذا الأسبوع. اختاري «كل المصادر» لعرضها كلها.':'ستظهر هنا المواد والروابط التي يضيفها الفريق.')+'</p></div>')+'</div></section></div>';
 }
+const preparationSections=[['decision','القرارات','توثيق قرارات الفريق ومتابعة تنفيذها'],['task','المهام','مهام مسؤولة عنها عضوة الفريق وبموعد محدد'],['launch','شروط الانطلاق','لا يُجدول لقاء التأسيس إلا بعد استكمال جميع الشروط'],['closing','قائمة الختام','توثيق الأعمال النهائية وإغلاق المرحلة']];
+const launchReadiness=()=>{const all=rows('tasks').filter(t=>t.section==='launch');return {total:all.length,remaining:all.filter(t=>t.done!==true),ready:all.length>0&&all.every(t=>t.done===true)}};
+const isFoundationMeeting=(kind,title)=>kind==='لقاء التأسيس'||/لقاء\s+التأسيس/.test(String(title||''));
 function tasks(){
-return heading('التحضير والتشغيل','القرارات والمهام وشروط الانطلاق وقائمة الختام',btn('newtask','إضافة مهمة','goldbtn'))+['decision','task','launch','closing'].map((key,i)=>'<div class="card" style="margin-bottom:15px"><h3>'+['القرارات','المهام','شروط الانطلاق','قائمة الختام'][i]+'</h3>'+rows('tasks').filter(t=>t.section===key).map(t=>'<div class="list-row"><div><strong>'+esc(t.body)+'</strong><p class="muted">'+esc(t.owner||'')+' '+(t.due_on?'| '+date(t.due_on):'')+'</p></div><input style="width:20px;min-height:20px" type="checkbox" data-task="'+t.id+'" '+(t.done?'checked':'')+'/></div>').join('')+(!rows('tasks').some(t=>t.section===key)?empty('لم تُدخل بنود هذا القسم بعد'):'')+'</div>').join('');
+ if(!team())return heading('التحضير والتشغيل','هذه الصفحة مخصصة للفريق');
+ const taskList=rows('tasks'),launch=launchReadiness();
+ const readiness='<div class="prep-readiness '+(launch.ready?'is-ready':'is-blocked')+'"><div class="prep-readiness-symbol">'+iconSvg(launch.ready?'check-circle':'alert-triangle')+'</div><div><strong>'+(launch.ready?'شروط الانطلاق مكتملة':'لا يمكن جدولة لقاء التأسيس بعد')+'</strong><p>'+(launch.total===0?'لم تُضاف شروط الانطلاق بعد. أضيفي الشروط وحددي إنجازها أولًا.':launch.ready?'تم إنجاز الشروط '+launch.total+' كلها؛ يمكن الآن جدولة لقاء التأسيس.':'المتبقي '+launch.remaining.length+' من '+launch.total+' شروط. أكمليها قبل جدولة لقاء التأسيس.')+'</p></div><span class="prep-readiness-pill">'+(launch.ready?'جاهز للانطلاق':'بانتظار الإنجاز')+'</span></div>';
+ const sections=preparationSections.map(([key,title,description],index)=>{
+  const list=taskList.filter(t=>t.section===key).sort((a,b)=>(a.sort_order??999)-(b.sort_order??999)||String(a.due_on||'').localeCompare(String(b.due_on||'')));
+  const done=list.filter(t=>t.done===true).length,all=list.length;
+  return '<section class="card prep-section"><header class="prep-section-head"><div><span class="prep-section-index">0'+(index+1)+'</span><div><h3>'+esc(title)+'</h3><p>'+esc(description)+'</p></div></div><span class="prep-section-count">'+done+' من '+all+' منجز</span></header>'+
+  '<div class="prep-progress" role="progressbar" aria-label="نسبة إنجاز '+esc(title)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+(all?Math.round(done/all*100):0)+'"><div style="width:'+(all?Math.round(done/all*100):0)+'%"></div></div>'+
+  '<div class="prep-entries">'+(list.length?list.map(t=>'<article class="prep-entry '+(t.done?'is-done':'')+'"><label class="prep-entry-check"><input type="checkbox" data-task="'+esc(t.id)+'" '+(t.done?'checked':'')+' aria-label="تعليم '+esc(t.body)+' كمنجز"/><span class="prep-entry-checkmark">'+iconSvg('check')+'</span></label><div class="prep-entry-body"><strong>'+esc(t.body)+'</strong><div class="prep-entry-meta">'+(t.owner?'<span>'+iconSvg('user-round')+' '+esc(t.owner)+'</span>':'<span>لم تُحدّد المسؤولة</span>')+(t.due_on?'<span>'+iconSvg('calendar-days')+' الموعد: '+esc(date(t.due_on))+'</span>':'')+(t.done&&t.done_at?'<span class="prep-completion-date">'+iconSvg('check-circle')+' أُنجز: '+esc(date(t.done_at))+'</span>':'')+'</div>'+(t.note?'<p class="prep-entry-note">'+esc(t.note)+'</p>':'')+'</div><div class="prep-entry-actions">'+btn('edittask:'+t.id,'تعديل','secondary smallbtn')+btn('deletetask:'+t.id,'حذف','prep-delete smallbtn')+'</div></article>').join(''):'<div class="prep-empty">'+iconSvg('clipboard-list')+'<span>لا توجد بنود في هذا القسم بعد</span></div>')+'</div></section>';
+ }).join('');
+ const completed=taskList.filter(t=>t.done===true).length;
+ return '<div class="preparation-page">'+heading('التحضير والتشغيل','قرارات واضحة ومهام قابلة للمتابعة، من التأسيس إلى الختام',btn('newtask','إضافة بند جديد','goldbtn'))+
+ '<div class="prep-summary"><span>إجمالي البنود: <strong>'+taskList.length+'</strong></span><span>المكتمل: <strong>'+completed+'</strong></span><span>المتبقي: <strong>'+(taskList.length-completed)+'</strong></span></div>'+
+ readiness+'<div class="prep-sections">'+sections+'</div></div>';
 }
 function journal(){return heading('سجل التجربة','ما نجح، وما تعثر، وما تقرر في كل أسبوع',btn('newjournal','تدوين أسبوع','goldbtn'))+rows('journal').map(j=>'<div class="card" style="margin-bottom:12px"><h3>'+esc(weekName(j.week_id))+'</h3><p><strong>نجح:</strong> '+esc(j.success)+'</p><p><strong>تعثر:</strong> '+esc(j.obstacle)+'</p><p><strong>القرار:</strong> '+esc(j.decision)+'</p></div>').join('')||empty('لا توجد تدوينات بعد')}
 
@@ -944,7 +960,7 @@ function formData(f){const o={};new FormData(f).forEach((v,k)=>o[k]=v);return o}
 async function save(t,obj,conflict){const q=db.from(t).upsert(obj,conflict?{onConflict:conflict}:{});const{error}=await q;if(error)throw error;await read(t);flash('حُفظت التغييرات بنجاح')}
 async function modal(action){
 const [a,id]=action.split(':');state.editing={a,id};let o={};
-if(a.startsWith('edit')){const tab={editstudent:'students',editweek:'weeks',editaccount:'accounts'}[a];o=rows(tab).find(x=>x.id===id||x.user_id===id)||{}}
+if(a.startsWith('edit')){const tab={editstudent:'students',editweek:'weeks',editaccount:'accounts',edittask:'tasks'}[a];o=rows(tab).find(x=>x.id===id||x.user_id===id)||{}}
 const stSelect=[['','بلا أسرة'],...rows('families').map(x=>[x.id,x.name])];
 switch(a){
 case 'newstudent':case 'editstudent':
@@ -1005,13 +1021,13 @@ field('الترتيب (الأقل يظهر أولًا)','sort_order',o.sort_orde
 (o.cover_path?'<img class="resource-cover-preview" src="'+esc(resourceCoverUrl(o.cover_path))+'" alt="الغلاف الحالي" />':'<img class="resource-cover-preview" id="resourceCoverPreview" alt="معاينة الغلاف" hidden />')+
 '<p class="muted small">يمكنكِ الاحتفاظ بالغلاف الحالي دون إعادة رفعه عند تعديل المصدر.</p></div>');break;
 }
-case 'newtask':dialog('مهمة جديدة',field('القسم','section','task','text',true,[['decision','قرار'],['task','مهمة'],['launch','شرط انطلاق'],['closing','قائمة الختام']])+field('الأسبوع (للمهام الأسبوعية)','week_id',(sortedWeeks().find(w=>w.kind==='program')?.starts_on>todayISO()?(sortedWeeks().find(w=>w.kind==='prep'&&weekCurrent(w))||sortedWeeks().find(w=>w.kind==='prep'&&w.starts_on>todayISO())||sortedWeeks().find(w=>w.kind==='prep'))?.id:state.week)||'','text',false,[['','غير مرتبطة بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('المهمة','body','','textarea',true)+field('المسؤول','owner')+field('موعد الإنجاز','due_on','','date'));break;
+case 'newtask':case 'edittask':{if(!team())throw Error('إدارة التحضير والتشغيل للفريق فقط');const previous=a==='edittask';if(previous&&!o.id)throw Error('تعذر العثور على البند');dialog(previous?'تعديل البند':'إضافة بند جديد',field('القسم','section',o.section||'task','text',true,preparationSections.map(([value,label])=>[value,label]))+field('الأسبوع (للمهام الأسبوعية)','week_id',o.week_id||'','text',false,[['','غير مرتبطة بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('نص البند','body',o.body||'','textarea',true)+field('المسؤولة','owner',o.owner||'')+field('موعد الإنجاز','due_on',o.due_on||'','date')+field('ملاحظات التنفيذ','note',o.note||'','textarea')+(previous?'<div class="notice">يمكنكِ تعديل التفاصيل، وستظل حالة الإنجاز وتاريخها محفوظين.</div>':''));break;}
 case 'newjournal':dialog('تدوين التجربة',field('الأسبوع','week_id',state.week,'text',true,rows('weeks').filter(w=>w.kind==='program').map(w=>[w.id,w.title]))+field('ما نجح','success','','textarea')+field('ما تعثر','obstacle','','textarea')+field('القرار','decision','','textarea'));break;
 case 'editaccount':dialog('مراجعة الحساب',field('الاسم','name',o.name,'text',true)+field('الصفة','role',o.role,'text',true,[['pending','ينتظر'],['gharisa','غارسة'],['musaida','مساعدة المرافقة'],['murafiqa','المرافقة'],...(state.account?.role==='admin'?[['admin','الإدارة']]:[]),['disabled','موقوف']])+field('اللقب','title',o.title)+field('سجل الغارسة','student_id',o.student_id||(o.role==='gharisa'?state.studentToLink:'')||'','text',false,[['','بدون ربط'],...rows('students').map(s=>[s.id,s.name])]));break;
 case 'doc':o=rows('docs_family').find(d=>d.family_id===state.family&&d.kind===id)||{};dialog('وثيقة الأسرة',field('نص الوثيقة','body',o.body,'textarea',true));break;
 case 'assignrole':dialog('توزيع مهمة دوارة',field('المهمة','task','munassiqa','text',true,[['munassiqa','المنسقة'],['fiqhiya','المسؤولة الفقهية'],['fikriya','المسؤولة الفكرية'],['ijtimaiya','المسؤولة الاجتماعية'],['ataa','مسؤولة العطاء']])+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name]))+field('الدورة','cycle',setting('current_cycle',1),'number',true));break;
 case 'assignleader':dialog('مديرة اللقاء',field('الأسبوع','week_id',state.week,'text',true,rows('weeks').filter(x=>x.kind==='program').map(x=>[x.id,x.title]))+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name])));break;
-case 'newevent':dialog('موعد جديد',field('عنوان الموعد','title','','text',true)+field('نوع الموعد','kind','مجلس','text',true,[['مجلس','مجلس'],['درس','درس'],['لقاء أسرة','لقاء أسرة'],['لقاء حضوري','لقاء حضوري'],['لقاء فردي','لقاء فردي'],['لقاء فريق','لقاء فريق'],['غيره','غيره']])+field('وقت الموعد (اختياري — يُحدّد لاحقًا)','starts_at','','datetime-local')+field('المدة بالدقائق','duration_minutes',90,'number')+field('الأسبوع','week_id',state.week||'','text',false,[['','غير مرتبط بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('الأسرة (اختياري)','family_id','','text',false,[['','للجميع'],...rows('families').map(f=>[f.id,f.name])])+field('المكان أو الرابط','place')+field('ملاحظات','notes','','textarea'));break;
+case 'newevent':dialog('موعد جديد',field('عنوان الموعد','title','','text',true)+field('نوع الموعد','kind','مجلس','text',true,[['مجلس','مجلس'],['لقاء التأسيس','لقاء التأسيس'],['درس','درس'],['لقاء أسرة','لقاء أسرة'],['لقاء حضوري','لقاء حضوري'],['لقاء فردي','لقاء فردي'],['لقاء فريق','لقاء فريق'],['غيره','غيره']])+field('وقت الموعد (اختياري — يُحدّد لاحقًا)','starts_at','','datetime-local')+field('المدة بالدقائق','duration_minutes',90,'number')+field('الأسبوع','week_id',state.week||'','text',false,[['','غير مرتبط بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('الأسرة (اختياري)','family_id','','text',false,[['','للجميع'],...rows('families').map(f=>[f.id,f.name])])+field('المكان أو الرابط','place')+field('ملاحظات','notes','','textarea'));break;
 case 'newminute':dialog('محضر لقاء',field('تاريخ اللقاء','meeting_date',new Date().toISOString().slice(0,10),'date')+field('الأسبوع','week_id',state.week,'text',false,rows('weeks').filter(w=>w.kind==='program').map(w=>[w.id,w.title]))+field('عدد الحاضرات','attendance_count','','number')+field('الخلاصة','summary','','textarea')+field('التكليف والقرارات','decisions','','textarea'));break;
 default:return;
 }
@@ -1102,13 +1118,29 @@ throw error;
 if(oldResource?.cover_path&&oldResource.cover_path!==obj.cover_path)db.storage.from(RESOURCE_COVER_BUCKET).remove([oldResource.cover_path]).then(({error})=>{if(error)console.warn('تعذر حذف الغلاف القديم',error)});
 await read('resources');flash(a==='editresource'?'عُدّل المصدر بنجاح':'أُضيف المصدر بنجاح');
 }
-else if(a==='newtask')await save('tasks',{...x,due_on:x.due_on||null,week_id:x.section==='task'?(x.week_id||null):null});
+else if(a==='newtask'||a==='edittask'){
+ if(!team())throw Error('إدارة البنود للفريق فقط');
+ const body=String(x.body||'').trim();
+ if(!body)throw Error('أدخلي نص البند');
+ if(!preparationSections.some(([section])=>section===x.section))throw Error('القسم غير صالح');
+ const value={section:x.section,body,owner:x.owner?.trim()||null,due_on:x.due_on||null,note:x.note?.trim()||null,week_id:x.section==='task'?(x.week_id||null):null};
+ if(a==='edittask'){
+  const {data,error}=await db.from('tasks').update(value).eq('id',id).select('id');if(error)throw error;if(!data?.length)throw Error('لم يُحفظ التعديل؛ تحققي من صلاحياتك');
+ }else{const {data,error}=await db.from('tasks').insert(value).select('id');if(error)throw error;if(!data?.length)throw Error('تعذرت إضافة البند')}
+ await read('tasks');flash(a==='edittask'?'عُدّل البند بنجاح':'أُضيف البند بنجاح');
+}
 else if(a==='newjournal')await save('journal',{...x,author_id:state.user.id});
 else if(a==='editaccount'){const{error}=await db.from('accounts').update({...x,student_id:x.student_id||null}).eq('user_id',id);if(error)throw error;await read('accounts');state.studentToLink=null;flash('حُفظت صلاحية الحساب وربطه')}
 else if(a==='doc')await save('docs_family',{...x,kind:id,family_id:state.family},'family_id,kind');
 else if(a==='assignrole')await save('roles_family',{family_id:state.family,student_id:x.student_id,task:x.task,cycle:Number(x.cycle)},'family_id,task,cycle');
 else if(a==='assignleader')await save('rota_leader',{family_id:state.family,week_id:x.week_id,student_id:x.student_id},'family_id,week_id');
-else if(a==='newevent')await save('events',{...x,starts_at:x.starts_at||null,duration_minutes:Number(x.duration_minutes||90),week_id:x.week_id||null,family_id:x.family_id||null});
+else if(a==='newevent'){
+ if(isFoundationMeeting(x.kind,x.title)){
+  const launch=launchReadiness();
+  if(!launch.ready)throw Error(launch.total===0?'أضيفي شروط الانطلاق أولًا قبل جدولة لقاء التأسيس':'لا يمكن جدولة لقاء التأسيس: تبقى '+launch.remaining.length+' من شروط الانطلاق');
+ }
+ await save('events',{...x,starts_at:x.starts_at||null,duration_minutes:Number(x.duration_minutes||90),week_id:x.week_id||null,family_id:x.family_id||null});
+}
 else if(a==='newminute')await save('minutes',{...x,family_id:state.family,attendance_count:x.attendance_count?Number(x.attendance_count):null,author_id:state.user.id});
 $('.dialog-backdrop')?.remove();state.editing=null;render();
 }
@@ -1188,13 +1220,25 @@ const{error}=await db.from('questions').update({status:'sent',published:false}).
 if(error)throw error;
 await read('questions');state.questionsTab='sent';render();flash('سُجّلت إحالة السؤال إلى المرجعية. أرسليه خارج المنصة واستلمي الجواب المعتمد.');
 }
+else if(action.startsWith('deletetask:')){
+ if(!team())throw Error('حذف البنود للفريق فقط');
+ const id=action.split(':')[1],item=rows('tasks').find(t=>t.id===id);
+ if(!item)throw Error('البند غير موجود');
+ openDeleteConfirmation({type:'task',id,name:item.body});
+}
 else if(action.startsWith('deleteStudent:')){if(!leadership())throw Error('حذف السجل للإدارة والمرافقة فقط');const id=action.split(':')[1],student=rows('students').find(x=>x.id===id);if(!student)throw Error('تعذر العثور على السجل');if(rows('accounts').some(a=>a.student_id===id))throw Error('السجل مربوط بحساب. افصلي ربط الحساب من صفحة الحسابات قبل الحذف');openDeleteConfirmation({type:'student',id,name:student.name})}
 else if(action==='cancelDelete'){closeDeleteConfirmation()}
 else if(action==='confirmDelete'){
 const pending=deletePending;if(!pending)return;if(pending.type==='student'&&!leadership())throw Error('حذف السجل للإدارة والمرافقة فقط');
 el.disabled=true;
 try{
-if(pending.type==='student'){
+if(pending.type==='task'){
+ if(!team())throw Error('حذف البنود للفريق فقط');
+ const {data,error}=await db.from('tasks').delete().eq('id',pending.id).select('id');
+ if(error)throw error;
+ if(!data?.length)throw Error('لم يُحذف البند؛ تحققي من صلاحياتك');
+ closeDeleteConfirmation();await read('tasks');render();flash('حُذف البند بنجاح');
+ }else if(pending.type==='student'){
 const{error}=await db.from('students').delete().eq('id',pending.id);
 if(error)throw new Error('تعذر حذف السجل؛ قد تكون له متابعات أو تقارير مرتبطة. '+error.message);
 await read('students');closeDeleteConfirmation();state.page='students';render();flash('حُذف سجل الغارسة');
@@ -1259,7 +1303,13 @@ try{
 await save('milestones',{student_id,code,done:el.checked,done_at:el.checked?(previously?.done_at||new Date().toISOString()):null},'student_id,code');
 }catch(error){el.checked=!el.checked;throw error}
 }
-else if(el.dataset.task){const{error}=await db.from('tasks').update({done:el.checked,done_at:el.checked?new Date().toISOString():null}).eq('id',el.dataset.task);if(error)throw error;await read('tasks');render()}
+else if(el.dataset.task){
+ if(!team())throw Error('تحديث البنود للفريق فقط');
+ const previous=rows('tasks').find(t=>t.id===el.dataset.task);
+ const {data,error}=await db.from('tasks').update({done:el.checked,done_at:el.checked?(previous?.done_at||new Date().toISOString()):null}).eq('id',el.dataset.task).select('id');
+ if(error)throw error;if(!data?.length)throw Error('لم تُحفظ الحالة؛ تحققي من صلاحياتك');
+ await read('tasks');render();
+}
 }catch(err){flash(err.message||'تعذر الحفظ',true)}
 });
 document.addEventListener('submit',async e=>{
