@@ -1236,9 +1236,12 @@ function enhanceChoiceSelect(select){
  trigger.addEventListener('keydown',e=>{
   if(e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='Home'||e.key==='End'||e.key===' '||e.key==='Enter'){
    e.preventDefault();
-   if(!openChoiceMenu||openChoiceMenu.trigger!==trigger)openChoicePopover(select,trigger);
+   const wasClosed=!openChoiceMenu||openChoiceMenu.trigger!==trigger;
+   if(wasClosed)openChoicePopover(select,trigger);
    if(!openChoiceMenu)return;
+   if(wasClosed&&(e.key===' '||e.key==='Enter'))return;
    const enabled=[...select.options].map((opt,i)=>!opt.disabled&&!opt.hidden?i:-1).filter(i=>i>=0);
+   if(!enabled.length)return;
    const current=openChoiceMenu.active;
    let next=current;
    if(e.key==='Home')next=enabled[0];
