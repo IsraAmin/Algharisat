@@ -35,7 +35,7 @@ async function load(){
 const base=['settings','weeks','families','events','announcements','resources','roles_family','rota_leader'];
 const staff=['students','followups','reports_self','cards','milestones','goals','questions','tasks','journal','minutes','docs_family'];
 const student=['students','followups','reports_self','cards','milestones','goals','questions','minutes','docs_family'];
-const tables=[...base,...(team()?staff:student),...(leadership()?['accounts','done_survey','responses_survey','observations']:[])];
+const tables=[...base,...(team()?staff:student),...(leadership()?['accounts','done_survey','responses_survey','observations']:!team()?['done_survey']:[])];
 await Promise.all(tables.map(t=>read(t).catch(err=>{console.warn(t,err.message);state.rows[t]=[]})));
 if(!team()&&state.account?.student_id){state.profile=rows('students').find(s=>s.id===state.account.student_id);const result=await db.rpc('family_directory');if(!result.error&&result.data){const own=rows('students');state.rows.students=[...own,...result.data.filter(s=>!own.some(m=>m.id===s.id))]}const pub=await db.rpc('published_questions');if(!pub.error&&pub.data){const mine=rows('questions');state.rows.questions=[...mine,...pub.data.filter(q=>!mine.some(m=>m.id===q.id))]}}
 state.week ||= currentWeek()?.id;
@@ -753,10 +753,22 @@ const periodWeeks=rows('weeks').filter(w=>w.kind==='program'&&(state.period==='a
 return heading('التقارير','المؤشرات المستخرجة من المتابعة المحفوظة',btn('print','طباعة / حفظ PDF','secondary no-print'))+'<div class="toolbar no-print"><select data-select="period">'+[['all','المرحلة كلها'],['month1','الشهر الأول (الأسابيع ١–٤)'],['month2','الشهر الثاني (الأسابيع ٥–٨)']].map(x=>option(x[0],x[1],state.period)).join('')+'</select></div><div class="grid stats">'+[['عدد الأسر',families.length],['الحضور',known.length?Math.round(present.length/known.length*100)+'٪':'—'],['متوسط الورد',reports.filter(x=>x.wird_days!==null).length?(reports.reduce((a,x)=>a+Number(x.wird_days||0),0)/reports.filter(x=>x.wird_days!==null).length).toFixed(1):'—'],['المخرجات المنجزة',rows('milestones').filter(m=>m.done).length]].map(([label,v])=>'<div class="card stat"><div class="value">'+v+'</div><div class="label">'+label+'</div></div>').join('')+'</div><div class="card"><h3>ملخص الأسر</h3>'+families.map(f=>'<div class="list-row"><strong>'+esc(f.name)+'</strong><span class="muted">'+rows('students').filter(s=>s.family_id===f.id&&s.stage==='active').length+' غارسات</span></div>').join('')+'</div>';
 }
 function survey(){
-if(team())return heading('صوت الغارسة','استبانة بلا اسم ولا أسرة')+btn('togglesurvey',setting('survey_open',false)?'إغلاق الاستبانة':'فتح الاستبانة','goldbtn')+'<div class="card" style="margin-top:20px"><h3>الإجابات: '+rows('responses_survey').length+'</h3>'+rows('responses_survey').map(r=>'<div class="list-row"><div>'+((r.answers||[]).map((v,i)=>'<p><strong>'+['ما الذي نفعك؟','ما الذي أثقل عليك؟','هل كان الحمل مناسبًا؟','كيف وجدتِ أسرتك؟','مقترحاتك'][i]+'</strong> '+esc(v)+'</p>').join(''))+'</div></div>').join('')+'</div>';
-if(!setting('survey_open',false))return '<div class="card"><h2>صوت الغارسة</h2><p>الاستبانة غير مفتوحة الآن.</p></div>';
-if(rows('done_survey').some(d=>d.student_id===state.account?.student_id))return '<div class="notice">جزاكِ الله خيرًا، وصلت إجابتكِ.</div>';
-return heading('صوت الغارسة','تُحفظ إجاباتكِ دون اسم ولا أسرة')+'<form id="surveyForm" class="card">'+['ما الذي نفعكِ في هذه المرحلة أكثر من غيره؟','ما الذي أثقل عليكِ؟','هل كان حمل الأسبوع مناسبًا لدراستكِ وبيتكِ؟ وأين زاد؟','كيف وجدتِ أسرتكِ ولقاءها؟','ماذا تقترحين للمرحلة الثانية؟'].map((t,i)=>field(t,'q'+i,'','textarea',true)).join('')+'<button type="submit" class="btn">إرسال الإجابات</button></form>';
+const round=String(setting('survey_round','p1')),isOpen=setting('survey_open',false)===true;
+const questions=['ما الذي نفعكِ في هذه المرحلة أكثر من غيره؟','ما الذي أثقل عليكِ؟','هل كان حمل الأسبوع مناسبًا لدراستكِ وبيتكِ؟ وأين زاد؟','كيف وجدتِ أسرتكِ ولقاءها؟','ماذا تقترحين للمرحلة الثانية؟'];
+if(leadership()){
+ const answers=rows('responses_survey').filter(r=>r.round===round),completed=rows('done_survey').filter(d=>d.round===round).length;
+ const total=rows('students').filter(s=>s.stage==='active').length;
+ return heading('صوت الغارسة','استبانة بلا اسم ولا أسرة')
+ +'<div class="card"><p><strong>حالة الاستبانة: '+(isOpen?'مفتوحة':'مغلقة')+'</strong></p><p>الجولة: '+esc(round)+'</p><h3>أجابت '+completed+' من '+total+'</h3>'
+ +btn('togglesurvey',isOpen?'إغلاق الاستبانة':'فتح الاستبانة','goldbtn')
+ +'<div class="field" style="margin-top:18px"><label for="surveyRoundInput">رمز الجولة الحالية (مثل p1 أو p2)</label><input id="surveyRoundInput" type="text" value="'+esc(round)+'" '+(isOpen?'disabled':'')+' maxlength="32" pattern="[A-Za-z0-9_-]+"/><p class="muted">لإنشاء جولة جديدة، أغلقي الاستبانة ثم غيّري الرمز واحفظيه. تبقى نتائج الجولات السابقة محفوظة.</p></div>'
+ +btn('saveSurveyRound','حفظ رمز الجولة','secondary',isOpen?'disabled':'')+'</div>'
+ +questions.map((question,i)=>'<div class="card" style="margin-top:14px"><h3>'+esc((i+1)+'. '+question)+'</h3>'
+ +(answers.length?answers.map(r=>'<div class="list-row"><p>'+esc(Array.isArray(r.answers)?r.answers[i]??'—':'—')+'</p></div>').join(''):empty('لا توجد إجابات لهذا السؤال في الجولة الحالية'))+'</div>').join('');
+}
+if(!isOpen)return '<div class="card"><h2>صوت الغارسة</h2><p>الاستبانة غير مفتوحة الآن.</p></div>';
+if(rows('done_survey').some(d=>d.student_id===state.account?.student_id&&d.round===round))return '<div class="notice">جزاكِ الله خيرًا، وصلت إجابتكِ.</div>';
+return heading('صوت الغارسة','تُحفظ إجاباتكِ دون اسم ولا أسرة')+'<form id="surveyForm" class="card">'+questions.map((t,i)=>field(t,'q'+i,'','textarea',true)).join('')+'<button type="submit" class="btn">إرسال الإجابات</button></form>';
 }
 function accounts(){
 return heading('الحسابات والصلاحيات','موافقة الحسابات وربطها بالغارسات')+(state.studentToLink?'<div class="notice students-link-help">لربط حساب بالغارسة «'+esc(rows('students').find(x=>x.id===state.studentToLink)?.name||'المحددة')+'»، اختاري الحساب المطلوب من الجدول واضغطي «مراجعة وربط»، ثم حددي سجلها في حقل «سجل الغارسة» واحفظي.</div>':'')+table(['الاسم','البريد','الصفة','الغارسة المرتبطة','إجراء'],rows('accounts').map(a=>'<tr><td>'+esc(a.name)+'</td><td>'+esc(a.email)+'</td><td><span class="chip '+(a.role==='pending'?'warn':'')+'">'+esc(a.role)+'</span></td><td>'+esc(rows('students').find(s=>s.id===a.student_id)?.name||'—')+'</td><td>'+btn('editaccount:'+a.user_id,a.role==='pending'?'مراجعة وربط':'تعديل','secondary smallbtn')+'</td></tr>').join('')||'<tr><td colspan="5">'+empty('لا توجد حسابات')+'</td></tr>');
@@ -1058,7 +1070,8 @@ closeDeleteConfirmation();await refreshQuestions();render();flash('حُذف ال
 else if(action.startsWith('viewstudent:')){state.studentProfileTab='data';state.studentFileReturn=state.page==='students'?'students':'dashboard';state.dashboardStudent=action.split(':')[1];state.page='dashboardStudent';render();window.scrollTo(0,0)}
 else if(action.startsWith('go:')){state.page=action.split(':')[1];render()}
 else if(action==='changepassword'){const password=$('#f_newpassword').value;if(password.length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{error}=await db.auth.updateUser({password});if(error)throw error;flash('تغيرت كلمة المرور')}
-else if(action==='togglesurvey'){await save('settings',{key:'survey_open',value:!setting('survey_open',false)});render()}
+else if(action==='togglesurvey'){if(!leadership())throw Error('غير مصرح');await save('settings',{key:'survey_open',value:!setting('survey_open',false)});render()}
+else if(action==='saveSurveyRound'){if(!leadership())throw Error('غير مصرح');if(setting('survey_open',false))throw Error('أغلقي الاستبانة قبل تغيير الجولة');const value=$('#surveyRoundInput')?.value?.trim();if(!/^[A-Za-z0-9_-]{1,32}$/.test(value||''))throw Error('رمز الجولة غير صالح');await save('settings',{key:'survey_round',value});render();flash('حُفظت الجولة الحالية')}
 else await modal(action);
 }catch(err){flash(err.message||'تعذر تنفيذ الإجراء',true)}
 });
@@ -1131,7 +1144,7 @@ else if(f.id==='modalForm')await modalSave(f);
 else if(f.id==='followupForm')await saveFollowupTable(f);
 else if(f.id==='reportForm'){if(!state.account?.student_id)throw Error('حسابك غير مربوط بسجل الغارسة؛ أعيدي فتح المنصة بعد تحديث الصفحة');if(!state.week)throw Error('اختاري الأسبوع أولًا');x.wird_days=Number(x.wird_days);x.thought_read=x.thought_read==='true';await save('reports_self',{...x,student_id:state.account.student_id,week_id:state.week},'student_id,week_id')}
 else if(f.id==='settingsForm'){for(const [key,value] of Object.entries(x)){await save('settings',{key,value:key==='current_cycle'?Number(value):value})}render()}
-else if(f.id==='surveyForm'){const{error}=await db.rpc('submit_survey',{p_answers:[0,1,2,3,4].map(i=>x['q'+i]),p_round:'p1'});if(error)throw error;await read('done_survey');render();flash('جزاكِ الله خيرًا. وصلت إجابتكِ')}
+else if(f.id==='surveyForm'){const{error}=await db.rpc('submit_survey',{p_answers:[0,1,2,3,4].map(i=>x['q'+i]),p_round:String(setting('survey_round','p1'))});if(error)throw error;await read('done_survey');render();flash('جزاكِ الله خيرًا. وصلت إجابتكِ')}
 else if(f.id==='profileForm'){const{error}=await db.rpc('update_my_profile',{p_phone:x.phone,p_email:x.email,p_university:x.university,p_college:x.college,p_study_level:x.study_level,p_neighborhood:x.neighborhood});if(error)throw error;const{data:accountInfo,error:accountError}=await db.from('accounts').select('student_id').eq('user_id',state.user.id).single();if(accountError)throw accountError;state.account.student_id=accountInfo.student_id;await load();flash('حُفظت بياناتكِ الشخصية بنجاح')}
 }catch(err){console.error(err);const message=String(err?.message||'');const match=message.match(/(?:after|in)\s+(\d+)\s+seconds?/i);const throttled=err?.status===429||/for security purposes|rate limit|too many requests/i.test(message);flash(err?.code==='over_email_send_rate_limit'?'تعذّر إنشاء الحساب: بلغت رسائل تأكيد البريد حدّ الإرسال في Supabase. على الإدارة إيقاف Confirm Email من إعدادات Email؛ لا يكفي الانتظار بضع ثوانٍ.':throttled?'تم رفض الطلب مؤقتًا بسبب كثرة المحاولات. انتظري قليلًا ثم حاولي مرة واحدة.':(/row-level security|permission denied|غير مصرح/i.test(message)?'تعذر الحفظ بسبب صلاحيات الحساب أو عدم ارتباطه بسجل الغارسة. حدّثي الصفحة، وتأكدي من اعتماد الحساب وربطه؛ وإن استمرت المشكلة راجعي الإدارة. ('+esc(err?.code||'')+')':message||'تعذر الحفظ، تحققي من الاتصال'),true)}finally{if(submit)submit.disabled=false}
 });
