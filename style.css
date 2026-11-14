@@ -1563,3 +1563,22 @@ body{overflow-x:clip}
   .auth{height:auto;min-height:100svh;overflow:visible}
   .auth-hero,.auth-panel{height:auto;overflow:visible}
 }
+
+/* Login and new-account actions use the same warm gold language in dark mode. */
+html[data-theme="dark"] .auth-panel #authForm button[type="submit"].btn{
+  background:#97713e!important;
+  border-color:#97713e!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff;
+  text-shadow:0 1px 1px rgba(30,22,15,.2);
+}
+html[data-theme="dark"] .auth-panel #authForm button[type="submit"].btn:hover:not(:disabled),
+html[data-theme="dark"] .auth-panel #authForm button[type="submit"].btn:focus-visible{
+  background:#805e32!important;
+  border-color:#805e32!important;
+  color:#fff!important;
+}
+html[data-theme="dark"] .auth-panel #authForm button[type="submit"].btn:disabled{
+  opacity:.65;
+  cursor:wait;
+}
