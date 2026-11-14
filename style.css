@@ -1473,11 +1473,12 @@ td .btn{margin:2px;vertical-align:middle}
   --dark-text-secondary:#c5d4e1;
   --dark-text-gold:#f3c78e;
 }
-html[data-theme="dark"] .content :is(div,span,p,small,th,td,label,summary,a,button),
-html[data-theme="dark"] .content :is(h1,h2,h3,h4,h5,h6,strong){
+/* Scoped heading contrast; do not overwrite every span, table cell or button.
+   Universal text overrides previously made white text invisible on pale badges and rows. */
+html[data-theme="dark"] .content :is(h1,h2,h3,h4,h5,h6,legend,summary){
   color:var(--dark-text-primary)!important;
 }
-html[data-theme="dark"] :is(.auth-panel,.dialog,.app-confirm-box,.mobile-more-sheet) :is(h1,h2,h3,h4,h5,h6,p,div,span,small,label,strong,button){
+html[data-theme="dark"] :is(.auth-panel,.dialog,.app-confirm-box,.mobile-more-sheet) :is(h1,h2,h3,h4,h5,h6,label,strong){
   color:var(--dark-text-primary)!important;
 }
 html[data-theme="dark"] .content :is(
@@ -1581,4 +1582,172 @@ html[data-theme="dark"] .auth-panel #authForm button[type="submit"].btn:focus-vi
 html[data-theme="dark"] .auth-panel #authForm button[type="submit"].btn:disabled{
   opacity:.65;
   cursor:wait;
+}
+
+
+/* Full dark-mode surface and typography audit, November 2026.
+   All panels, zebra rows, badges and icon tiles must be contrast-safe.
+   Avoid broad universal color overrides: semantic indicators need their own colors. */
+html[data-theme="dark"]{
+  --dm-surface:#1d2b39;
+  --dm-surface-raised:#25384b;
+  --dm-surface-muted:#203243;
+  --dm-border:#40576c;
+  --dm-text:#f2f6fa;
+  --dm-text-muted:#c3d2df;
+  --dm-gold:#f0c48b;
+}
+html[data-theme="dark"] .content{
+  color:var(--dm-text);
+}
+html[data-theme="dark"] .content :is(
+  .card,.table-wrap,.students-table-wrap,.batch-family,.outcomes-surface,
+  .comms-metrics>div,.comms-section,.comms-announcement,.comms-resource,
+  .comms-empty,.questions-intro,.question-item,.question-answer,
+  .students-filterbar,.followup-panel,.followup-settings,
+  .dashboard-family-card,.student-file-section,.student-file-goal,
+  .batch-summary-card,.batch-rubric-item,.outcomes-mobile-totals
+){
+  background:var(--dm-surface)!important;
+  color:var(--dm-text)!important;
+  border-color:var(--dm-border)!important;
+}
+html[data-theme="dark"] .content :is(
+  .comms-announcement.is-pinned,.dashboard-launch-note,.dashboard-prep-info,
+  .followup-overview>div,.card-aspect,.card-stage-picker,
+  .student-file-details>div,.student-file-milestone,.outcomes-total-grid>div
+){
+  background:var(--dm-surface-raised)!important;
+  border-color:var(--dm-border)!important;
+  color:var(--dm-text)!important;
+}
+/* Generic tables: the accounts page uses table() without specialized row classes.
+   Setting both TR and TD backgrounds avoids inherited white zebra rules. */
+html[data-theme="dark"] .content .table-wrap > table{
+  background:var(--dm-surface)!important;
+  color:var(--dm-text)!important;
+}
+html[data-theme="dark"] .content .table-wrap > table thead th{
+  background:#2b4053!important;
+  color:var(--dm-text)!important;
+  border-color:var(--dm-border)!important;
+}
+html[data-theme="dark"] .content .table-wrap > table tbody tr,
+html[data-theme="dark"] .content .table-wrap > table tbody tr > :is(td,th){
+  background:var(--dm-surface)!important;
+  color:var(--dm-text)!important;
+  border-color:var(--dm-border)!important;
+}
+html[data-theme="dark"] .content .table-wrap > table tbody tr:nth-child(even),
+html[data-theme="dark"] .content .table-wrap > table tbody tr:nth-child(even) > :is(td,th){
+  background:var(--dm-surface-muted)!important;
+}
+html[data-theme="dark"] .content .table-wrap > table tbody tr:hover > :is(td,th){
+  background:#31495c!important;
+}
+/* Maintain the weekly tracking matrix and sticky-name cells, rather than
+   applying generic alternating-row fills over its special layout. */
+html[data-theme="dark"] .content .followup-edit-table thead th{
+  background:#30485e!important;
+  color:var(--dm-text)!important;
+}
+html[data-theme="dark"] .content .followup-edit-table .followup-name-cell{
+  background:var(--dm-surface)!important;
+  color:var(--dm-text)!important;
+}
+html[data-theme="dark"] .content .followup-edit-table tbody tr:nth-child(even) .followup-name-cell{
+  background:var(--dm-surface-muted)!important;
+}
+/* Common controls inside table and cards. */
+html[data-theme="dark"] .content :is(.btn.secondary,.students-clear,.theme-toggle){
+  background:#30475b!important;
+  border-color:#5e758a!important;
+  color:#fff!important;
+}
+html[data-theme="dark"] .content :is(.btn.secondary,.students-clear):hover:not(:disabled){
+  background:#405b70!important;
+  color:#fff!important;
+}
+html[data-theme="dark"] .content .btn.dangerbtn,
+html[data-theme="dark"] .content :is(.comms-delete,.question-delete,.student-delete-btn){
+  background:#56353c!important;
+  border-color:#80525b!important;
+  color:#ffe7e4!important;
+}
+html[data-theme="dark"] .content :is(.comms-delete,.question-delete,.student-delete-btn):hover{
+  background:#704149!important;
+  color:#fff!important;
+}
+/* Announcement and resource counters, labels, tiles and action areas. */
+html[data-theme="dark"] .content :is(.comms-metrics>div,.comms-section-header,.comms-announcement,.comms-resource){
+  color:var(--dm-text)!important;
+}
+html[data-theme="dark"] .content :is(.comms-heading-icon,.comms-metric-icon,.comms-resource-symbol,.questions-intro-icon){
+  background:#334e65!important;
+  color:#e6c596!important;
+  border:1px solid #4a6275!important;
+}
+html[data-theme="dark"] .content :is(.comms-heading-icon,.comms-metric-icon,.comms-resource-symbol,.questions-intro-icon) svg{
+  color:#f4d29e!important;
+  stroke:currentColor;
+}
+html[data-theme="dark"] .content :is(.comms-section-count,.comms-tag,.comms-tag.audience,.comms-tag.pinned,.comms-tag.resource-type,.comms-tag.resource-week,.comms-order){
+  background:#33495e!important;
+  color:#e9f2fa!important;
+  border-color:#50667a!important;
+}
+html[data-theme="dark"] .content :is(.comms-section-count,.comms-tag.pinned){
+  background:#50402f!important;
+  color:#ffdfaa!important;
+}
+html[data-theme="dark"] .content :is(.comms-announcement.is-pinned){
+  border-color:#86704d!important;
+}
+html[data-theme="dark"] .content :is(.comms-date,.comms-description,.comms-resource-note,.comms-section-heading p,.comms-metrics>div>span:last-child){
+  color:var(--dm-text-muted)!important;
+}
+html[data-theme="dark"] .content :is(.comms-announcement h3,.comms-resource h3,.comms-section-heading h2,.comms-metrics strong){
+  color:var(--dm-text)!important;
+}
+html[data-theme="dark"] .content :is(.comms-item-actions,.comms-resource-actions){
+  border-color:var(--dm-border)!important;
+}
+/* Highlight buttons and notification dots stay readable, not pale-on-pale. */
+html[data-theme="dark"] .content :is(.comms-item-actions .btn.goldbtn,.comms-resource-actions .btn.goldbtn){
+  background:#97713e!important;
+  border-color:#97713e!important;
+  color:#fff!important;
+}
+html[data-theme="dark"] .content .announcement-notice-indicator,
+html[data-theme="dark"] .communications-page .announcement-notice-indicator{
+  background:#b83b4a!important;
+  color:#fff!important;
+}
+/* Uniform chips and progress labels across accounts and reports. */
+html[data-theme="dark"] .content :is(.chip,.students-soft-tag,.students-tab-count,.batch-legend-value.unrated,.batch-level.unrated){
+  background:#364c60!important;
+  color:#ecf4fa!important;
+  border-color:#50677a!important;
+}
+html[data-theme="dark"] .content :is(.chip.ok,.batch-level.level-2,.batch-legend-value.level-2){background:#285044!important;color:#d5f9e5!important}
+html[data-theme="dark"] .content :is(.chip.warn,.batch-level.level-1,.batch-legend-value.level-1){background:#594730!important;color:#ffdda1!important}
+html[data-theme="dark"] .content :is(.chip.danger,.batch-level.level-0,.batch-legend-value.level-0){background:#613840!important;color:#ffd8d4!important}
+html[data-theme="dark"] .content :is(.batch-level.level-3,.batch-legend-value.level-3){background:#304d70!important;color:#e0edff!important}
+/* Accessible muted text and dark search/filter inputs. */
+html[data-theme="dark"] .content :is(.muted,.small.muted,.subtitle,.comms-empty p,.comms-date,.batch-summary-metric span){
+  color:var(--dm-text-muted)!important;
+}
+html[data-theme="dark"] .content :is(input,select,textarea){
+  background:#172737!important;
+  color:#f2f6fa!important;
+  border-color:#5f778b!important;
+}
+html[data-theme="dark"] .content :is(input,textarea)::placeholder{color:#b1c3d2}
+@media print{
+  html[data-theme="dark"] .content .table-wrap > table tbody tr > :is(td,th){
+    background:#fff!important;color:#172b3c!important;
+  }
+  html[data-theme="dark"] .content .table-wrap > table thead th{
+    background:#f4f4f4!important;color:#172b3c!important;
+  }
 }
