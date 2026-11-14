@@ -616,3 +616,37 @@ td .btn{margin:2px;vertical-align:middle}
 .student-file-observation>p{margin-top:6px}
 @media(max-width:950px){.student-file-details{grid-template-columns:repeat(2,minmax(0,1fr))}.student-file-milestones{grid-template-columns:1fr}}
 @media(max-width:650px){.student-profile{gap:13px}.student-file-header{padding:18px}.student-file-actions{width:100%}.student-file-tabs{margin:0 -4px;border-radius:13px}.student-file-tabs button{font-size:.75rem;padding:9px 12px}.student-file-section{padding:17px 14px}.student-file-details{gap:9px}.student-file-details>div{padding:10px}.student-file-details strong{font-size:.8rem}.student-file-milestone{padding:11px;flex-wrap:wrap}.student-file-observation{padding:14px 1px}}
+
+/* Compact action groups throughout the application */
+.page-head>.page-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px;flex:0 1 auto}
+.page-actions>.btn{margin:0!important;white-space:nowrap}
+@media(max-width:800px){.page-head>.page-actions{width:auto;max-width:100%;justify-content:flex-start;gap:7px}}
+@media(max-width:440px){.page-head>.page-actions{width:100%;gap:6px}.page-actions>.btn{padding:9px 11px;font-size:.77rem;flex:0 0 auto}}
+/* Navy Algharisat palette in the student register, replacing the bright green styling */
+.students-tab.active{background:var(--navy);border-color:var(--navy);box-shadow:0 4px 13px rgba(18,38,65,.17)}
+.students-tab.active .students-tab-count{background:#37506c;color:#fff}
+.students-tab:hover:not(.active){background:#f2f5f9;border-color:#b4c4d6;color:var(--navy)}
+.students-search-box input:focus{border-color:#577494;outline:2px solid #dce6f1}
+.students-search-icon,.students-filter-summary,.students-family-choice span{color:var(--navy)}
+.students-name-link,.students-name-link:hover{color:var(--navy)}
+.students-linked{color:var(--navy)}
+.students-linked .ui-icon{color:var(--navy)}
+.students-unlinked{color:#596f88;background:#edf2f8}
+.students-tab-count{color:#4a6078}
+.students-clear:hover{background:#edf2f8}
+.students-table th{color:var(--navy);background:#f2f5f9}
+/* Confirm before destructive writes */
+.delete-confirm-backdrop{position:fixed;inset:0;z-index:350;display:grid;place-items:center;padding:16px}
+.delete-confirm-scrim{position:absolute;inset:0;background:rgba(13,28,46,.68);backdrop-filter:blur(4px)}
+.delete-confirm{position:relative;z-index:1;width:min(430px,100%);padding:29px 26px;border-radius:21px;background:#fff;box-shadow:0 24px 70px rgba(10,28,45,.25);text-align:center}
+.delete-confirm-icon{width:55px;height:55px;display:grid;place-items:center;margin:0 auto 15px;color:#ad3434;background:#fff0ee;border-radius:16px}
+.delete-confirm-icon .ui-icon{width:27px;height:27px}
+.delete-confirm h2{font-size:1.27rem;color:var(--navy);margin-bottom:11px}
+.delete-confirm p{font-size:.89rem;color:#546373;line-height:1.85}
+.delete-confirm p strong{color:#a72e2e}
+.delete-confirm-actions{display:flex;gap:10px;justify-content:center;margin-top:24px}
+.delete-confirm-actions .btn{flex:1}
+.delete-confirm .delete-accept{background:#b03838;border:1px solid #b03838;color:#fff}
+.delete-confirm .delete-accept:hover{background:#922a2a;border-color:#922a2a}
+.delete-confirm .delete-accept:disabled{opacity:.55;cursor:wait}
+@media(max-width:500px){.delete-confirm{padding:24px 19px}}
