@@ -1463,3 +1463,42 @@ td .btn{margin:2px;vertical-align:middle}
 [data-theme="dark"] :is(.app-confirm-box h2,.app-toast-content strong){color:#f0f4f8!important}
 [data-theme="dark"] :is(.app-confirm-box p,.app-toast-content p){color:#bdcbd7!important}
 @media(max-width:650px){.toast.app-toast{left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));max-width:none;min-width:0}}
+
+
+/* Contrast hardening for every text-bearing component on dark surfaces.
+   Previous colors such as var(--navy) are intentionally navy even in dark mode.
+   Enforce high-contrast copy first; then restore accessible semantic accents. */
+:root[data-theme="dark"]{
+  --dark-text-primary:#f2f6fa;
+  --dark-text-secondary:#c5d4e1;
+  --dark-text-gold:#f3c78e;
+}
+html[data-theme="dark"] .content :is(div,span,p,small,th,td,label,summary,a,button),
+html[data-theme="dark"] .content :is(h1,h2,h3,h4,h5,h6,strong){
+  color:var(--dark-text-primary)!important;
+}
+html[data-theme="dark"] :is(.auth-panel,.dialog,.app-confirm-box,.mobile-more-sheet) :is(h1,h2,h3,h4,h5,h6,p,div,span,small,label,strong,button){
+  color:var(--dark-text-primary)!important;
+}
+html[data-theme="dark"] .content :is(
+ .muted,.subtitle,.small.muted,.batch-summary-metric span,.batch-summary-meta span:last-child,
+ .batch-rubric-source,.followup-no-report,.followup-save-state,
+ .outcome-check-date,.outcomes-total-grid small,.outcomes-total-grid>div>span,
+ .dashboard-family-metrics span,.student-file-details span,.comms-section-header p
+){color:var(--dark-text-secondary)!important}
+html[data-theme="dark"] .content :is(
+ .batch-summary-meta span:first-child,.outcome-family-count,.batch-section-heading .eyebrow
+){color:var(--dark-text-gold)!important}
+html[data-theme="dark"] .content :is(.batch-summary-title,.batch-summary-metric,.batch-summary-metric strong,.batch-section-heading h2,.batch-family-heading h3,.outcomes-section-title h2,.outcomes-table,.outcomes-table tbody th,.outcome-minutes-count,.outcomes-total-grid strong,.outcomes-mobile-totals h3){color:var(--dark-text-primary)!important}
+html[data-theme="dark"] .content :is(.batch-summary-card,.batch-section,.batch-family,.batch-rubric-item,.outcomes-table tbody tr,.outcomes-mobile-totals,.card-aspect,.student-file-goal,.question-item,.comms-resource){background:var(--paper)!important;border-color:var(--line)!important}
+html[data-theme="dark"] .content .batch-summary-card .batch-summary-meter{background:#496175!important}
+html[data-theme="dark"] .content :is(.chip.ok,.batch-level.level-2,.batch-legend-value.level-2,.card-aspect-level.level-2,.outcome-doc-status.done,.question-pill.state-answered,.question-pill.state-published){background:#265043!important;color:#d7fbe4!important}
+html[data-theme="dark"] .content :is(.chip.warn,.batch-level.level-1,.batch-legend-value.level-1,.card-aspect-level.level-1,.outcome-doc-status.pending,.question-pill.state-sent){background:#58432b!important;color:#ffdfa5!important}
+html[data-theme="dark"] .content :is(.chip.danger,.batch-level.level-0,.batch-legend-value.level-0,.card-aspect-level.level-0,.question-pill.state-open){background:#60393d!important;color:#ffd7d4!important}
+html[data-theme="dark"] .content :is(.batch-level.level-3,.batch-legend-value.level-3,.card-aspect-level.level-3){background:#304d72!important;color:#dceaff!important}
+html[data-theme="dark"] .content :is(.batch-level.unrated,.batch-legend-value.unrated){background:#3a5063!important;color:#e7f1fa!important}
+html[data-theme="dark"] .content :is(.btn.goldbtn,.btn:not(.secondary),.followup-week-pill.active,.students-tab.active,.questions-tabs button.active,.communications-tab.is-active){color:#fff!important}
+html[data-theme="dark"] .content :is(.btn.secondary,.theme-toggle){color:var(--dark-text-primary)!important}
+html[data-theme="dark"] .content :is(.students-name-link,.dashboard-student-link,.batch-student-name,.comms-open-link){color:#c2e5ff!important}
+html[data-theme="dark"] .content :is(input,select,textarea){color:#f2f6fa!important}
+@media print{html[data-theme="dark"] .content :is(div,span,p,small,th,td,label,summary,a,button,h1,h2,h3,h4,h5,h6,strong){color:#172b3c!important}}
