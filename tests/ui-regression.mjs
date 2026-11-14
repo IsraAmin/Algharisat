@@ -360,3 +360,15 @@ test('new setting controls retain readable colors in dark mode',()=>{
  assert.match(css,/html\[data-theme="dark"\] \.settings-section/);
  assert.match(css,/html\[data-theme="dark"\] \.backup-contact-note/);
 });
+
+test('mobile auth fits narrow viewport and removes obsolete hero marketing paragraph',()=>{
+ assert.doesNotMatch(app,/مساحة تجمع الأسبوع، والأسرة، والمتابعة، والثمرة في مكان واحد/);
+ assert.match(css,/html,body,#root\{width:100%;max-width:100%;min-width:0\}/);
+ assert.match(css,/@media\(max-width:1024px\)\{/);
+ assert.match(css,/\.auth\{display:flex;flex-direction:column;height:auto;min-height:100svh;overflow:visible\}/);
+ assert.match(css,/\.auth-panel\{padding:clamp\(20px,5vw,36px\)/);
+ assert.match(css,/\.auth-hero \.verse\{font-size:clamp/);
+ assert.match(css,/-webkit-text-size-adjust:100%/);
+ assert.match(css,/\.auth-panel :is\(input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\),textarea,select\)/);
+ assert.doesNotMatch(css,/user-scalable=no/);
+});
