@@ -681,8 +681,30 @@ return '<div class="questions-page">'+heading(staff?'الأسئلة':'أسئلت
 '<div class="questions-list">'+(cards||'<div class="questions-empty">'+iconSvg('inbox')+'<strong>'+noData+'</strong><p class="muted small">ستظهر الأسئلة هنا عند توفرها.</p></div>')+'</div>'+
 (staff?'<p class="questions-footnote">إحالة السؤال الفقهي تغيّر حالته إلى «عند المرجعية» لتتابعي إرساله خارج المنصة واستلام جوابه المعتمد؛ لا ترسل المنصة رسالة تلقائيًا للمعهد.</p>':'')+'</div>';
 }
+const resourceTypes={recording:'تسجيل',file:'ملف',link:'رابط'};
 function announcements(){
-return heading('الإعلانات والمصادر','المواعيد المهمة والمواد المساعدة',team()?btn('newannouncement','إعلان جديد','goldbtn')+' '+btn('newresource','إضافة مصدر'):'')+'<div class="grid two"><div class="card"><h3>الإعلانات</h3>'+rows('announcements').map(a=>'<div class="list-row"><div><strong>'+esc(a.title)+'</strong><p>'+esc(a.body)+'</p></div><span class="chip">'+(a.pinned?'مثبت':'إعلان')+'</span></div>').join('')||empty('لا توجد إعلانات')+'</div><div class="card"><h3>المصادر</h3>'+rows('resources').map(r=>'<div class="list-row"><div><a href="'+esc(safeUrl(r.url))+'" target="_blank" rel="noopener noreferrer"><strong>'+esc(r.title)+'</strong></a><p class="muted">'+esc(r.kind)+'</p></div></div>').join('')||empty('لا توجد مصادر')+'</div></div>';
+const staff=team();
+const announcementsSorted=[...rows('announcements')].sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned)||(b.created_at||'').localeCompare(a.created_at||''));
+const resourcesSorted=[...rows('resources')].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||a.title.localeCompare(b.title,'ar'));
+const publicCount=announcementsSorted.filter(a=>!a.family_id).length;
+const pinnedCount=announcementsSorted.filter(a=>a.pinned).length;
+const managementBtns=staff?btn('newannouncement','إعلان جديد','goldbtn')+' '+btn('newresource','إضافة مصدر'):'';
+const info=staff?'<div class="comms-metrics"><div><span class="comms-metric-icon">'+iconSvg('megaphone')+'</span><strong>'+announcementsSorted.length+'</strong><span>إعلانات</span></div><div><span class="comms-metric-icon">'+iconSvg('pin')+'</span><strong>'+pinnedCount+'</strong><span>مثبتة</span></div><div><span class="comms-metric-icon">'+iconSvg('book-open')+'</span><strong>'+resourcesSorted.length+'</strong><span>مصادر</span></div></div>':'';
+const itemsA=announcementsSorted.map(a=>{
+const target=a.family_id?'أسرة '+name('families',a.family_id):'جميع الغارسات';
+return '<article class="comms-announcement'+(a.pinned?' is-pinned':'')+'"><div class="comms-announcement-top"><div class="comms-tags">'+(a.pinned?'<span class="comms-tag pinned">'+iconSvg('pin')+' مثبت</span>':'')+'<span class="comms-tag audience">'+iconSvg(a.family_id?'users':'globe')+' '+esc(target)+'</span></div><time class="comms-date">'+esc(date(a.created_at))+'</time></div><h3>'+esc(a.title)+'</h3><p class="comms-description">'+esc(a.body)+'</p>'+
+(staff?'<div class="comms-item-actions">'+btn('editannouncement:'+a.id,'تعديل','secondary smallbtn')+' '+btn('deleteannouncement:'+a.id,'حذف','comms-delete smallbtn')+'</div>':'')+'</article>';
+}).join('');
+const itemsR=resourcesSorted.map(r=>{
+const type=resourceTypes[r.kind]||r.kind||'رابط';
+const week=r.week_id?weekName(r.week_id):'مصدر عام';
+const link=safeUrl(r.url);
+return '<article class="comms-resource"><div class="comms-resource-symbol">'+iconSvg(r.kind==='recording'?'video':r.kind==='file'?'file-text':'link')+'</div><div class="comms-resource-main"><div class="comms-resource-top"><span class="comms-tag resource-type">'+esc(type)+'</span><span class="comms-tag resource-week">'+iconSvg('calendar-days')+' '+esc(week)+'</span></div><h3>'+esc(r.title)+'</h3>'+(r.note?'<p class="comms-resource-note">'+esc(r.note)+'</p>':'')+'<div class="comms-resource-bottom"><a href="'+esc(link)+'" target="_blank" rel="noopener noreferrer" class="comms-open-link">'+iconSvg('external-link')+' فتح المصدر</a>'+(staff?'<span class="comms-order">ترتيب '+Number(r.sort_order||0)+'</span>':'')+'</div></div>'+
+(staff?'<div class="comms-resource-actions">'+btn('editresource:'+r.id,'تعديل','secondary smallbtn')+' '+btn('deleteresource:'+r.id,'حذف','comms-delete smallbtn')+'</div>':'')+'</article>';
+}).join('');
+return '<div class="communications-page">'+heading('الإعلانات والمصادر',staff?'نشر أخبار البرنامج وموادّه التعليمية وإدارتها':'آخر أخبار البرنامج والمصادر التعليمية التي تحتاجين إليها',managementBtns)+info+
+'<section class="comms-section"><div class="comms-section-header"><div class="comms-section-heading"><span class="comms-heading-icon">'+iconSvg('megaphone')+'</span><div><h2>الإعلانات</h2><p>المواعيد والتنبيهات المهمة للدفعة وللأسر</p></div></div><span class="comms-section-count">'+announcementsSorted.length+' إعلان</span></div><div class="comms-announcements">'+(itemsA||'<div class="comms-empty">'+iconSvg('megaphone')+'<strong>لا توجد إعلانات بعد</strong><p>ستظهر هنا إعلانات البرنامج حين تنشرها عضوة الفريق.</p></div>')+'</div></section>'+
+'<section class="comms-section"><div class="comms-section-header"><div class="comms-section-heading"><span class="comms-heading-icon">'+iconSvg('book-open')+'</span><div><h2>المصادر</h2><p>تسجيلات وملفات وروابط مرتبة بحسب أولويتها</p></div></div><span class="comms-section-count">'+resourcesSorted.length+' مصدر</span></div><div class="comms-resources">'+(itemsR||'<div class="comms-empty">'+iconSvg('book-open')+'<strong>لا توجد مصادر بعد</strong><p>ستظهر هنا المواد والروابط التي يضيفها الفريق.</p></div>')+'</div></section></div>';
 }
 function tasks(){
 return heading('التحضير والتشغيل','القرارات والمهام وشروط الانطلاق وقائمة الختام',btn('newtask','إضافة مهمة','goldbtn'))+['decision','task','launch','closing'].map((key,i)=>'<div class="card" style="margin-bottom:15px"><h3>'+['القرارات','المهام','شروط الانطلاق','قائمة الختام'][i]+'</h3>'+rows('tasks').filter(t=>t.section===key).map(t=>'<div class="list-row"><div><strong>'+esc(t.body)+'</strong><p class="muted">'+esc(t.owner||'')+' '+(t.due_on?'| '+date(t.due_on):'')+'</p></div><input style="width:20px;min-height:20px" type="checkbox" data-task="'+t.id+'" '+(t.done?'checked':'')+'/></div>').join('')+(!rows('tasks').some(t=>t.section===key)?empty('لم تُدخل بنود هذا القسم بعد'):'')+'</div>').join('');
@@ -758,8 +780,28 @@ case 'answer':
 if(!team())throw Error('الإجابة من صلاحيات الفريق');
 o=rows('questions').find(x=>x.id===id)||{};
 dialog('الجواب ومتابعة السؤال','<div class="question-modal-intro"><span class="question-pill kind-'+esc(o.kind||'general')+'">'+esc(questionKinds[o.kind]||'عام')+'</span><p>'+esc(o.body||'')+'</p></div>'+field('الجواب المعتمد','answer',o.answer||'','textarea')+field('الحالة','status',o.status||'open','text',true,[['open','جديد'],['sent','عند المرجعية'],['answered','أُجيب']])+field('النشر لجميع الغارسات دون اسم السائلة','published',String(!!o.published),'text',true,[['false','لا، لا يُنشر'],['true','نعم، ينشر بدون اسم']])+'<p class="muted small question-modal-help">لا يُنشر السؤال إلا إذا كانت حالته «أُجيب» وكانت الإجابة مكتوبة. للسؤال الفقهي المحال للمرجعية، سجّلي الجواب المعتمد حين يصل.</p>');break;
-case 'newannouncement':dialog('إعلان جديد',field('العنوان','title','','text',true)+field('نص الإعلان','body','','textarea',true)+field('الأُسرة','family_id','','text',false,stSelect)+field('مثبت','pinned','false','text',false,[['false','لا'],['true','نعم']]));break;
-case 'newresource':dialog('مصدر جديد',field('العنوان','title','','text',true)+field('الرابط','url','','url',true)+field('النوع','kind','link','text',true,[['recording','تسجيل'],['file','ملف'],['link','رابط']]));break;
+case 'newannouncement':case 'editannouncement':{
+if(!team())throw Error('إدارة الإعلانات للفريق فقط');
+o=a==='editannouncement'?rows('announcements').find(x=>x.id===id):{};
+if(!o)throw Error('تعذر العثور على الإعلان');
+dialog(a==='editannouncement'?'تعديل الإعلان':'إعلان جديد',
+field('عنوان الإعلان','title',o.title||'','text',true)+
+field('نص الإعلان','body',o.body||'','textarea',true)+
+field('الجمهور','family_id',o.family_id||'','text',false,[['','جميع الغارسات'],...rows('families').map(f=>[f.id,f.name])])+
+field('التثبيت في أعلى الإعلانات','pinned',String(!!o.pinned),'text',true,[['false','إعلان عادي'],['true','مثبت في الأعلى']]));break;
+}
+case 'newresource':case 'editresource':{
+if(!team())throw Error('إدارة المصادر للفريق فقط');
+o=a==='editresource'?rows('resources').find(x=>x.id===id):{};
+if(!o)throw Error('تعذر العثور على المصدر');
+dialog(a==='editresource'?'تعديل المصدر':'مصدر جديد',
+field('عنوان المصدر','title',o.title||'','text',true)+
+field('رابط المصدر','url',o.url||'','url',true)+
+field('نوع المصدر','kind',o.kind||'link','text',true,[['recording','تسجيل'],['file','ملف'],['link','رابط']])+
+field('الأسبوع المرتبط بالمصدر','week_id',o.week_id||'','text',false,[['','مصدر عام (لا يرتبط بأسبوع)'],...sortedWeeks().map(w=>[w.id,w.title])])+
+field('ملاحظة','note',o.note||'','textarea')+
+field('الترتيب (الأقل يظهر أولًا)','sort_order',o.sort_order??0,'number'));break;
+}
 case 'newtask':dialog('مهمة جديدة',field('القسم','section','task','text',true,[['decision','قرار'],['task','مهمة'],['launch','شرط انطلاق'],['closing','قائمة الختام']])+field('الأسبوع (للمهام الأسبوعية)','week_id',(sortedWeeks().find(w=>w.kind==='program')?.starts_on>todayISO()?(sortedWeeks().find(w=>w.kind==='prep'&&weekCurrent(w))||sortedWeeks().find(w=>w.kind==='prep'&&w.starts_on>todayISO())||sortedWeeks().find(w=>w.kind==='prep'))?.id:state.week)||'','text',false,[['','غير مرتبطة بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('المهمة','body','','textarea',true)+field('المسؤول','owner')+field('موعد الإنجاز','due_on','','date'));break;
 case 'newjournal':dialog('تدوين التجربة',field('الأسبوع','week_id',state.week,'text',true,rows('weeks').filter(w=>w.kind==='program').map(w=>[w.id,w.title]))+field('ما نجح','success','','textarea')+field('ما تعثر','obstacle','','textarea')+field('القرار','decision','','textarea'));break;
 case 'editaccount':dialog('مراجعة الحساب',field('الاسم','name',o.name,'text',true)+field('الصفة','role',o.role,'text',true,[['pending','ينتظر'],['gharisa','غارسة'],['musaida','مساعدة المرافقة'],['murafiqa','المرافقة'],...(state.account?.role==='admin'?[['admin','الإدارة']]:[]),['disabled','موقوف']])+field('اللقب','title',o.title)+field('سجل الغارسة','student_id',o.student_id||(o.role==='gharisa'?state.studentToLink:'')||'','text',false,[['','بدون ربط'],...rows('students').map(s=>[s.id,s.name])]));break;
@@ -807,8 +849,31 @@ if(!updated?.length)throw Error('تعذر تحديث السؤال. تحققي م
 await refreshQuestions();
 flash('حُفظت إجابة السؤال وحالته بنجاح');
 }
-else if(a==='newannouncement')await save('announcements',{...x,family_id:x.family_id||null,pinned:bo(x.pinned),author_id:state.user.id});
-else if(a==='newresource'){if(!/^https?:\/\//i.test(x.url))throw Error('رابط المصدر يجب أن يبدأ بـ https:// أو http://');await save('resources',x)}
+else if(a==='newannouncement'||a==='editannouncement'){
+if(!team())throw Error('إدارة الإعلانات للفريق فقط');
+const title=String(x.title||'').trim(),body=String(x.body||'').trim();
+if(!title||!body)throw Error('اكتبي عنوان الإعلان ونصّه');
+const obj={title,body,family_id:x.family_id||null,pinned:bo(x.pinned)};
+if(a==='newannouncement')obj.author_id=state.user.id;
+const request=a==='editannouncement'?db.from('announcements').update(obj).eq('id',id).select('id'):db.from('announcements').insert(obj).select('id');
+const{data,error}=await request;if(error)throw error;
+if(!data?.length)throw Error('لم يتم حفظ الإعلان؛ تحققي من صلاحياتك');
+await read('announcements');flash(a==='editannouncement'?'عُدّل الإعلان بنجاح':'نُشر الإعلان بنجاح');
+}
+else if(a==='newresource'||a==='editresource'){
+if(!team())throw Error('إدارة المصادر للفريق فقط');
+const title=String(x.title||'').trim(),url=String(x.url||'').trim();
+if(!title)throw Error('أدخلي عنوان المصدر');
+if(!/^https?:\/\/[^\\s]+$/i.test(url))throw Error('الرابط يجب أن يبدأ بـ https:// أو http:// ويكون صالحًا');
+if(!Object.hasOwn(resourceTypes,x.kind))throw Error('نوع المصدر غير صحيح');
+const order=Number(x.sort_order??0);
+if(!Number.isSafeInteger(order)||order<0)throw Error('الترتيب يجب أن يكون عددًا صحيحًا غير سالب');
+const obj={title,url,kind:x.kind,week_id:x.week_id||null,note:String(x.note||'').trim()||null,sort_order:order};
+const request=a==='editresource'?db.from('resources').update(obj).eq('id',id).select('id'):db.from('resources').insert(obj).select('id');
+const{data,error}=await request;if(error)throw error;
+if(!data?.length)throw Error('لم يتم حفظ المصدر؛ تحققي من صلاحياتك');
+await read('resources');flash(a==='editresource'?'عُدّل المصدر بنجاح':'أُضيف المصدر بنجاح');
+}
 else if(a==='newtask')await save('tasks',{...x,due_on:x.due_on||null,week_id:x.section==='task'?(x.week_id||null):null});
 else if(a==='newjournal')await save('journal',{...x,author_id:state.user.id});
 else if(a==='editaccount'){const{error}=await db.from('accounts').update({...x,student_id:x.student_id||null}).eq('user_id',id);if(error)throw error;await read('accounts');state.studentToLink=null;flash('حُفظت صلاحية الحساب وربطه')}
@@ -863,6 +928,14 @@ else if(action==='more'){showMobileMore()}
 else if(action==='closeMore'){closeMobileMore()}
 else if(action==='backStudentProfile'){state.page='dashboardStudent';render();window.scrollTo(0,0)}
 else if(action.startsWith('studentReport:')){state.studentReportWeek=action.split(':')[1];state.page='studentReport';render();window.scrollTo(0,0)}
+else if(action.startsWith('deleteannouncement:')||action.startsWith('deleteresource:')){
+if(!team())throw Error('الحذف من صلاحيات الفريق فقط');
+const isAnnouncement=action.startsWith('deleteannouncement:');
+const id=action.split(':')[1],table=isAnnouncement?'announcements':'resources';
+const record=rows(table).find(item=>item.id===id);
+if(!record)throw Error('تعذر العثور على العنصر');
+openDeleteConfirmation({type:isAnnouncement?'announcement':'resource',id,name:record.title});
+}
 else if(action.startsWith('deletequestion:')){
 const id=action.split(':')[1],q=rows('questions').find(item=>item.id===id);
 if(!q)throw Error('تعذر العثور على السؤال');
@@ -887,6 +960,17 @@ if(pending.type==='student'){
 const{error}=await db.from('students').delete().eq('id',pending.id);
 if(error)throw new Error('تعذر حذف السجل؛ قد تكون له متابعات أو تقارير مرتبطة. '+error.message);
 await read('students');closeDeleteConfirmation();state.page='students';render();flash('حُذف سجل الغارسة');
+}else if(pending.type==='announcement'||pending.type==='resource'){
+if(!team())throw Error('الحذف من صلاحيات الفريق فقط');
+const table=pending.type==='announcement'?'announcements':'resources';
+const current=rows(table).find(item=>item.id===pending.id);
+if(!current)throw Error('العنصر غير موجود');
+const{data,error}=await db.from(table).delete().eq('id',pending.id).select('id');
+if(error)throw error;
+if(!data?.length)throw Error('لم يتم الحذف؛ تحققي من صلاحياتك');
+closeDeleteConfirmation();
+await read(table);
+render();flash(pending.type==='announcement'?'حُذف الإعلان':'حُذف المصدر');
 }else if(pending.type==='question'){
 const q=rows('questions').find(x=>x.id===pending.id);
 if(!q||(!team()&&!(q.student_id===state.account?.student_id&&q.status!=='answered')))throw Error('غير مصرح بحذف هذا السؤال');
