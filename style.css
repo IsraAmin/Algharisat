@@ -761,3 +761,30 @@ td .btn{margin:2px;vertical-align:middle}
   .followup-edit-table .followup-name-cell,.followup-edit-table .followup-note-cell{grid-column:1}
   .followup-week-pill{font-size:.63rem}
 }
+
+/* Constrain desktop weekly follow-up to the laptop viewport.
+   The wide eight-column table scrolls inside its own panel, never the page. */
+.app{width:100%;max-width:100%;min-width:0}
+.app>.main{min-width:0;width:0;flex:1 1 0%}
+.app>.main>.content{box-sizing:border-box;width:100%;max-width:1460px;min-width:0}
+.app>.main>.content>.followup-dashboard{min-width:0}
+.followup-dashboard{width:100%;max-width:100%;min-width:0;grid-template-columns:minmax(0,1fr)}
+.followup-dashboard>*{min-width:0;max-width:100%;box-sizing:border-box}
+.followup-settings,.followup-overview,#followupForm,.followup-panel{min-width:0;max-width:100%;width:100%;box-sizing:border-box}
+.followup-week-group{min-width:0}
+.followup-overview{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr)}
+.followup-panel{overflow:hidden}
+.followup-table-scroll{display:block;min-width:0;max-width:100%;width:100%;overflow-x:auto;overflow-y:hidden;box-sizing:border-box;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.followup-edit-table{width:1120px;min-width:1120px;max-width:none}
+@media(min-width:1021px){
+  .followup-table-scroll{border-top:1px solid #edf0f3;border-bottom:1px solid #edf0f3}
+  .followup-table-scroll::-webkit-scrollbar{height:10px}
+  .followup-table-scroll::-webkit-scrollbar-track{background:#f2f5f8}
+  .followup-table-scroll::-webkit-scrollbar-thumb{background:#a8b8c8;border-radius:10px}
+}
+@media(max-width:1020px){
+  .followup-overview{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .followup-edit-table{width:100%;min-width:0!important;max-width:100%}
+  .followup-table-scroll{overflow-x:visible;overflow-y:visible}
+}
+@media(max-width:600px){.followup-overview{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
