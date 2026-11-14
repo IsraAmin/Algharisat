@@ -230,10 +230,10 @@ const personalFollow=rows('followups').filter(f=>f.student_id===student.id);
 const reports=rows('reports_self').filter(r=>r.student_id===student.id);
 const stat=key=>({present:'حاضرة',late:'متأخرة',excused:'بعذر',absent:'غائبة'})[key]||'—';
 const linked=rows('accounts').find(a=>a.student_id===student.id);
-const details=[['الهاتف',student.phone],['البريد',student.email],['الجامعة',student.university],['الكلية',student.college],['المستوى الدراسي',student.study_level],['الحي',student.neighborhood],['الحالة الاجتماعية',student.marital_status],['دون العشرين',student.under_twenty?'نعم':'لا'],['ولي الأمر',student.guardian_name],['هاتف ولي الأمر',student.guardian_phone],['قادت السابق',student.led_before?'نعم':'لا'],['الحساب المرتبط',linked?.email||'غير مرتبط']];
+const details=[['الهاتف',student.phone],['البريد',student.email],['الجامعة',student.university],['الكلية',student.college],['المستوى الدراسي',student.study_level],['الحي',student.neighborhood],['الحالة الاجتماعية',({single:'عزباء',engaged:'مخطوبة',married:'متزوجة'})[student.marital_status]||student.marital_status],['دون العشرين',student.under_twenty?'نعم':'لا'],['ولي الأمر',student.guardian_name],['هاتف ولي الأمر',student.guardian_phone],['قادت السابق',student.led_before?'نعم':'لا'],['الحساب المرتبط',linked?.email||'غير مرتبط']];
 const goals=rows('goals').filter(g=>g.student_id===student.id);
 const milestones=rows('milestones').filter(m=>m.student_id===student.id);
-return '<div class="dashboard-student-file">'+btn('go:dashboard','العودة إلى اللوحة','secondary smallbtn')+
+return '<div class="dashboard-student-file">'+btn('go:'+(state.studentFileReturn==='students'?'students':'dashboard'),state.studentFileReturn==='students'?'العودة إلى الغارسات':'العودة إلى اللوحة','secondary smallbtn')+
 heading(student.name,'ملف الغارسة · '+name('families',student.family_id),btn('editstudent:'+student.id,'تعديل البيانات','secondary smallbtn')+' '+btn('newgoal:'+student.id,'إضافة هدف','secondary smallbtn'))+
 '<div class="card"><h3>البيانات</h3><div class="dashboard-student-details">'+details.map(([k,v])=>'<div><span class="muted small">'+esc(k)+'</span><strong>'+esc(v||'—')+'</strong></div>').join('')+'</div></div>'+
 '<div class="card"><h3>المتابعة الأسبوعية والتقارير</h3><div class="dashboard-student-history">'+program.map(w=>{const f=personalFollow.find(x=>x.week_id===w.id),r=reports.find(x=>x.week_id===w.id);return '<div class="list-row"><div><strong>'+esc(w.title)+'</strong><p class="muted small">المجلس: '+stat(f?.majlis)+' · لقاء الأسرة: '+stat(f?.family_meeting)+' · الورد: '+esc(f?.wird_days??'—')+'</p></div><span class="chip '+(r?'ok':'')+'">'+(r?'وصل التقرير':'لم يُرسل')+'</span></div>'}).join('')+'</div></div>'+
@@ -485,7 +485,7 @@ else if(action==='clearstudents'){state.studentsSearch='';state.studentsFamily='
 else if(action.startsWith('studentaccounts:')){if(!leadership())throw Error('ربط الحسابات متاح للإدارة والمرافقة فقط');state.studentToLink=action.split(':')[1];state.page='accounts';render();window.scrollTo(0,0)}
 else if(action==='more'){showMobileMore()}
 else if(action==='closeMore'){closeMobileMore()}
-else if(action.startsWith('viewstudent:')){state.dashboardStudent=action.split(':')[1];state.page='dashboardStudent';render();window.scrollTo(0,0)}
+else if(action.startsWith('viewstudent:')){state.studentFileReturn=state.page==='students'?'students':'dashboard';state.dashboardStudent=action.split(':')[1];state.page='dashboardStudent';render();window.scrollTo(0,0)}
 else if(action.startsWith('go:')){state.page=action.split(':')[1];render()}
 else if(action==='changepassword'){const password=$('#f_newpassword').value;if(password.length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{error}=await db.auth.updateUser({password});if(error)throw error;flash('تغيرت كلمة المرور')}
 else if(action==='togglesurvey'){await save('settings',{key:'survey_open',value:!setting('survey_open',false)});render()}
