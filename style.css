@@ -2442,3 +2442,43 @@ html[data-theme="dark"] .backup-contact-note :is(strong){color:#f2f6fa!important
 html[data-theme="dark"] .backup-contact-note p{color:#c7d7e4!important}
 html[data-theme="dark"] .backup-contact-icon{background:#514636!important;color:#f1c88b!important}
 @media(max-width:650px){.settings-section{padding:16px!important}.settings-calendar-grid{grid-template-columns:1fr}.settings-stage-row{align-items:start;flex-wrap:wrap}.settings-stage-actions{width:100%;justify-content:flex-end}.backup-contact-note{padding:13px}.backup-contact-note .btn{width:100%}}
+
+/* Authentication viewport and Android browser text-scaling stability.
+   Responsive by available CSS width; do not disable pinch-zoom accessibility. */
+html{
+ -webkit-text-size-adjust:100%;
+ text-size-adjust:100%;
+}
+html,body,#root{width:100%;max-width:100%;min-width:0}
+.auth{width:100%;max-width:100%;min-width:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.auth-hero,.auth-panel{min-width:0;max-width:100%;box-sizing:border-box}
+.auth-hero :is(.brand,h1,.verse),.auth-panel :is(h1,h2,p,label){max-width:100%;overflow-wrap:anywhere}
+.auth-panel form,.auth-panel .field,.auth-panel .tabs{min-width:0;max-width:100%}
+.auth-panel :is(input,textarea,select,button){max-width:100%}
+.auth-hero .verse{font-size:clamp(1rem,2.1vw,1.5rem);line-height:1.9}
+@media(max-width:1024px){
+ .auth{display:flex;flex-direction:column;height:auto;min-height:100svh;overflow:visible}
+ .auth-hero,.auth-panel{width:100%;height:auto;min-height:0;overflow:visible}
+ .auth-hero{padding:clamp(20px,5vw,32px) clamp(18px,5vw,38px);justify-content:flex-start}
+ .auth-hero h1{font-size:clamp(2.15rem,6.8vw,3rem);margin:12px 0 4px;line-height:1.3}
+ .auth-hero .verse{font-size:clamp(.96rem,3.1vw,1.14rem);line-height:1.8;max-width:100%}
+ .auth-panel{padding:clamp(20px,5vw,36px) clamp(16px,5vw,38px) 48px;flex:1;justify-content:flex-start}
+ .auth-panel .welcome{font-size:clamp(1.45rem,4.4vw,1.95rem);line-height:1.65}
+ .auth-panel .tabs{width:100%}
+ .auth-panel .tabs button{min-width:0;flex:1}
+}
+/* Never let focused mobile form fields cause automatic browser zoom. */
+@media(max-width:1024px) and (pointer:coarse){
+ .auth-panel :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select),
+ .auth-panel .ui-choice-trigger{font-size:16px!important;line-height:1.5}
+ .auth-panel .field label{font-size:max(.88rem,14px)}
+}
+@media(max-width:480px){
+ .auth-hero{padding:19px 17px}
+ .auth-hero .brand{font-size:.88rem;flex-wrap:wrap;line-height:1.6}
+ .auth-hero h1{font-size:2.25rem}
+ .auth-hero .verse{font-size:1rem;line-height:1.7}
+ .auth-panel{padding:22px 17px 44px}
+ .auth-panel .welcome{font-size:1.55rem}
+ .auth-panel .tabs button{font-size:.94rem;padding-inline:7px}
+}
