@@ -1264,3 +1264,96 @@ td .btn{margin:2px;vertical-align:middle}
 .communications-page [role="tabpanel"][hidden]{display:none!important}
 .communications-page .communications-tab:focus-visible{outline:2px solid #b79867;outline-offset:2px}
 @media(max-width:530px){.communications-page .communications-tabs{gap:5px;padding:5px;border-radius:13px}.communications-page .communications-tab{min-height:49px;gap:6px;font-size:.82rem;padding:7px 4px}.communications-page .communications-tab svg{width:17px;height:17px}.communications-page .communications-tab-count{min-width:22px;height:22px;font-size:.68rem}}
+
+/* Responsive follow-ups: always a compact, horizontally scrolling table. */
+.followup-panel{overflow:hidden!important}
+.followup-table-scroll{display:block!important;width:100%!important;max-width:100%!important;overflow-x:auto!important;overflow-y:auto!important;max-height:67vh;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0!important;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+.followup-edit-table{display:table!important;border-collapse:separate!important;border-spacing:0!important;table-layout:fixed!important;width:1230px!important;min-width:1230px!important;max-width:none!important}
+.followup-edit-table thead{display:table-header-group!important}
+.followup-edit-table tbody{display:table-row-group!important}
+.followup-edit-table tbody tr,.followup-edit-table tbody tr:nth-child(even){display:table-row!important;width:auto!important;min-width:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important}
+.followup-edit-table tr th,.followup-edit-table tr td{display:table-cell!important;vertical-align:middle!important;min-width:0!important;width:auto!important;padding:8px 7px!important;border:0!important;border-bottom:1px solid var(--line)!important;white-space:normal}
+.followup-edit-table thead th{position:sticky!important;top:0!important;z-index:3!important;background:var(--soft)!important;color:var(--ink)!important;font-size:.77rem!important;padding:11px 8px!important;white-space:nowrap!important}
+.followup-edit-table .followup-name-cell{position:sticky!important;right:0!important;z-index:2!important;background:var(--paper)!important;width:245px!important;min-width:245px!important;max-width:245px!important;box-shadow:-2px 0 0 var(--line)!important}
+.followup-edit-table thead th:first-child{position:sticky!important;right:0!important;z-index:5!important;min-width:245px!important;width:245px!important;max-width:245px!important}
+.followup-edit-table tbody tr:nth-child(even) td{background:var(--soft)}
+.followup-edit-table tbody tr:nth-child(even) .followup-name-cell{background:var(--soft)!important}
+.followup-edit-table tbody tr:hover td,.followup-edit-table tbody tr:hover .followup-name-cell{background:var(--gold-light)!important}
+.followup-edit-table .followup-name-cell>strong{font-size:.8rem!important}
+.followup-edit-table td:before{display:none!important;content:none!important}
+.followup-edit-table td select,.followup-edit-table td input{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;height:36px!important;min-height:36px!important;font-size:.78rem!important;padding:4px 7px!important}
+.followup-edit-table th:nth-child(2),.followup-edit-table th:nth-child(3){min-width:145px!important;width:145px!important}
+.followup-edit-table th:nth-child(4){min-width:77px!important;width:77px!important}
+.followup-edit-table th:nth-child(5),.followup-edit-table th:nth-child(6),.followup-edit-table th:nth-child(7){min-width:145px!important;width:145px!important}
+.followup-edit-table th:nth-child(8){min-width:180px!important;width:180px!important}
+.followup-edit-table .followup-note-cell{grid-column:auto!important}
+.followup-student-report,.followup-no-report{font-size:.67rem!important;line-height:1.45!important}
+@media(max-width:1320px){.followup-table-scroll{overflow-x:auto!important;overflow-y:auto!important}.followup-edit-table{width:1230px!important;min-width:1230px!important;max-width:none!important}}
+@media(max-width:650px){.followup-table-scroll{max-height:63vh}.followup-edit-table .followup-name-cell,.followup-edit-table thead th:first-child{min-width:175px!important;width:175px!important;max-width:175px!important}}
+/* International phone number capture */
+.signup-phone{display:flex;gap:10px;align-items:end;width:100%}
+.signup-phone .signup-code{flex:0 0 105px;min-width:0}
+.signup-phone .signup-local{flex:1;min-width:0}
+.signup-phone label{display:block;font-size:.73rem;margin-bottom:6px;color:var(--ink-2);font-weight:650;text-align:left}
+.signup-phone input{direction:ltr;text-align:left;unicode-bidi:plaintext}
+.auth-theme-control{display:flex;justify-content:flex-start;margin-top:15px}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-height:36px;padding:6px 11px;border-radius:11px;border:1px solid var(--line-strong);background:var(--paper);color:var(--ink);font-size:.77rem;font-weight:700;cursor:pointer}
+.theme-toggle:hover{border-color:var(--gold);background:var(--gold-light)}
+/* Brown primary accents use white button text. */
+.btn.goldbtn,.btn.goldbtn:hover:not(:disabled),button.btn.goldbtn{color:#fff!important;text-shadow:0 1px 1px rgba(30,22,15,.25)}
+.btn.goldbtn{background:#97713e;border-color:#97713e}
+.btn.goldbtn:hover:not(:disabled){background:#805e32;border-color:#805e32}
+/* Dark theme: coherent navy, cream text and warm-gold accents. */
+:root[data-theme="dark"]{
+ color-scheme:dark;--ink:#edf3f7;--ink-2:#d4e0e9;--muted:#aabccc;
+ --navy:#20384e;--navy-deep:#101b29;--gold:#dbb37c;--gold-light:#35402f;
+ --paper:#1d2b39;--canvas:#101a26;--line:#36485a;--line-strong:#587085;--soft:#243547;
+ --shadow-xs:0 1px 3px rgba(0,0,0,.13);--shadow-sm:0 5px 18px rgba(0,0,0,.15);--shadow-md:0 15px 42px rgba(0,0,0,.22);
+ background:var(--canvas);color:var(--ink)
+}
+[data-theme="dark"] body,[data-theme="dark"] .app,[data-theme="dark"] .main{background:var(--canvas);color:var(--ink)}
+[data-theme="dark"] .auth,[data-theme="dark"] .auth-panel,[data-theme="dark"] .topbar,[data-theme="dark"] .mobile-nav,[data-theme="dark"] .card,[data-theme="dark"] .dialog,[data-theme="dark"] .followup-panel,[data-theme="dark"] .followup-settings,
+[data-theme="dark"] .followup-overview>div,[data-theme="dark"] .student-file-section,[data-theme="dark"] .dashboard-family-card,[data-theme="dark"] .comms-announcement,[data-theme="dark"] .comms-resource,[data-theme="dark"] .question-item,[data-theme="dark"] .card-assessment-panel,[data-theme="dark"] .student-file-header,
+[data-theme="dark"] .week-tile,[data-theme="dark"] .comms-section,[data-theme="dark"] .mobile-more-sheet,[data-theme="dark"] .mobile-more-header,[data-theme="dark"] .install-help,[data-theme="dark"] .delete-confirm,[data-theme="dark"] .logout-confirm,[data-theme="dark"] .students-filterbar,[data-theme="dark"] .communications-page .comms-resource-filter{background:var(--paper)!important;color:var(--ink);border-color:var(--line)!important}
+[data-theme="dark"] .sidebar{background:#111e2d}
+[data-theme="dark"] :is(h1,h2,h3,strong,.page-head,.eyebrow,.field label,.followup-overview strong,.followup-panel-header h2,.followup-name-cell>strong,.student-file-header h1,.empty strong,.comms-section-heading h2){color:var(--ink)}
+[data-theme="dark"] .muted,[data-theme="dark"] .subtitle,[data-theme="dark"] .small.muted,[data-theme="dark"] .stat .label,[data-theme="dark"] .followup-overview span{color:var(--muted)}
+[data-theme="dark"] :is(input,select,textarea),[data-theme="dark"] .followup-edit-table input,[data-theme="dark"] .followup-edit-table select,[data-theme="dark"] .communications-page .comms-resource-filter select{background:#172534!important;color:var(--ink)!important;border-color:var(--line-strong)!important;box-shadow:none}
+[data-theme="dark"] :is(input,textarea)::placeholder{color:#9aafc1}
+[data-theme="dark"] :is(.tabs,.communications-page .communications-tabs,.questions-tabs,.comms-tabs){background:#162635!important;border-color:var(--line)!important}
+[data-theme="dark"] :is(.tabs button.active,.communications-page .communications-tab.is-active,.questions-tabs button.active){background:#334a5d!important;color:#fff!important;border-color:var(--line-strong)!important}
+[data-theme="dark"] .tabs button:not(.active){color:var(--muted)}
+[data-theme="dark"] :is(th,.followup-edit-table thead th){background:#28394a!important;color:var(--ink)!important;border-color:var(--line)!important}
+[data-theme="dark"] :is(td,tr,.list-row){border-color:var(--line)!important;color:var(--ink)}
+[data-theme="dark"] tr:hover td{background:#2b4152}
+[data-theme="dark"] .followup-edit-table .followup-name-cell{background:var(--paper)!important}
+[data-theme="dark"] .followup-edit-table tbody tr:nth-child(even) :is(td,.followup-name-cell){background:var(--soft)!important}
+[data-theme="dark"] .followup-edit-table tbody tr:hover :is(td,.followup-name-cell){background:#374735!important}
+[data-theme="dark"] :is(.btn.secondary,.theme-toggle){background:#293d50;color:var(--ink);border-color:var(--line-strong)}
+[data-theme="dark"] :is(.btn.secondary:hover,.theme-toggle:hover){background:#39536b;color:#fff}
+[data-theme="dark"] .btn:not(.secondary):not(.goldbtn):not(.dangerbtn){background:#385b78;border-color:#385b78;color:#fff}
+[data-theme="dark"] :is(.chip,.week-code,.followup-week-pill,.communications-tab-count){background:#324457;color:var(--ink);border-color:var(--line)}
+[data-theme="dark"] :is(.notice,.followup-panel-footer,.resource-cover-upload,.students-search-box,.students-family-choice){background:#243a40!important;color:var(--ink);border-color:var(--line)!important}
+[data-theme="dark"] :is(.notice.error,.chip.danger){background:#533035!important;color:#ffd8d8}
+[data-theme="dark"] :is(.separator,.student-file-section,.card){border-color:var(--line)}
+[data-theme="dark"] .auth-hero{background:radial-gradient(circle at 80% 10%,#2e4259,#111d2a 65%)}
+[data-theme="dark"] .hero-card{background:linear-gradient(110deg,#22394d,#39566a)}
+[data-theme="dark"] .mobile-nav button{color:var(--muted)}
+[data-theme="dark"] .mobile-nav button.active{color:#fff}
+[data-theme="dark"] .toast{background:#3a556a;color:#fff}
+[data-theme="dark"] .week-tile,[data-theme="dark"] .textbtn{color:var(--ink)}
+[data-theme="dark"] .communications-page .communications-tab{color:var(--muted)}
+[data-theme="dark"] :is(.communications-page .communications-tab-count,.communications-page .communications-tab.is-active .communications-tab-count){color:var(--ink);background:#405367}
+[data-theme="dark"] a[href^="http"]:hover{color:#e7bc80}
+@media print{:root[data-theme="dark"]{color-scheme:light;--ink:#172b3c;--ink-2:#395061;--muted:#647486;--paper:#fff;--canvas:#fff;--line:#e5e7e5;--soft:#fbfaf7}html[data-theme="dark"] body,html[data-theme="dark"] .card{background:#fff!important;color:#172b3c!important}.theme-toggle{display:none!important}}
+
+/* Dark-mode coverage for nested cards, reports, student files and menus. */
+[data-theme="dark"] :is(.dashboard-family-metrics>div,.dashboard-student-details>div,.dashboard-prep-info,.dashboard-launch-note,.dashboard-phase,.dashboard-alert-reasons span,.dashboard-task-status,.week-content-block,.fixed-questions>div,.student-file-details>div,.student-file-mentor,.student-file-goal,.student-file-milestone,.student-file-tabs,.students-tab,.students-table tr,.students-clear,.students-tab-count,.students-soft-tag,.mobile-more-link,.mobile-more-footer,.mobile-more-close,.communications-page .communications-tabs,.communications-page .communications-tab.is-active,.comms-resource-filter,.communications-page .comms-resource-filter,.card-stage-picker,.card-assessment-panel,.followup-panel-footer,.followup-week-pill,.question-actions,.questions-intro,.questions-results-header,.comms-section-header,.resource-cover-upload,.resource-cover,.dialog .form-actions){background:var(--soft)!important;color:var(--ink)!important;border-color:var(--line)!important}
+[data-theme="dark"] :is(.student-file-tabs button.active,.students-tab.active,.students-tab.is-active,.mobile-more-link.is-selected,.followup-week-pill.active,.week-tile.is-current){background:#38536a!important;color:#fff!important;border-color:var(--gold)!important}
+[data-theme="dark"] :is(.dashboard-family-metrics strong,.dashboard-family-name h3,.dashboard-student-details strong,.student-file-details strong,.student-file-tabs button,.student-file-goal strong,.student-file-milestone strong,.questions-page strong,.communications-page strong,.communications-page h3,.students-table strong,.followup-edit-table .followup-name-cell strong){color:var(--ink)!important}
+[data-theme="dark"] :is(.dashboard-family-metrics span,.student-file-details span,.questions-page p,.communications-page p,.students-register .muted,.mobile-more-header p){color:var(--muted)}
+[data-theme="dark"] :is(.mobile-more-link:hover,.students-tab:hover,.student-file-tabs button:hover,.week-tile:hover){background:#364e60!important;color:#fff!important}
+[data-theme="dark"] :is(.student-file-tabs,.students-tab,.mobile-more-link,.communications-page .communications-tabs,.comms-section,.student-file-details>div){box-shadow:none}
+[data-theme="dark"] .auth-theme-control .theme-toggle{color:var(--ink)}
+[data-theme="dark"] .sidebar :is(.brand,.side-label,.sidebar-section-title){color:#ead2a6}
+[data-theme="dark"] .btn.goldbtn,[data-theme="dark"] .btn.goldbtn:hover:not(:disabled){color:#fff!important}
