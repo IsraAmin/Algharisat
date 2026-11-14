@@ -189,7 +189,7 @@ test('weekly report statistics exclude empty/unrecorded values',()=>{
 test('report cards honor stage rules and milestone guardian exception',()=>{
  assert.match(app,/period==='month1'\?\['self'\]:\['fourth','third','second','first'\]/);
  assert.match(app,/cardEntries\.filter\(r=>r\.student_id===studentId&&r\.aspect===aspect/);
- assert.match(app,/code!=='guardian'\|\|s\.under_twenty/);
+ assert.match(app,/code!=='guardian'\|\|studentUnder20\(s\)===true/);
  assert.match(app,/new Set\(familyMinutes\.filter\(m=>m\.family_id===familyId\)\.map\(m=>m\.week_id\)\)/);
 });
 test('private observations never appear in printable reports',()=>{
@@ -203,4 +203,26 @@ test('print report is self contained and dark mode uses readable panels',()=>{
  assert.match(css,/html\[data-theme="dark"\] \.report-sheet\{/);
  assert.match(css,/@page\{size:A4;margin:14mm 12mm\}/);
  assert.match(css,/\.professional-report-page>\.page-head,\.professional-report-page>\.report-toolbar/);
+});
+
+test('birthdate is collected during signup and not inferred from manual age flags',()=>{
+ assert.match(app,/birthDateField\('',true\)\+phoneSignupField\(\)/);
+ assert.match(app,/birth_date:x\.birth_date/);
+ assert.match(app,/function validBirthDate\(value\)/);
+ assert.match(app,/function studentAge\(studentId\)/);
+ assert.match(app,/function studentUnder20\(student\)/);
+ assert.doesNotMatch(app,/field\('دون العشرين','under_twenty'/);
+});
+test('birthdates are saved privately for current and newly enrolled students',()=>{
+ assert.match(app,/const staff=\['students','student_birthdates'/);
+ assert.match(app,/const student=\['students','student_birthdates'/);
+ assert.match(app,/db\.rpc\('set_my_birth_date',\{p_birth_date:x\.birth_date\}\)/);
+ assert.match(app,/db\.from\('student_birthdates'\)\.upsert/);
+ assert.match(app,/birthDateField\(birthDateOf\(p\.id\)\|\|''/);
+});
+test('unknown birthdays never make under-twenty requirements disappear silently',()=>{
+ assert.match(app,/studentUnder20\(student\)===null\?'غير معروف'/);
+ assert.match(app,/code==='guardian'&&studentUnder20\(s\)===null/);
+ assert.match(app,/studentUnder20\(student\)!==true/);
+ assert.match(app,/code!=='guardian'\|\|studentUnder20\(s\)===true/);
 });
