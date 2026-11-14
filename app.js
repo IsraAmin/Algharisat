@@ -715,6 +715,10 @@ function announcements(){
 const staff=team();
 const announcementsSorted=[...rows('announcements')].sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned)||(b.created_at||'').localeCompare(a.created_at||''));
 const resourcesSorted=[...rows('resources')].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||a.title.localeCompare(b.title,'ar'));
+const resourceWeeks=sortedWeeks();
+const resourceWeekFilter=state.resourceWeekFilter&&resourceWeeks.some(w=>w.id===state.resourceWeekFilter)?state.resourceWeekFilter:(state.resourceWeekFilter==='general'?'general':'all');
+const filteredResources=resourcesSorted.filter(r=>resourceWeekFilter==='all'||(resourceWeekFilter==='general'?!r.week_id:r.week_id===resourceWeekFilter));
+const resourceFilter='<div class="comms-resource-filter"><label for="commsResourceWeekFilter">مصادر الأسبوع</label><select id="commsResourceWeekFilter" data-select="resourceWeekFilter" aria-label="تصفية المصادر حسب الأسبوع">'+[['all','كل المصادر'],['general','مصادر عامة'],...resourceWeeks.map(w=>[w.id,w.title])].map(([value,label])=>option(value,label,resourceWeekFilter)).join('')+'</select></div>';
 const publicCount=announcementsSorted.filter(a=>!a.family_id).length;
 const pinnedCount=announcementsSorted.filter(a=>a.pinned).length;
 const managementBtns=staff?btn('newannouncement','إعلان جديد','goldbtn')+' '+btn('newresource','إضافة مصدر'):'';
@@ -724,7 +728,7 @@ const target=a.family_id?'أسرة '+name('families',a.family_id):'جميع ال
 return '<article class="comms-announcement'+(a.pinned?' is-pinned':'')+'"><div class="comms-announcement-top"><div class="comms-tags">'+(a.pinned?'<span class="comms-tag pinned">'+iconSvg('pin')+' مثبت</span>':'')+'<span class="comms-tag audience">'+iconSvg(a.family_id?'users':'globe')+' '+esc(target)+'</span></div><time class="comms-date">'+esc(date(a.created_at))+'</time></div><h3>'+esc(a.title)+'</h3><p class="comms-description">'+esc(a.body)+'</p>'+
 (staff?'<div class="comms-item-actions">'+btn('editannouncement:'+a.id,'تعديل','secondary smallbtn')+' '+btn('deleteannouncement:'+a.id,'حذف','comms-delete smallbtn')+'</div>':'')+'</article>';
 }).join('');
-const itemsR=resourcesSorted.map(r=>{
+const itemsR=filteredResources.map(r=>{
 const type=resourceTypes[r.kind]||r.kind||'رابط';
 const week=r.week_id?weekName(r.week_id):'مصدر عام';
 const link=safeUrl(r.url);
@@ -734,7 +738,7 @@ return '<article class="comms-resource'+(thumbnail?' has-cover':' is-text-only')
 }).join('');
 return '<div class="communications-page">'+heading('الإعلانات والمصادر',staff?'نشر أخبار البرنامج وموادّه التعليمية وإدارتها':'آخر أخبار البرنامج والمصادر التعليمية التي تحتاجين إليها',managementBtns)+info+
 '<section class="comms-section"><div class="comms-section-header"><div class="comms-section-heading"><span class="comms-heading-icon">'+iconSvg('megaphone')+'</span><div><h2>الإعلانات</h2><p>المواعيد والتنبيهات المهمة للدفعة وللأسر</p></div></div><span class="comms-section-count">'+announcementsSorted.length+' إعلان</span></div><div class="comms-announcements">'+(itemsA||'<div class="comms-empty">'+iconSvg('megaphone')+'<strong>لا توجد إعلانات بعد</strong><p>ستظهر هنا إعلانات البرنامج حين تنشرها عضوة الفريق.</p></div>')+'</div></section>'+
-'<section class="comms-section"><div class="comms-section-header"><div class="comms-section-heading"><span class="comms-heading-icon">'+iconSvg('book-open')+'</span><div><h2>المصادر</h2><p>تسجيلات وملفات وروابط مرتبة بحسب أولويتها</p></div></div><span class="comms-section-count">'+resourcesSorted.length+' مصدر</span></div><div class="comms-resources">'+(itemsR||'<div class="comms-empty">'+iconSvg('book-open')+'<strong>لا توجد مصادر بعد</strong><p>ستظهر هنا المواد والروابط التي يضيفها الفريق.</p></div>')+'</div></section></div>';
+'<section class="comms-section"><div class="comms-section-header"><div class="comms-section-heading"><span class="comms-heading-icon">'+iconSvg('book-open')+'</span><div><h2>المصادر</h2><p>تسجيلات وملفات وروابط مرتبة بحسب أولويتها</p></div></div><span class="comms-section-count">'+filteredResources.length+' من '+resourcesSorted.length+' مصدر</span></div>'+resourceFilter+'<div class="comms-resources">'+(itemsR||'<div class="comms-empty">'+iconSvg('book-open')+'<strong>لا توجد مصادر بعد</strong><p>'+(resourcesSorted.length?'لا توجد مصادر لهذا الأسبوع. اختاري «كل المصادر» لعرضها كلها.':'ستظهر هنا المواد والروابط التي يضيفها الفريق.')+'</p></div>')+'</div></section></div>';
 }
 function tasks(){
 return heading('التحضير والتشغيل','القرارات والمهام وشروط الانطلاق وقائمة الختام',btn('newtask','إضافة مهمة','goldbtn'))+['decision','task','launch','closing'].map((key,i)=>'<div class="card" style="margin-bottom:15px"><h3>'+['القرارات','المهام','شروط الانطلاق','قائمة الختام'][i]+'</h3>'+rows('tasks').filter(t=>t.section===key).map(t=>'<div class="list-row"><div><strong>'+esc(t.body)+'</strong><p class="muted">'+esc(t.owner||'')+' '+(t.due_on?'| '+date(t.due_on):'')+'</p></div><input style="width:20px;min-height:20px" type="checkbox" data-task="'+t.id+'" '+(t.done?'checked':'')+'/></div>').join('')+(!rows('tasks').some(t=>t.section===key)?empty('لم تُدخل بنود هذا القسم بعد'):'')+'</div>').join('');
@@ -1066,6 +1070,7 @@ const el=e.target;
 try{
 if(el.closest('#followupForm')&&el.matches('[data-followup-field]')){markFollowupDirty();return}
 if(el.id==='resourceCoverMode'){const field=document.querySelector('#resourceCoverUpload');if(field)field.hidden=el.value!=='upload';return}
+if(el.dataset.select==='resourceWeekFilter'){state.resourceWeekFilter=el.value;render();return}
 if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView();rememberCurrentPage()}
 else if(el.dataset.select==='week'){if(!confirmFollowupLeave()){el.value=state.week;return}state.week=el.value;render()}
 else if(el.dataset.select==='cardStage'){state.cardStage=el.value;render()}
