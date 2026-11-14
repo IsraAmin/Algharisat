@@ -1005,3 +1005,85 @@ td .btn{margin:2px;vertical-align:middle}
  .batch-rubric-item{padding:12px}
  .batch-rubric>summary{padding:15px;font-size:.88rem}
 }
+
+/* Outcomes: family milestones + eleven student markers (guide order) */
+.outcomes-page{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;width:100%;max-width:100%;min-width:0}
+.outcomes-page>.page-head{margin-bottom:0}
+.outcomes-section{min-width:0;max-width:100%;display:grid;gap:13px}
+.outcomes-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.outcomes-section-title h2{color:var(--navy);font-size:1.12rem;margin:0 0 7px}
+.outcomes-section-title p{margin:0;line-height:1.75}
+.outcomes-surface{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;min-width:0;max-width:100%;box-shadow:var(--shadow-sm)}
+.outcomes-scroll{max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.outcomes-table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;color:var(--navy)}
+.outcomes-table thead th{background:#f2f5f9;font-weight:750;font-size:.77rem;white-space:normal;line-height:1.65;padding:13px 10px}
+.outcomes-table tbody td,.outcomes-table tbody th{border-top:1px solid #e9eef2;padding:12px 10px;font-size:.8rem;line-height:1.7}
+.outcomes-table tbody tr:nth-child(even){background:#fcfdfe}
+.outcomes-table tbody tr:hover{background:#f8fafc}
+.outcomes-table tbody th{font-weight:770;color:var(--navy)}
+.outcomes-family-table{min-width:740px}
+.outcomes-family-table thead th:first-child{width:23%}
+.outcomes-family-table th,.outcomes-family-table td{text-align:right}
+.outcome-doc-status{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:6px 9px;border-radius:9px;font-size:.72rem;font-weight:750}
+.outcome-doc-status.done{background:#e8f3ec;color:#296747}
+.outcome-doc-status.done:before{content:'✓';font-weight:900}
+.outcome-doc-status.pending{background:#f2f4f6;color:#798492}
+.outcome-doc-status.pending:before{content:'—'}
+.outcome-minutes-count{font-weight:850;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
+.outcome-minutes-count span{font-weight:500;color:#82909c;font-size:.72rem}
+.outcome-family-count{font-weight:750;color:#83623b;white-space:nowrap}
+.outcomes-students-table{min-width:1480px}
+.outcomes-students-table th,.outcomes-students-table td{text-align:center}
+.outcomes-students-table thead th{font-size:.72rem;min-width:0;padding:11px 8px}
+.outcomes-students-table thead th:first-child{width:190px;text-align:right;position:sticky;right:0;z-index:4;background:#eaf0f5;box-shadow:-2px 0 7px rgba(24,49,70,.07)}
+.outcomes-students-table tbody th.outcomes-student-name{position:sticky;right:0;background:#fff;text-align:right;z-index:3;box-shadow:-2px 0 7px rgba(24,49,70,.06)}
+.outcomes-students-table tbody tr:nth-child(even) th.outcomes-student-name{background:#fcfdfe}
+.outcomes-students-table tfoot th{position:sticky;right:0;z-index:3;background:#e8edf2;text-align:right;box-shadow:-2px 0 7px rgba(24,49,70,.04)}
+.outcomes-students-table tfoot th,.outcomes-students-table tfoot td{background:#edf2f6;padding:16px 8px;font-size:.77rem;border-top:2px solid #cddae3}
+.outcomes-students-table tfoot td strong{font-size:.93rem;color:var(--navy);font-variant-numeric:tabular-nums}
+.outcomes-students-table tfoot td span{color:#758496;font-size:.71rem}
+.outcomes-student-family{display:block;font-size:.7rem;color:#7f8e9d;font-weight:500;margin-top:4px}
+.outcome-check{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;cursor:pointer;min-height:49px}
+.outcome-check input{width:20px;height:20px;min-height:20px;margin:0;accent-color:#214a65;cursor:pointer}
+.outcome-check-icon{display:none}
+.outcome-check-date{font-size:.64rem;color:#85919c;white-space:normal;line-height:1.6}
+.outcome-check:has(input:checked) .outcome-check-date{color:#2c7352;font-weight:720}
+.outcome-not-required{display:inline-block;background:#f1f3f5;color:#758291;border-radius:7px;padding:6px 8px;font-size:.68rem}
+.outcomes-mobile-totals{display:none}
+.outcomes-help{margin:0;background:#f5f8fb;border-right:3px solid #98aabd;border-radius:9px;padding:12px 13px;color:#5d7183;font-size:.79rem;line-height:1.8}
+@media(max-width:820px){
+ .outcomes-page{gap:18px}
+ .outcomes-surface{border:0;background:transparent;box-shadow:none;overflow:visible}
+ .outcomes-scroll{overflow:visible}
+ .outcomes-table{display:block;min-width:0;width:100%}
+ .outcomes-table thead{display:none}
+ .outcomes-table tbody{display:grid;gap:11px}
+ .outcomes-table tbody tr,.outcomes-table tbody tr:nth-child(even){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;padding:15px;border:1px solid #e1e8ee;border-radius:14px;background:#fff}
+ .outcomes-table tbody th,.outcomes-table tbody td{display:flex;flex-direction:column;gap:6px;padding:0;border:0!important;text-align:right;min-width:0;position:static!important;box-shadow:none!important;background:transparent!important}
+ .outcomes-table tbody th{grid-column:1/-1;padding-bottom:10px;border-bottom:1px solid #edf0f2!important;font-size:.91rem}
+ .outcomes-table tbody td::before{content:attr(data-label);font-size:.72rem;color:#748394;font-weight:700;line-height:1.6}
+ .outcomes-students-table .outcome-check{flex-direction:row;justify-content:flex-start;align-items:center;min-height:37px;gap:10px}
+ .outcomes-students-table .outcome-check input{flex:none}
+ .outcomes-students-table .outcome-check-date{font-size:.73rem}
+ .outcomes-students-table tfoot{display:none}
+ .outcomes-mobile-totals{display:block;margin-top:12px;padding:17px;background:#fff;border:1px solid #e1e8ee;border-radius:14px}
+ .outcomes-mobile-totals h3{color:var(--navy);font-size:.97rem;margin:0 0 13px}
+ .outcomes-total-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .outcomes-total-grid>div{padding:10px;border:1px solid #e6eaee;border-radius:9px;background:#fbfcfd;display:flex;flex-direction:column;gap:6px}
+ .outcomes-total-grid>div>span{font-size:.74rem;color:#62778a;line-height:1.6}
+ .outcomes-total-grid strong{color:var(--navy);font-size:1.08rem}
+ .outcomes-total-grid small{color:#81909b;font-size:.7rem;font-weight:500}
+}
+@media(max-width:460px){
+ .outcomes-page{gap:14px}
+ .outcomes-table tbody tr,.outcomes-table tbody tr:nth-child(even){padding:12px;gap:11px}
+ .outcomes-table tbody td{font-size:.76rem}
+ .outcomes-total-grid{gap:7px}
+ .outcomes-mobile-totals{padding:13px}
+ .outcomes-total-grid>div{padding:9px}
+}
+@media(max-width:345px){
+ .outcomes-table tbody tr,.outcomes-table tbody tr:nth-child(even){grid-template-columns:minmax(0,1fr)}
+ .outcomes-table tbody th{grid-column:1}
+ .outcomes-total-grid{grid-template-columns:minmax(0,1fr)}
+}
