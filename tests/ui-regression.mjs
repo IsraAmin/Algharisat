@@ -145,3 +145,22 @@ test('all native dropdowns share premium light/dark theme and keyboard focus',()
  assert.match(css,/@media \(pointer:coarse\)/);
  assert.match(css,/font-size:16px!important/);
 });
+
+test('native select is preserved while custom option menus are rendered',()=>{
+ assert.match(app,/function enhanceChoiceSelect\(select\)/);
+ assert.match(app,/select\.dataset\.choiceEnhanced='true'/);
+ assert.match(app,/holder\.appendChild\(select\)/);
+ assert.match(app,/function openChoicePopover\(select,trigger\)/);
+ assert.match(app,/function commitChoice\(select,index\)/);
+ assert.match(app,/select\.dispatchEvent\(new Event\('change',\{bubbles:true\}\)\)/);
+ assert.match(app,/installChoiceSelects\(\)/);
+});
+test('option menus show actual branded options in light and dark mode',()=>{
+ assert.match(css,/\.ui-choice-popover\{/);
+ assert.match(css,/\.ui-choice-option\.is-selected/);
+ assert.match(css,/html\[data-theme="dark"\] \.ui-choice-popover\{/);
+ assert.match(css,/html\[data-theme="dark"\] \.ui-choice-option\.is-selected/);
+ assert.match(css,/\.ui-choice-trigger:focus-visible/);
+ assert.match(app,/role','listbox/);
+ assert.match(app,/aria-selected/);
+});

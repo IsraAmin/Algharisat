@@ -1187,5 +1187,155 @@ else if(f.id==='surveyForm'){const{error}=await db.rpc('submit_survey',{p_answer
 else if(f.id==='profileForm'){const{error}=await db.rpc('update_my_profile',{p_phone:x.phone,p_email:x.email,p_university:x.university,p_college:x.college,p_study_level:x.study_level,p_neighborhood:x.neighborhood});if(error)throw error;const{data:accountInfo,error:accountError}=await db.from('accounts').select('student_id').eq('user_id',state.user.id).single();if(accountError)throw accountError;state.account.student_id=accountInfo.student_id;await load();flash('حُفظت بياناتكِ الشخصية بنجاح')}
 }catch(err){console.error(err);const message=String(err?.message||'');const match=message.match(/(?:after|in)\s+(\d+)\s+seconds?/i);const throttled=err?.status===429||/for security purposes|rate limit|too many requests/i.test(message);flash(err?.code==='over_email_send_rate_limit'?'تعذّر إنشاء الحساب: بلغت رسائل تأكيد البريد حدّ الإرسال في Supabase. على الإدارة إيقاف Confirm Email من إعدادات Email؛ لا يكفي الانتظار بضع ثوانٍ.':throttled?'تم رفض الطلب مؤقتًا بسبب كثرة المحاولات. انتظري قليلًا ثم حاولي مرة واحدة.':(/row-level security|permission denied|غير مصرح/i.test(message)?'تعذر الحفظ بسبب صلاحيات الحساب أو عدم ارتباطه بسجل الغارسة. حدّثي الصفحة، وتأكدي من اعتماد الحساب وربطه؛ وإن استمرت المشكلة راجعي الإدارة. ('+esc(err?.code||'')+')':message||'تعذر الحفظ، تحققي من الاتصال'),true)}finally{if(submit)submit.disabled=false}
 });
+
+/* Real custom option popovers while retaining native select state for form and
+   existing app change handlers. Enhanced once per rendered DOM select. */
+let openChoiceMenu=null,choiceSequence=0;
+function closeChoiceMenu({restoreFocus=false}={}){
+ if(!openChoiceMenu)return;
+ const {menu,trigger}=openChoiceMenu;
+ openChoiceMenu=null;
+ menu.remove();
+ trigger.setAttribute('aria-expanded','false');
+ trigger.classList.remove('is-open');
+ if(restoreFocus&&trigger.isConnected)trigger.focus();
+}
+function choiceLabel(select){
+ const label=select.id?document.querySelector('label[for="'+CSS.escape(select.id)+'"]'):null;
+ const wrapperLabel=select.closest('label');
+ return select.getAttribute('aria-label')||label?.textContent?.trim()||wrapperLabel?.querySelector('span')?.textContent?.trim()||'اختيار من القائمة';
+}
+function syncChoiceTrigger(select){
+ const trigger=select.closest('.ui-choice')?.querySelector('.ui-choice-trigger');
+ if(!trigger)return;
+ const text=trigger.querySelector('.ui-choice-value');
+ if(text)text.textContent=select.selectedOptions[0]?.textContent?.trim()||'اختاري من القائمة';
+ trigger.disabled=select.disabled;
+ trigger.classList.toggle('is-placeholder',!select.value);
+}
+function enhanceChoiceSelect(select){
+ if(select.dataset.choiceEnhanced||select.multiple||select.size>1)return;
+ select.dataset.choiceEnhanced='true';
+ const holder=document.createElement('span');
+ holder.className='ui-choice';
+ select.before(holder);
+ holder.appendChild(select);
+ select.classList.add('ui-choice-native');
+ select.tabIndex=-1;
+ select.setAttribute('aria-hidden','true');
+ const trigger=document.createElement('button');
+ trigger.type='button';
+ trigger.className='ui-choice-trigger';
+ trigger.setAttribute('aria-label',choiceLabel(select));
+ trigger.setAttribute('aria-haspopup','listbox');
+ trigger.setAttribute('aria-expanded','false');
+ trigger.innerHTML='<span class="ui-choice-value"></span><svg class="ui-choice-arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+ holder.appendChild(trigger);
+ syncChoiceTrigger(select);
+ trigger.addEventListener('click',()=>{if(openChoiceMenu?.trigger===trigger){closeChoiceMenu();return}openChoicePopover(select,trigger)});
+ trigger.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='Home'||e.key==='End'||e.key===' '||e.key==='Enter'){
+   e.preventDefault();
+   const wasClosed=!openChoiceMenu||openChoiceMenu.trigger!==trigger;
+   if(wasClosed)openChoicePopover(select,trigger);
+   if(!openChoiceMenu)return;
+   if(wasClosed&&(e.key===' '||e.key==='Enter'))return;
+   const enabled=[...select.options].map((opt,i)=>!opt.disabled&&!opt.hidden?i:-1).filter(i=>i>=0);
+   if(!enabled.length)return;
+   const current=openChoiceMenu.active;
+   let next=current;
+   if(e.key==='Home')next=enabled[0];
+   else if(e.key==='End')next=enabled[enabled.length-1];
+   else if(e.key==='ArrowDown')next=enabled[(enabled.indexOf(current)+1)%enabled.length];
+   else if(e.key==='ArrowUp')next=enabled[(enabled.indexOf(current)-1+enabled.length)%enabled.length];
+   else if(e.key==='Enter'||e.key===' '){if(openChoiceMenu.active>=0)commitChoice(select,openChoiceMenu.active);return}
+   setActiveChoice(next);
+  }else if(e.key==='Escape'&&openChoiceMenu?.trigger===trigger){e.preventDefault();closeChoiceMenu({restoreFocus:true})}
+ });
+}
+function setActiveChoice(index){
+ if(!openChoiceMenu||index==null)return;
+ const {menu,trigger}=openChoiceMenu;openChoiceMenu.active=index;
+ for(const option of menu.querySelectorAll('[role="option"]')){
+  const active=Number(option.dataset.choiceIndex)===index;
+  option.classList.toggle('is-highlighted',active);
+  if(active){trigger.setAttribute('aria-activedescendant',option.id);option.scrollIntoView({block:'nearest'})}
+ }
+}
+function commitChoice(select,index){
+ const option=select.options[index];
+ if(!option||option.disabled||option.hidden)return;
+ const changed=select.selectedIndex!==index;
+ select.selectedIndex=index;
+ syncChoiceTrigger(select);
+ closeChoiceMenu({restoreFocus:true});
+ if(changed)select.dispatchEvent(new Event('change',{bubbles:true}));
+}
+function openChoicePopover(select,trigger){
+ if(select.disabled)return;
+ closeChoiceMenu();
+ const menu=document.createElement('div');
+ menu.className='ui-choice-popover';
+ menu.id='ui-choice-menu-'+(++choiceSequence);
+ menu.setAttribute('role','listbox');
+ menu.setAttribute('aria-label',choiceLabel(select));
+ menu.dir='rtl';
+ const selected=select.selectedIndex;
+ [...select.options].forEach((opt,i)=>{
+  if(opt.hidden)return;
+  const entry=document.createElement('button');
+  entry.type='button';entry.className='ui-choice-option';
+  entry.id=menu.id+'-option-'+i;entry.dataset.choiceIndex=String(i);
+  entry.setAttribute('role','option');
+  entry.setAttribute('aria-selected',String(i===selected));
+  entry.disabled=opt.disabled;
+  const title=document.createElement('span');
+  title.className='ui-choice-option-text';title.textContent=opt.textContent.trim();
+  const check=document.createElement('span');check.className='ui-choice-check';
+  check.textContent='✓';check.setAttribute('aria-hidden','true');
+  entry.append(title,check);
+  if(i===selected)entry.classList.add('is-selected');
+  entry.addEventListener('click',()=>commitChoice(select,i));
+  entry.addEventListener('pointerenter',()=>{if(openChoiceMenu?.menu===menu)setActiveChoice(i)});
+  menu.appendChild(entry);
+ });
+ if(!menu.children.length)return;
+ document.body.appendChild(menu);
+ const rect=trigger.getBoundingClientRect();
+ const maxWidth=Math.max(210,window.innerWidth-20);
+ const width=Math.min(maxWidth,Math.max(rect.width,250));
+ const left=Math.max(10,Math.min(rect.right-width,window.innerWidth-width-10));
+ const below=window.innerHeight-rect.bottom-12,above=rect.top-12;
+ const upward=below<190&&above>below;
+ const available=Math.max(120,upward?above:below);
+ const height=Math.min(340,available);
+ menu.style.width=width+'px';menu.style.maxHeight=height+'px';
+ menu.style.left=left+'px';
+ menu.style.top=(upward?Math.max(10,rect.top-Math.min(menu.scrollHeight,height)-6):Math.min(window.innerHeight-height-10,rect.bottom+6))+'px';
+ trigger.setAttribute('aria-expanded','true');
+ trigger.setAttribute('aria-controls',menu.id);
+ trigger.classList.add('is-open');
+ openChoiceMenu={menu,trigger,select,active:selected};
+ setActiveChoice(selected>=0?selected:[...select.options].findIndex(o=>!o.disabled&&!o.hidden));
+}
+function enhanceChoiceSelects(){
+ for(const select of document.querySelectorAll('select:not([data-choice-enhanced])'))enhanceChoiceSelect(select);
+ if(openChoiceMenu&&!openChoiceMenu.trigger.isConnected)closeChoiceMenu();
+}
+function installChoiceSelects(){
+ enhanceChoiceSelects();
+ const observer=new MutationObserver(records=>{
+  if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&(n.matches?.('select:not([data-choice-enhanced])')||n.querySelector?.('select:not([data-choice-enhanced])')))))enhanceChoiceSelects();
+  if(openChoiceMenu&&!openChoiceMenu.trigger.isConnected)closeChoiceMenu();
+ });
+ observer.observe(document.body,{childList:true,subtree:true});
+ document.addEventListener('change',e=>{if(e.target.matches?.('select[data-choice-enhanced]'))syncChoiceTrigger(e.target)},true);
+ document.addEventListener('pointerdown',e=>{if(openChoiceMenu&&!openChoiceMenu.menu.contains(e.target)&&!openChoiceMenu.trigger.contains(e.target))closeChoiceMenu()},true);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&openChoiceMenu){e.preventDefault();closeChoiceMenu({restoreFocus:true})}},true);
+ window.addEventListener('resize',()=>closeChoiceMenu());
+ document.addEventListener('scroll',e=>{if(openChoiceMenu&&!openChoiceMenu.menu.contains(e.target))closeChoiceMenu()},{capture:true,passive:true});
+}
+
 render();
+installChoiceSelects();
 start().catch(err=>{console.error(err);$('#root').innerHTML='<div class="card" style="margin:30px"><h2>تعذر تحميل المنصة</h2><p>تحققي من الاتصال بالإنترنت ثم أعيدي تحميل الصفحة.</p></div>'});
