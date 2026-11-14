@@ -2579,3 +2579,69 @@ html,body,#root{width:100%;max-width:100%;min-width:0}
 }
 /* Browser font enlargement can otherwise overflow long controls. */
 .auth,.auth :is(.auth-hero,.auth-panel,.field,.tabs,.signup-phone){overflow-wrap:anywhere}
+
+/* Compact, accessible icon-only appearance switch; same footprint as logout. */
+.theme-toggle.theme-toggle-icon{
+ display:inline-grid!important;
+ place-items:center!important;
+ inline-size:43px!important;
+ block-size:43px!important;
+ min-inline-size:43px!important;
+ min-block-size:43px!important;
+ padding:0!important;
+ flex:none;
+ border-radius:12px;
+ line-height:1;
+}
+.theme-toggle-icon svg{
+ display:block;
+ inline-size:21px;
+ block-size:21px;
+ color:inherit;
+ stroke:currentColor;
+}
+.theme-toggle-icon:focus-visible{
+ outline:2px solid #bd9562!important;
+ outline-offset:3px;
+}
+html[data-theme="dark"] .theme-toggle.theme-toggle-icon{
+ background:#2b4155!important;
+ border-color:#5d7589!important;
+ color:#f1d09d!important;
+}
+html[data-theme="dark"] .theme-toggle.theme-toggle-icon:hover{
+ background:#3d566b!important;
+ color:#fff!important;
+}
+/* Contrast-safe mobile bottom navigation: selected state was white-on-cream. */
+@media(max-width:800px){
+ html[data-theme="dark"] .mobile-nav{
+  background:#1d2b39!important;
+  border-top:1px solid #445c70!important;
+ }
+ html[data-theme="dark"] .mobile-nav button{
+  background:transparent!important;
+  border-color:transparent!important;
+  color:#c1d2e0!important;
+ }
+ html[data-theme="dark"] .mobile-nav button.active,
+ html[data-theme="dark"] .mobile-nav button[data-page].active{
+  background:#36526a!important;
+  color:#fff!important;
+  border:1px solid #607d92!important;
+  box-shadow:inset 0 0 0 1px rgba(237,201,145,.14);
+ }
+ html[data-theme="dark"] .mobile-nav button.active :is(svg,.ui-icon),
+ html[data-theme="dark"] .mobile-nav button.active svg *{
+  color:#fff!important;
+  stroke:#fff!important;
+ }
+ html[data-theme="dark"] .mobile-nav button:not(.active) :is(svg,.ui-icon){
+  color:#c1d2e0!important;
+  stroke:currentColor!important;
+ }
+ html[data-theme="dark"] .mobile-nav button:focus-visible{
+  outline:2px solid #d9b47f!important;
+  outline-offset:1px;
+ }
+}
