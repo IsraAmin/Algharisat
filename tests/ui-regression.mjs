@@ -44,7 +44,7 @@ test('dark palette covers nested operational pages and dialog text',()=>{
 
 test('dark mode guarantees high contrast for batch scorecard titles and all page text',()=>{
  assert.match(css,/--dark-text-primary:#f2f6fa/);
- assert.match(css,/html\[data-theme="dark"\] \.content :is\(div,span,p,small,th,td,label,summary,a,button\)/);
+ assert.match(css,/html\[data-theme="dark"\] \.content :is\(h1,h2,h3,h4,h5,h6,legend,summary\)/);
  for(const selector of ['.batch-summary-title','.batch-summary-metric','.batch-section-heading h2','.outcomes-section-title h2','.outcome-minutes-count','.batch-family-heading h3']){
   assert.ok(css.includes(selector), 'Missing dark contrast rule for '+selector);
  }
@@ -99,4 +99,22 @@ test('dark authentication submit buttons are gold with white labels',()=>{
  assert.match(css,/background:#97713e!important/);
  assert.match(css,/color:#fff!important/);
  assert.match(css,/html\[data-theme="dark"\] \.auth-panel #authForm button\[type="submit"\]\.btn:hover:not\(:disabled\)/);
+});
+
+test('dark account table uses dark alternating row and cell backgrounds',()=>{
+ assert.match(css,/html\[data-theme="dark"\] \.content \.table-wrap > table tbody tr:nth-child\(even\) > :is\(td,th\)/);
+ assert.match(css,/html\[data-theme="dark"\] \.content \.table-wrap > table tbody tr > :is\(td,th\)/);
+ assert.match(css,/background:var\(--dm-surface-muted\)!important/);
+ assert.match(css,/color:var\(--dm-text\)!important/);
+});
+test('communications status labels, icons and destructive controls use dark-safe colors',()=>{
+ for(const name of ['.comms-heading-icon','.comms-metric-icon','.comms-resource-symbol','.comms-section-count','.comms-delete','.comms-date','.comms-tag.pinned','.comms-announcement.is-pinned']){
+  assert.ok(css.includes(name), 'missing dark contrast rule '+name);
+ }
+ assert.match(css,/background:#334e65!important/);
+ assert.match(css,/color:#f4d29e!important/);
+ assert.match(css,/background:#56353c!important/);
+});
+test('no global forced white text on all spans and table cells',()=>{
+ assert.doesNotMatch(css,/html\[data-theme="dark"\] \.content :is\(div,span,p,small,th,td,label,summary,a,button\)/);
 });
