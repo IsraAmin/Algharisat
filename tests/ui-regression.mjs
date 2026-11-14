@@ -86,3 +86,10 @@ test('signup requires a matching confirmed password, with independently accessib
  assert.match(app,/input\.id==='f_password_confirm'/);
  assert.match(app,/authPasswordField\(key='password',label='كلمة المرور'\)/);
 });
+
+test('desktop auth keeps verse panel stationary and scrolls the account form only',()=>{
+ assert.match(css,/@media \(min-width:801px\)/);
+ assert.match(css,/\.auth\{\s*height:100vh;\s*height:100dvh;\s*min-height:0;\s*overflow:hidden/);
+ assert.match(css,/\.auth-panel\{\s*height:100%;\s*min-height:0;\s*overflow-x:hidden;\s*overflow-y:auto/);
+ assert.match(css,/@media \(max-width:800px\)\{\s*\.auth\{height:auto;min-height:100svh;overflow:visible\}/);
+});
