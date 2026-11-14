@@ -8,7 +8,7 @@ test('signup has distinct international dial code and exactly nine local digits'
  assert.match(app,/name="phone_local"/);
  assert.match(app,/\^\[0-9\]\{9\}\$/);
  assert.match(app,/const phone=code\+local/);
- assert.match(app,/full_name:x\.full_name,phone\}/);
+ assert.match(app,/full_name:x\.full_name,phone,birth_date:x\.birth_date\}/);
 });
 test('dark theme can be toggled and persisted',()=>{
  assert.match(app,/localStorage\.setItem\('algharisat-theme'/);
