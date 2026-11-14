@@ -292,3 +292,38 @@ test('council review is sourced from saved journal entries and printable',()=>{
  assert.match(css,/@media print\{/);
  assert.match(css,/html\[data-theme="dark"\] \.journal-table/);
 });
+
+
+test('accounts and permissions page presents separate pending and established tabs',()=>{
+ for(const value of ['account-tabs','account-overview','بانتظار الموافقة','الحسابات القائمة','منذ تقديم الطلب','رقم الهاتف','اللقب']){
+  assert.ok(app.includes(value)||css.includes(value),'missing account UI: '+value);
+ }
+ assert.match(app,/state\.accountsTab==='current'\?'current':'pending'/);
+ assert.match(app,/data-action="accountsTab:pending"/);
+ assert.match(app,/data-action="accountsTab:current"/);
+ assert.match(app,/function accountWaitingTime\(value\)/);
+ assert.match(app,/function accountMatchCandidates\(a\)/);
+});
+test('account approvals and rejection use protected single database operation',()=>{
+ assert.match(app,/case 'editaccount':case 'reviewaccount'/);
+ assert.match(app,/case 'rejectaccount'/);
+ assert.match(app,/p_action:account\.role==='pending'\|\|account\.role==='rejected'\?'approve':'update'/);
+ assert.match(app,/db\.rpc\('review_account',/);
+ assert.match(app,/p_create_student:createStudent/);
+ assert.match(app,/p_action:'reject'/);
+ assert.match(app,/تأكيد رفض الطلب/);
+ assert.match(app,/account\.role==='pending'\|\|account\.role==='rejected'/);
+});
+test('rejected accounts remain blocked and show their rejection reason',()=>{
+ assert.match(app,/\['pending','rejected','disabled'\]\.includes/);
+ assert.match(app,/role==='rejected'\?'لم تُقبل نتيجة طلب التسجيل'/);
+ assert.match(app,/account\.rejection_reason/);
+ assert.match(app,/data-action="accountsTab:pending"/);
+});
+test('accounts pages retain high-contrast custom light and dark design',()=>{
+ assert.match(css,/\.account-overview\{display:grid/);
+ assert.match(css,/\.account-tabs button\.is-active/);
+ assert.match(css,/html\[data-theme="dark"\] \.account-role-badge\.is-rejected/);
+ assert.match(css,/html\[data-theme="dark"\] \.account-reject-button/);
+ assert.match(css,/@media\(max-width:690px\)/);
+});

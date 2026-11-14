@@ -64,7 +64,7 @@ function readCurrentPage(userId){
 try{const value=JSON.parse(localStorage.getItem(pageMemoryKey(userId))||'null');return value&&typeof value.page==='string'?value:null}catch(e){return null}
 }
 function rememberCurrentPage(){
-if(!state.user||!state.account||['pending','disabled'].includes(state.account.role))return;
+if(!state.user||!state.account||['pending','rejected','disabled'].includes(state.account.role))return;
 try{localStorage.setItem(pageMemoryKey(state.user.id),JSON.stringify({
 page:state.page,week:state.week,family:state.family,dashboardStudent:state.dashboardStudent,
 studentReportWeek:state.studentReportWeek,studentFileReturn:state.studentFileReturn,
@@ -85,7 +85,7 @@ const{data,error}=await withTimeout(db.from('accounts').select('*').eq('user_id'
 if(sequence!==bootSequence)return;
 if(error)throw error;
 state.account=data;
-if(!data||['pending','disabled'].includes(data.role)){render();return}
+if(!data||['pending','rejected','disabled'].includes(data.role)){render();return}
 // An approved gharisa must have a student record before reports, cards or profile changes can be saved.
 if(data.role==='gharisa'&&!data.student_id){
   const{data:studentId,error:profileError}=await withTimeout(db.rpc('ensure_my_student_profile'));
@@ -120,7 +120,7 @@ function authPasswordField(key='password',label='كلمة المرور'){
 function auth(){
 return '<div class="auth"><section class="auth-hero"><div class="brand"><div class="brandmark">'+iconSvg('sprout')+'</div>معهد التأسيس الشرعي | منصة الغارسات</div><h1>الغارسات</h1><p class="verse">﴿كَزَرْعٍ أَخْرَجَ شَطْأَهُ فَآزَرَهُ فَاسْتَغْلَظَ فَاسْتَوَىٰ عَلَىٰ سُوقِهِ﴾</p><p style="margin-top:35px;color:#c8c7c6">مساحة تجمع الأسبوع، والأسرة، والمتابعة، والثمرة في مكان واحد.</p></section><section class="auth-panel"><div class="eyebrow">أهلًا بكِ في منصة الغارسات</div><h2 class="welcome">رحلة تُغرس فيها المعاني وتُرعى ثمارها.</h2><p class="muted">ادخلي إلى حسابك، أو أنشئي حسابًا جديدًا للمراجعة.</p><div class="auth-theme-control">'+themeControl()+'</div><div class="tabs"><button data-action="signin" class="'+(state.authTab==='signin'?'active':'')+'">تسجيل الدخول</button><button data-action="signup" class="'+(state.authTab==='signup'?'active':'')+'">حساب جديد</button></div><form id="authForm">'+(state.authTab==='signup'?field('الاسم كاملًا','full_name','', 'text',true)+birthDateField('',true)+phoneSignupField():'')+field('البريد الإلكتروني','email','','email',true)+authPasswordField()+(state.authTab==='signup'?authPasswordField('password_confirm','تأكيد كلمة المرور'):'')+'<button class="btn" type="submit" style="width:100%;margin-top:15px">'+(state.authTab==='signup'?'إرسال طلب التسجيل':'دخول إلى المنصة')+'</button></form><button class="textbtn" data-action="reset">نسيتِ كلمة المرور؟</button></section></div>';
 }
-function pending(){return '<div class="auth"><section class="auth-hero"><div class="brand">'+iconSvg('sprout')+' معهد التأسيس الشرعي</div><h1>الغارسات</h1><p class="verse">لكل بذرة أوانها، ولكل غرس رعاية.</p></section><section class="auth-panel"><h2>'+(state.account?.role==='disabled'?'هذا الحساب موقوف':'وصل طلبكِ')+'</h2><p class="muted" style="margin:20px 0">'+(state.account?.role==='disabled'?'راجعي إدارة البرنامج إن ظننتِ أن هناك خطأ.':'طلب التسجيل في انتظار موافقة إدارة البرنامج. يمكنكِ العودة للتحقق من حالته.')+'</p>'+btn('refresh','تحديث حالة الحساب')+' '+'<button type="button" class="logout-icon pending-logout" data-action="logout" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>'+installNotice()+themeControl()+'</section></div>'}
+function pending(){return '<div class="auth"><section class="auth-hero"><div class="brand">'+iconSvg('sprout')+' معهد التأسيس الشرعي</div><h1>الغارسات</h1><p class="verse">لكل بذرة أوانها، ولكل غرس رعاية.</p></section><section class="auth-panel"><h2>'+(state.account?.role==='disabled'?'هذا الحساب موقوف':state.account?.role==='rejected'?'لم تُقبل نتيجة طلب التسجيل':'وصل طلبكِ')+'</h2><p class="muted" style="margin:20px 0">'+(state.account?.role==='disabled'?'راجعي إدارة البرنامج إن ظننتِ أن هناك خطأ.':state.account?.role==='rejected'?(state.account?.rejection_reason?'سبب عدم الموافقة: '+esc(state.account.rejection_reason):'لم تتم الموافقة على طلب التسجيل. يمكنكِ التواصل مع الإدارة لمراجعة الحالة.'):'طلب التسجيل في انتظار موافقة إدارة البرنامج. يمكنكِ العودة للتحقق من حالته.')+'</p>'+btn('refresh','تحديث حالة الحساب')+' '+'<button type="button" class="logout-icon pending-logout" data-action="logout" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>'+installNotice()+themeControl()+'</section></div>'}
 function installNotice(){
 if(!shouldShowInstall())return '';
 return '<section class="install-notice" role="status" aria-label="اقتراح تثبيت الغارسات"><div class="install-notice-mark" aria-hidden="true">✦</div><div class="install-notice-copy"><strong>الغارسات على شاشة تلفونك</strong><p>أضيفي المنصة للشاشة الرئيسية وافتحيها بسهولة مثل التطبيق.</p></div><div class="install-notice-actions"><button type="button" class="btn goldbtn smallbtn" data-action="install">إضافة للشاشة الرئيسية</button><button type="button" class="install-notice-dismiss" data-action="dismissInstall" aria-label="إخفاء اقتراح التثبيت" title="إخفاء">×</button></div></section>';
@@ -955,9 +955,44 @@ if(!isOpen)return '<div class="card"><h2>صوت الغارسة</h2><p>الاست
 if(rows('done_survey').some(d=>d.student_id===state.account?.student_id&&d.round===round))return '<div class="notice">جزاكِ الله خيرًا، وصلت إجابتكِ.</div>';
 return heading('صوت الغارسة','تُحفظ إجاباتكِ دون اسم ولا أسرة')+'<form id="surveyForm" class="card">'+questions.map((t,i)=>field(t,'q'+i,'','textarea',true)).join('')+'<button type="submit" class="btn">إرسال الإجابات</button></form>';
 }
-function accounts(){
-return heading('الحسابات والصلاحيات','موافقة الحسابات وربطها بالغارسات')+(state.studentToLink?'<div class="notice students-link-help">لربط حساب بالغارسة «'+esc(rows('students').find(x=>x.id===state.studentToLink)?.name||'المحددة')+'»، اختاري الحساب المطلوب من الجدول واضغطي «مراجعة وربط»، ثم حددي سجلها في حقل «سجل الغارسة» واحفظي.</div>':'')+table(['الاسم','البريد','الصفة','الغارسة المرتبطة','إجراء'],rows('accounts').map(a=>'<tr><td>'+esc(a.name)+'</td><td>'+esc(a.email)+'</td><td><span class="chip '+(a.role==='pending'?'warn':'')+'">'+esc(a.role)+'</span></td><td>'+esc(rows('students').find(s=>s.id===a.student_id)?.name||'—')+'</td><td>'+btn('editaccount:'+a.user_id,a.role==='pending'?'مراجعة وربط':'تعديل','secondary smallbtn')+'</td></tr>').join('')||'<tr><td colspan="5">'+empty('لا توجد حسابات')+'</td></tr>');
+
+const accountRoleLabels={pending:'بانتظار الموافقة',rejected:'مرفوض',disabled:'موقوف',gharisa:'غارسة',musaida:'مساعدة المرافقة',murafiqa:'المرافقة',admin:'الإدارة'};
+const accountRoles=()=>[['gharisa','غارسة'],['musaida','مساعدة المرافقة'],['murafiqa','المرافقة'],...(state.account?.role==='admin'?[['admin','الإدارة']]:[])];
+function accountWaitingTime(value){
+ if(!value)return 'غير معروف';
+ const since=new Date(value).getTime();
+ if(!Number.isFinite(since))return 'غير معروف';
+ const days=Math.max(0,Math.floor((Date.now()-since)/86400000));
+ return days===0?'أقل من يوم':days===1?'يوم واحد':days+' أيام';
 }
+function accountMatchCandidates(a){
+ const norm=v=>String(v||'').trim().toLowerCase();
+ return rows('students').filter(s=>
+  !rows('accounts').some(row=>row.student_id===s.id&&row.user_id!==a.user_id)&&
+  ((a.email&&s.email&&norm(a.email)===norm(s.email))||
+   (a.phone&&s.phone&&String(a.phone).replace(/\D/g,'')===String(s.phone).replace(/\D/g,'')))
+ );
+}
+function accounts(){
+ if(!leadership())return heading('الحسابات والصلاحيات','هذه الصفحة متاحة للإدارة والمرافقة فقط');
+ const all=rows('accounts'),pending=all.filter(a=>a.role==='pending').sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||''))),
+ current=all.filter(a=>a.role!=='pending').sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ar'));
+ const currentTab=state.accountsTab==='current'?'current':'pending';
+ const status=a=>'<span class="account-role-badge '+(a.role==='pending'?'is-pending':a.role==='rejected'?'is-rejected':a.role==='disabled'?'is-disabled':'is-active')+'">'+esc(accountRoleLabels[a.role]||a.role)+'</span>';
+ const pendingRows=pending.map(a=>{
+   const suggested=accountMatchCandidates(a);
+   const proposal=suggested.length===1?'<span class="account-suggestion">'+iconSvg('link')+' اقتراح: '+esc(suggested[0].name)+'</span>':suggested.length>1?'<span class="muted small">وجدت عدة سجلات محتملة؛ اختاري يدويًا</span>':'<span class="muted small">لا يوجد سجل مطابق تلقائيًا</span>';
+   return '<tr><th scope="row">'+esc(a.name)+'</th><td>'+esc(a.email||'—')+'</td><td dir="ltr">'+esc(a.phone||'—')+'</td><td><div class="account-age"><strong>'+esc(accountWaitingTime(a.created_at))+'</strong><small>'+esc(a.created_at?date(a.created_at):'—')+'</small></div></td><td>'+proposal+'</td><td><div class="account-action-buttons">'+btn('reviewaccount:'+a.user_id,'موافقة وربط','goldbtn smallbtn')+btn('rejectaccount:'+a.user_id,'رفض','account-reject-button smallbtn')+'</div></td></tr>';
+ }).join('');
+ const currentRows=current.map(a=>'<tr><th scope="row">'+esc(a.name)+'</th><td>'+esc(a.title||'—')+'</td><td>'+esc(a.email||'—')+'</td><td>'+status(a)+'</td><td>'+esc(rows('students').find(st=>st.id===a.student_id)?.name||'—')+'</td><td>'+btn('editaccount:'+a.user_id,a.role==='rejected'?'إعادة المراجعة':'تعديل','secondary smallbtn')+'</td></tr>').join('');
+ return '<div class="account-management">'+heading('الحسابات والصلاحيات','مراجعة طلبات التسجيل وضبط الربط والصلاحيات')+
+ '<div class="account-overview"><div><span>بانتظار الموافقة</span><strong>'+pending.length+'</strong></div><div><span>الحسابات القائمة</span><strong>'+current.filter(a=>a.role!=='rejected').length+'</strong></div><div><span>الطلبات المرفوضة</span><strong>'+current.filter(a=>a.role==='rejected').length+'</strong></div></div>'+
+ (state.studentToLink?'<div class="notice students-link-help">سجل الغارسة المحدد: '+esc(rows('students').find(st=>st.id===state.studentToLink)?.name||'—')+'. اختاري حسابها ثم حددي هذا السجل عند المراجعة.</div>':'')+
+ '<nav class="account-tabs" aria-label="أقسام الحسابات"><button type="button" class="'+(currentTab==='pending'?'is-active':'')+'" data-action="accountsTab:pending" aria-pressed="'+(currentTab==='pending')+'">بانتظار الموافقة <span>'+pending.length+'</span></button><button type="button" class="'+(currentTab==='current'?'is-active':'')+'" data-action="accountsTab:current" aria-pressed="'+(currentTab==='current')+'">الحسابات القائمة <span>'+current.length+'</span></button></nav>'+
+ (currentTab==='pending'?'<section class="account-table-card"><header><div><h2>طلبات التسجيل الجديدة</h2><p>راجعي بيانات الطلب ثم اختاري الصفة وسجل الغارسة، أو ارفضي الطلب مع ذكر السبب عند الحاجة.</p></div></header><div class="account-table-scroll">'+table(['الاسم','البريد الإلكتروني','رقم الهاتف','منذ تقديم الطلب','السجل المقترح','الإجراءات'],pendingRows||'<tr><td colspan="6" class="account-no-results">لا توجد طلبات بانتظار الموافقة حاليًا.</td></tr>')+'</div></section>':
+ '<section class="account-table-card"><header><div><h2>الحسابات القائمة</h2><p>تعديل الأسماء والألقاب والصفات وسجل الغارسة المرتبط، مع بيان الحسابات الموقوفة والمرفوضة.</p></div></header><div class="account-table-scroll">'+table(['الاسم','اللقب','البريد الإلكتروني','الصفة','الغارسة المرتبطة','الإجراء'],currentRows||'<tr><td colspan="6" class="account-no-results">لا توجد حسابات في هذه القائمة.</td></tr>')+'</div></section>')+'</div>';
+}
+
 function settings(){
 return heading('الإعدادات','اسم البرنامج والدورة الجارية والمعلومات الظاهرة')+'<form id="settingsForm" class="card"><div class="form-grid">'+field('اسم البرنامج','program_name',setting('program_name','الغارسات'))+field('اسم المرحلة','stage_name',setting('stage_name','المرحلة الأولى'))+field('الدورة الجارية','current_cycle',setting('current_cycle',1),'number')+field('الرقم البديل','backup_phone',setting('backup_phone',''),'tel')+'<div class="full">'+field('عبارة الترحيب','welcome',setting('welcome',''),'textarea')+'</div></div><button class="btn" type="submit">حفظ الإعدادات</button></form><div class="card" style="margin-top:15px"><h3>إزاحة التقويم</h3><p class="muted">يُزاح ترتيب الأسابيع والمواعيد مع الحفاظ على محتواها.</p>'+field('بداية الأسبوع الأول الجديدة','first_start',rows('weeks').find(w=>w.code==='w1')?.starts_on||'','date')+btn('shiftcalendar','تطبيق الإزاحة','secondary')+'</div>';
 }
@@ -975,11 +1010,11 @@ function page(){
 switch(state.page){
 case 'dashboard':return dashboard();case 'dashboardStudent':return dashboardStudentFile();case 'studentReport':return studentReportDetail();case 'weeks':case 'program':return weeks();case 'weekdetail':return weekDetails();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
 }
-function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast app-toast '+(state.noticeError?'is-error':'is-success')+'" role="'+(state.noticeError?'alert':'status')+'"><span class="app-toast-icon" aria-hidden="true">'+(state.noticeError?'!':'✓')+'</span><div class="app-toast-content"><strong>'+(state.noticeError?'تنبيه':'تم بنجاح')+'</strong><p>'+esc(state.notice)+'</p></div><button type="button" data-action="dismissToast" class="app-toast-dismiss" aria-label="إغلاق الرسالة">×</button></div>':'');if(state.page==='students'&&team())updateStudentsView();if((state.page==='announcements'||state.page==='notices')&&state.communicationTab!=='resources'){markAnnouncementsRead();refreshAnnouncementIndicators()}rememberCurrentPage();}
+function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','rejected','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast app-toast '+(state.noticeError?'is-error':'is-success')+'" role="'+(state.noticeError?'alert':'status')+'"><span class="app-toast-icon" aria-hidden="true">'+(state.noticeError?'!':'✓')+'</span><div class="app-toast-content"><strong>'+(state.noticeError?'تنبيه':'تم بنجاح')+'</strong><p>'+esc(state.notice)+'</p></div><button type="button" data-action="dismissToast" class="app-toast-dismiss" aria-label="إغلاق الرسالة">×</button></div>':'');if(state.page==='students'&&team())updateStudentsView();if((state.page==='announcements'||state.page==='notices')&&state.communicationTab!=='resources'){markAnnouncementsRead();refreshAnnouncementIndicators()}rememberCurrentPage();}
 function dialog(title,body,submit='حفظ'){const old=$('.dialog-backdrop');if(old)old.remove();const e=document.createElement('div');e.className='dialog-backdrop';e.innerHTML='<form id="modalForm" class="dialog"><div class="page-head"><h2>'+esc(title)+'</h2><button type="button" class="btn secondary smallbtn" data-action="close">إغلاق</button></div><div class="form-grid">'+body+'</div><div class="form-actions"><button class="btn" type="submit">'+esc(submit)+'</button></div></form>';document.body.appendChild(e)}
 // Refresh the small notification signal without refreshing a user's in-progress form.
 setInterval(async()=>{
-if(!state.user||!state.account||['pending','disabled'].includes(state.account.role))return;
+if(!state.user||!state.account||['pending','rejected','disabled'].includes(state.account.role))return;
 try{await read('announcements');if(state.page==='announcements'||state.page==='notices'){if(state.communicationTab!=='resources')markAnnouncementsRead();if(!document.querySelector('.dialog-backdrop'))render()}
 else refreshAnnouncementIndicators()}catch(error){console.warn('تعذر تحديث إشعارات الإعلانات',error)}
 },90000);
@@ -1062,7 +1097,37 @@ case 'newjournal':case 'editjournal':{
  '<p class="muted small">اكتبي ما حدث فعلًا في الأسبوع؛ ستظهر التدوينة في خلاصة مجلس التطوير.</p>');
  break;
 }
-case 'editaccount':dialog('مراجعة الحساب',field('الاسم','name',o.name,'text',true)+field('الصفة','role',o.role,'text',true,[['pending','ينتظر'],['gharisa','غارسة'],['musaida','مساعدة المرافقة'],['murafiqa','المرافقة'],...(state.account?.role==='admin'?[['admin','الإدارة']]:[]),['disabled','موقوف']])+field('اللقب','title',o.title)+field('سجل الغارسة','student_id',o.student_id||(o.role==='gharisa'?state.studentToLink:'')||'','text',false,[['','بدون ربط'],...rows('students').map(s=>[s.id,s.name])]));break;
+case 'editaccount':case 'reviewaccount':{
+ if(!leadership())throw Error('مراجعة الحسابات للإدارة والمرافقة فقط');
+ const target=rows('accounts').find(a=>a.user_id===id);
+ if(!target)throw Error('الحساب غير موجود');
+ if(target.role==='admin'&&state.account?.role!=='admin')throw Error('تعديل حساب الإدارة متاح للإدارة فقط');
+ const review=target.role==='pending'||target.role==='rejected';
+ const matches=accountMatchCandidates(target);
+ const suggested=state.studentToLink||target.student_id||(matches.length===1?matches[0].id:'');
+ const opts=[['','اختاري سجل الغارسة'],...rows('students').filter(st=>!rows('accounts').some(acc=>acc.student_id===st.id&&acc.user_id!==target.user_id)).map(st=>[st.id,st.name])];
+ const body='<div class="account-review-intro"><div><strong>'+esc(target.name)+'</strong><span>'+esc(target.email||'')+'</span></div><div><span>رقم الهاتف</span><strong dir="ltr">'+esc(target.phone||'غير مدخل')+'</strong></div><div><span>تاريخ الطلب</span><strong>'+esc(target.created_at?date(target.created_at):'—')+'</strong></div></div>'+
+ field('الاسم المعتمد','name',target.name,'text',true)+
+ field('الصفة المعتمدة','role',review?'gharisa':target.role,'text',true,[...accountRoles(),...(!review?[['disabled','موقوف']]:[])])+
+ field('اللقب (اختياري)','title',target.title||'')+
+ '<div class="account-link-fields" id="accountLinkFields"><p class="muted small">إذا كانت الصفة غارسة، اربطيها بسجل موجود أو أنشئي سجلًا جديدًا. لا يُنشأ سجل جديد عند اختيار صفة أخرى.</p>'+
+ field('طريقة الربط','link_mode',suggested?'existing':'new','text',true,[['existing','ربط بسجل موجود'],['new','إنشاء سجل غارسة جديد']])+
+ '<div id="accountExistingStudent">'+field('سجل الغارسة','student_id',suggested,'text',false,opts)+'</div>'+
+ '<div id="accountNewStudent"><p class="muted small">سوف يُنشأ سجل باسم الغارسة وبريدها وهاتفها في حالة «مقبولة»، ويمكن استكمال بيانات الأسرة لاحقًا من صفحة الغارسات.</p></div></div>';
+ dialog(review?'مراجعة طلب التسجيل':'تعديل الحساب',body,review?'اعتماد الحساب وحفظ الربط':'حفظ التعديلات');
+ const roleSelect=document.querySelector('#f_role');
+ const linkMode=document.querySelector('#f_link_mode');
+ const apply=()=>{const wrap=document.querySelector('#accountLinkFields');if(!wrap)return;wrap.hidden=roleSelect?.value!=='gharisa';document.querySelector('#accountExistingStudent').hidden=linkMode?.value==='new';document.querySelector('#accountNewStudent').hidden=linkMode?.value!=='new'};
+ apply();break;
+}
+case 'rejectaccount':{
+ if(!leadership())throw Error('رفض الحسابات للإدارة والمرافقة فقط');
+ const acc=rows('accounts').find(a=>a.user_id===id&&a.role==='pending');
+ if(!acc)throw Error('الطلب غير موجود أو تمت مراجعته');
+ dialog('رفض طلب التسجيل','<div class="account-rejection-note"><strong>'+esc(acc.name)+'</strong><span>'+esc(acc.email||'')+'</span></div>'+field('سبب عدم الموافقة (اختياري)','rejection_reason','','textarea')+'<p class="muted small">سيبقى الحساب محفوظًا في سجل الطلبات المرفوضة، ولن تتمكن صاحبته من فتح صفحات المنصة إلا إذا أعيد اعتماد حسابها.</p>','متابعة الرفض');
+ document.querySelector('#modalForm button[type="submit"]')?.classList.add('dangerbtn');
+ break;
+}
 case 'doc':o=rows('docs_family').find(d=>d.family_id===state.family&&d.kind===id)||{};dialog('وثيقة الأسرة',field('نص الوثيقة','body',o.body,'textarea',true));break;
 case 'assignrole':dialog('توزيع مهمة دوارة',field('المهمة','task','munassiqa','text',true,[['munassiqa','المنسقة'],['fiqhiya','المسؤولة الفقهية'],['fikriya','المسؤولة الفكرية'],['ijtimaiya','المسؤولة الاجتماعية'],['ataa','مسؤولة العطاء']])+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name]))+field('الدورة','cycle',setting('current_cycle',1),'number',true));break;
 case 'assignleader':dialog('مديرة اللقاء',field('الأسبوع','week_id',state.week,'text',true,rows('weeks').filter(x=>x.kind==='program').map(x=>[x.id,x.title]))+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name])));break;
@@ -1187,7 +1252,26 @@ else if(a==='newjournal'||a==='editjournal'){
  }
  await read('journal');flash(a==='editjournal'?'تم تحديث تدوين الأسبوع':'تم حفظ تدوين الأسبوع');
 }
-else if(a==='editaccount'){const{error}=await db.from('accounts').update({...x,student_id:x.student_id||null}).eq('user_id',id);if(error)throw error;await read('accounts');state.studentToLink=null;flash('حُفظت صلاحية الحساب وربطه')}
+else if(a==='editaccount'||a==='reviewaccount'){
+ if(!leadership())throw Error('إدارة الحسابات للإدارة والمرافقة فقط');
+ const account=rows('accounts').find(acc=>acc.user_id===id);
+ if(!account)throw Error('الحساب غير موجود');
+ const role=String(x.role||''),linkMode=String(x.link_mode||'');
+ const createStudent=role==='gharisa'&&linkMode==='new';
+ const selectedStudent=role==='gharisa'&&!createStudent?(x.student_id||null):null;
+ if(role==='gharisa'&&!createStudent&&!selectedStudent)throw Error('اختاري سجل الغارسة أو أنشئي سجلًا جديدًا');
+ const{error}=await db.rpc('review_account',{p_user_id:id,p_action:account.role==='pending'||account.role==='rejected'?'approve':'update',p_name:String(x.name||'').trim(),p_title:x.title||null,p_role:role,p_student_id:selectedStudent,p_create_student:createStudent,p_rejection_reason:null});
+ if(error)throw error;
+ await Promise.all([read('accounts'),read('students'),read('student_birthdates')]);
+ state.studentToLink=null;
+ flash(account.role==='pending'||account.role==='rejected'?'تم اعتماد الحساب وربطه بنجاح':'حُفظ تعديل الحساب بنجاح');
+}
+else if(a==='rejectaccount'){
+ if(!leadership())throw Error('رفض الحسابات للإدارة والمرافقة فقط');
+ if(!(await appConfirm({title:'تأكيد رفض الطلب',message:'سيظل حساب المتقدمة محفوظًا في الطلبات المرفوضة، ولن تستطيع استخدام المنصة حتى إعادة الموافقة. هل تريدين المتابعة؟',confirmText:'نعم، رفض الطلب',danger:true})))return;
+ const{error}=await db.rpc('review_account',{p_user_id:id,p_action:'reject',p_rejection_reason:String(x.rejection_reason||'').trim()||null});
+ if(error)throw error;await read('accounts');flash('تم تسجيل رفض الطلب');
+}
 else if(a==='doc')await save('docs_family',{...x,kind:id,family_id:state.family},'family_id,kind');
 else if(a==='assignrole')await save('roles_family',{family_id:state.family,student_id:x.student_id,task:x.task,cycle:Number(x.cycle)},'family_id,task,cycle');
 else if(a==='assignleader')await save('rota_leader',{family_id:state.family,week_id:x.week_id,student_id:x.student_id},'family_id,week_id');
@@ -1248,10 +1332,12 @@ else if(action==='refresh')await start();
 else if(action==='reset'){const email=await appConfirm({title:'استعادة كلمة المرور',message:'أدخلي بريدكِ الإلكتروني لإرسال رابط إعادة التعيين.',input:true,placeholder:'name@example.com',confirmText:'إرسال الرابط'});if(email){const{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;flash('إن كان البريد مسجلاً، سيصلك رابط إعادة كلمة المرور')}}
 else if(action==='close')$('.dialog-backdrop')?.remove();
 else if(action==='print')window.print();
+ else if(action.startsWith('accountsTab:')){if(!leadership())throw Error('هذا القسم للإدارة والمرافقة فقط');state.accountsTab=action.split(':')[1]==='current'?'current':'pending';render()}
  else if(action.startsWith('journalView:')){if(!team())throw Error('هذه الصفحة للفريق فقط');state.journalView=action.split(':')[1]==='review'?'review':'weeks';render()}
 else if(action==='shiftcalendar'){const newDate=$('#f_first_start')?.value;if(!newDate)throw Error('اختاري التاريخ الجديد');if(!(await appConfirm({title:'تأكيد إزاحة التقويم',message:'سيتم تغيير تواريخ جميع الأسابيع والمواعيد المرتبطة بها. هل تريدين المتابعة؟',confirmText:'نعم، تطبيق الإزاحة',danger:true})))return;const {data,error}=await db.rpc('shift_program',{p_first_week:newDate});if(error)throw error;await load();flash('تمت إزاحة التقويم بمقدار '+data+' يوم')}
 else if(action==='clearstudents'){state.studentsSearch='';state.studentsFamily='';state.studentsTab='all';render();updateStudentsView()}
-else if(action.startsWith('studentaccounts:')){if(!leadership())throw Error('ربط الحسابات متاح للإدارة والمرافقة فقط');state.studentToLink=action.split(':')[1];state.page='accounts';render();window.scrollTo(0,0)}
+else if(action.startsWith('rejectaccount:')){if(!leadership())throw Error('رفض الطلبات للإدارة والمرافقة فقط');await modal(action)}
+ else if(action.startsWith('studentaccounts:')){if(!leadership())throw Error('ربط الحسابات متاح للإدارة والمرافقة فقط');state.studentToLink=action.split(':')[1];state.page='accounts';render();window.scrollTo(0,0)}
 else if(action==='more'){try{await read('announcements');refreshAnnouncementIndicators()}catch(error){console.warn('تعذر تحديث الإعلانات قبل فتح القائمة',error)}showMobileMore()}
 else if(action==='closeMore'){closeMobileMore()}
 else if(action==='backStudentProfile'){state.page='dashboardStudent';render();window.scrollTo(0,0)}
@@ -1340,7 +1426,13 @@ document.addEventListener('change',async e=>{
 const el=e.target;
 try{
 if(el.closest('#followupForm')&&el.matches('[data-followup-field]')){markFollowupDirty();return}
-if(el.id==='resourceCoverMode'){const field=document.querySelector('#resourceCoverUpload');if(field)field.hidden=el.value!=='upload';return}
+if(el.id==='f_role'||el.id==='f_link_mode'){
+ const role=document.querySelector('#f_role')?.value,mode=document.querySelector('#f_link_mode')?.value;
+ const wrap=document.querySelector('#accountLinkFields');
+ if(wrap){wrap.hidden=role!=='gharisa';document.querySelector('#accountExistingStudent').hidden=mode==='new';document.querySelector('#accountNewStudent').hidden=mode!=='new'}
+ return;
+ }
+ if(el.id==='resourceCoverMode'){const field=document.querySelector('#resourceCoverUpload');if(field)field.hidden=el.value!=='upload';return}
 if(el.dataset.select==='resourceWeekFilter'){state.resourceWeekFilter=el.value;render();return}
 if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView();rememberCurrentPage()}
 else if(el.dataset.select==='week'){if(!(await confirmFollowupLeave())){el.value=state.week;return}state.week=el.value;render()}
@@ -1391,7 +1483,7 @@ status.textContent='تم التحقق من الحساب، جارٍ فتح لوح
 const{data:account,error:profileError}=await withTimeout(db.from('accounts').select('*').eq('user_id',data.user.id).maybeSingle(),12000);
 if(profileError)throw Error('تم تسجيل الدخول، لكن تعذر قراءة الصلاحيات. '+profileError.message);
 state.user=data.user;state.account=account;
-if(account&&!['pending','disabled'].includes(account.role)){
+if(account&&!['pending','rejected','disabled'].includes(account.role)){
 state.page=['admin','murafiqa','musaida'].includes(account.role)?'dashboard':'myweek';
 render();
 load().then(()=>render()).catch(err=>{console.error(err);flash('دخلتِ حسابكِ، لكن بعض البيانات لم تُحمّل. أعيدي تحديث الصفحة.',true)});
