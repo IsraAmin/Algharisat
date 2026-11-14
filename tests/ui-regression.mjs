@@ -226,3 +226,38 @@ test('unknown birthdays never make under-twenty requirements disappear silently'
  assert.match(app,/studentUnder20\(student\)!==true/);
  assert.match(app,/code!=='guardian'\|\|studentUnder20\(s\)===true/);
 });
+
+
+test('preparation shows four sections, live counts and actual completion dates',()=>{
+ for(const title of ['القرارات','المهام','شروط الانطلاق','قائمة الختام'])assert.ok(app.includes(title));
+ assert.match(app,/const preparationSections=/);
+ assert.match(app,/const done=list\.filter\(t=>t\.done===true\)\.length,all=list\.length/);
+ assert.match(app,/prep-section-count/);
+ assert.match(app,/data-task/);
+ assert.match(app,/t\.done&&t\.done_at/);
+ assert.match(app,/prep-progress/);
+});
+test('staff can edit tasks with existing completion state preserved, and delete through confirmation',()=>{
+ assert.match(app,/case 'newtask':case 'edittask'/);
+ assert.match(app,/edittask:'tasks'/);
+ assert.match(app,/db\.from\('tasks'\)\.update\(value\)\.eq\('id',id\)/);
+ assert.match(app,/action\.startsWith\('deletetask:'\)/);
+ assert.match(app,/openDeleteConfirmation\(\{type:'task',id,name:item\.body\}\)/);
+ assert.match(app,/pending\.type==='task'/);
+ assert.match(app,/db\.from\('tasks'\)\.delete\(\)\.eq\('id',pending\.id\)/);
+ assert.match(app,/previous\?\.done_at\|\|new Date\(\)\.toISOString\(\)/);
+});
+test('founding meeting cannot be scheduled before all launch tasks complete',()=>{
+ assert.match(app,/const launchReadiness=/);
+ assert.match(app,/all\.length>0&&all\.every\(t=>t\.done===true\)/);
+ assert.match(app,/isFoundationMeeting\(x\.kind,x\.title\)/);
+ assert.match(app,/if\(!launch\.ready\)throw Error/);
+ assert.match(app,/\['لقاء التأسيس','لقاء التأسيس'\]/);
+});
+test('preparation design is responsive and safe in dark mode',()=>{
+ assert.match(css,/\.prep-sections\{display:grid/);
+ assert.match(css,/\.prep-readiness\.is-ready/);
+ assert.match(css,/\.prep-entry-check input:focus-visible/);
+ assert.match(css,/html\[data-theme="dark"\] \.prep-delete/);
+ assert.match(css,/@media\(max-width:1100px\)\{\.prep-sections\{grid-template-columns:1fr\}\}/);
+});
