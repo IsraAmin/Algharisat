@@ -451,13 +451,13 @@ const triple=self?['task_self','task_home','task_community'].filter(key=>self[ke
 const tripleLabel=self?('المهام الثلاثية: '+triple+' من ٣ منجزة'):'';
 const summary=self?'<div class="followup-student-report"><span class="followup-report-dot" aria-hidden="true"></span><span>تقرير الغارسة: الورد '+esc(self.wird_days??'—')+' / ٧ · '+tripleLabel+'</span></div>':'<div class="followup-no-report">لم يصل التقرير الذاتي لهذا الأسبوع</div>';
 return '<tr data-followup-student="'+esc(student.id)+'"><th scope="row" class="followup-name-cell"><strong>'+esc(student.name)+'</strong>'+summary+'</th>'+
-'<td>'+attSelect(student.id,'majlis',previous.majlis)+'</td>'+
-'<td>'+attSelect(student.id,'family_meeting',previous.family_meeting)+'</td>'+
-'<td><input data-followup-field="wird_days" type="number" inputmode="numeric" min="0" max="7" step="1" value="'+esc(previous.wird_days??'')+'" placeholder="—" aria-label="عدد أيام الورد" /></td>'+
-'<td>'+taskSelect('triple_task',previous.triple_task)+'</td>'+
-'<td>'+taskSelect('transferred_lesson',previous.transferred_lesson)+'</td>'+
-'<td>'+taskSelect('rotating_task',previous.rotating_task)+'</td>'+
-'<td><input data-followup-field="note" type="text" maxlength="220" value="'+esc(previous.note||'')+'" placeholder="ملاحظة قصيرة" aria-label="ملاحظة عن '+esc(student.name)+'" /></td></tr>';
+'<td data-label="المجلس">'+attSelect(student.id,'majlis',previous.majlis)+'</td>'+
+'<td data-label="لقاء الأسرة">'+attSelect(student.id,'family_meeting',previous.family_meeting)+'</td>'+
+'<td data-label="الورد"><input data-followup-field="wird_days" type="number" inputmode="numeric" min="0" max="7" step="1" value="'+esc(previous.wird_days??'')+'" placeholder="—" aria-label="عدد أيام الورد" /></td>'+
+'<td data-label="المهمة الثلاثية">'+taskSelect('triple_task',previous.triple_task)+'</td>'+
+'<td data-label="الدرس المنقول">'+taskSelect('transferred_lesson',previous.transferred_lesson)+'</td>'+
+'<td data-label="المهمة الدوّارة">'+taskSelect('rotating_task',previous.rotating_task)+'</td>'+
+'<td class="followup-note-cell" data-label="ملاحظة"><input data-followup-field="note" type="text" maxlength="220" value="'+esc(previous.note||'')+'" placeholder="ملاحظة قصيرة" aria-label="ملاحظة عن '+esc(student.name)+'" /></td></tr>';
 }).join('');
 const tableMarkup=members.length?'<div class="followup-table-scroll"><table class="followup-edit-table"><thead><tr><th scope="col">الغارسة والتقرير الذاتي</th><th scope="col">المجلس</th><th scope="col">لقاء الأسرة</th><th scope="col">الورد</th><th scope="col">المهمة الثلاثية</th><th scope="col">الدرس المنقول</th><th scope="col">المهمة الدوّارة</th><th scope="col">ملاحظة</th></tr></thead><tbody>'+lines+'</tbody></table></div>':empty(family?'لا توجد غارسات بحالة «في البرنامج» في هذه الأسرة':'اختاري الأسرة لعرض الغارسات');
 return heading('المتابعة الأسبوعية','متابعة الغارسات من الأسرة والأسبوع، مع حفظ جميع الصفوف دفعة واحدة')+
