@@ -127,6 +127,21 @@ function visibleNavigation(){
 const nav=team()?teamNav:studentNav.filter(x=>x[0]!=='myfollowup'||coordinator()).filter(x=>x[0]!=='survey'||setting('survey_open',false)===true);
 return nav.filter(x=>x[0]!=='accounts'||leadership()).filter(x=>x[0]!=='survey'||state.account?.role!=='musaida');
 }
+// Section headings follow the team pages in the official guide.
+const teamNavGroups=[
+['صفحات المتابعة',['dashboard','weeks','students','families','followups']],
+['صفحات قياس الثمرة',['cards','milestones','reports','survey']],
+['صفحات التواصل',['questions','announcements']],
+['صفحات التشغيل',['tasks','journal']],
+['الإدارة والإعدادات',['accounts','settings']]
+];
+function groupedNavigation(visible){
+if(!team())return [['صفحات الغارسة',visible]];
+return teamNavGroups.map(([label,ids])=>[label,ids.map(id=>visible.find(([p])=>p===id)).filter(Boolean)]).filter(([,items])=>items.length);
+}
+function sidebarNavigation(visible){
+return groupedNavigation(visible).map(([label,items],index)=>'<section class="sidebar-section" aria-labelledby="sidebar-group-'+index+'"><h2 class="sidebar-section-title" id="sidebar-group-'+index+'">'+esc(label)+'</h2><div class="sidebar-section-links">'+items.map(([p,t])=>'<button type="button" class="nav-item '+(p===state.page?'active':'')+'" data-page="'+esc(p)+'"'+(p===state.page?' aria-current="page"':'')+'><span class="sidebar-nav-icon">'+iconSvg(icons[p])+'</span><span>'+esc(t)+'</span></button>').join('')+'</div></section>').join('');
+}
 function closeMobileMore(){
 const overlay=document.querySelector('.mobile-more-overlay');
 if(overlay){overlay.remove();document.body.classList.remove('mobile-more-open')}
@@ -135,7 +150,7 @@ function showMobileMore(){
 closeMobileMore();
 const visible=visibleNavigation();
 const primary=visible.slice(0,4).map(([p])=>p);
-const groups=[
+const groups=team()?groupedNavigation(visible):[
 ['التنقل السريع',visible.filter(([p])=>primary.includes(p))],
 ['بقية الصفحات',visible.filter(([p])=>!primary.includes(p))]
 ].filter(([,items])=>items.length);
@@ -155,7 +170,7 @@ const visible=visibleNavigation();
 let main='';
 try{main=page()}catch(err){console.error(err);main='<div class="card"><p>تعذر عرض هذه الصفحة. حدّثي البيانات وحاولي مرة أخرى.</p></div>'}
 const top=team()?'الفريق':'الغارسة';
-return '<div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">'+iconSvg('sprout')+'</div><span>الغارسات<small style="display:block;font-weight:400;color:#acb5c3">معهد التأسيس الشرعي</small></span></div><div class="side-label">مساحة '+top+'</div>'+visible.map(([p,t])=>'<button class="nav-item '+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="width:20px;text-align:center;color:#b79867">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'</aside><main class="main"><header class="topbar"><div class="mobile-brand brand"><div class="brandmark" style="width:32px;height:32px">✦</div>الغارسات</div><div class="muted small user-title">منصة برنامج الغارسات | '+esc(setting('stage_name','المرحلة الأولى'))+'</div><div style="display:flex;align-items:center;gap:12px"><span class="small">'+esc(state.account?.name||'')+' <span class="muted">| '+esc(state.account?.title||top)+'</span></span><button type="button" data-action="logout" class="logout-icon" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header><div class="content">'+installNotice()+main+'</div></main><nav class="mobile-nav">'+visible.slice(0,4).map(([p,t])=>'<button class="'+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="font-size:20px">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'<button type="button" data-action="more" aria-haspopup="dialog" aria-label="فتح جميع الصفحات"><span class="mobile-icon">'+iconSvg('grid')+'</span>المزيد</button></nav></div>';
+return '<div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">'+iconSvg('sprout')+'</div><span>الغارسات<small style="display:block;font-weight:400;color:#acb5c3">معهد التأسيس الشرعي</small></span></div><div class="side-label">مساحة '+top+'</div><nav class="sidebar-groups" aria-label="صفحات المنصة">'+sidebarNavigation(visible)+'</nav>+'</aside><main class="main"><header class="topbar"><div class="mobile-brand brand"><div class="brandmark" style="width:32px;height:32px">✦</div>الغارسات</div><div class="muted small user-title">منصة برنامج الغارسات | '+esc(setting('stage_name','المرحلة الأولى'))+'</div><div style="display:flex;align-items:center;gap:12px"><span class="small">'+esc(state.account?.name||'')+' <span class="muted">| '+esc(state.account?.title||top)+'</span></span><button type="button" data-action="logout" class="logout-icon" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header><div class="content">'+installNotice()+main+'</div></main><nav class="mobile-nav">'+visible.slice(0,4).map(([p,t])=>'<button class="'+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="font-size:20px">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'<button type="button" data-action="more" aria-haspopup="dialog" aria-label="فتح جميع الصفحات"><span class="mobile-icon">'+iconSvg('grid')+'</span>المزيد</button></nav></div>';
 }
 function heading(title,desc,action=''){return '<div class="page-head"><div><div class="eyebrow">مِن الغَرْسِ إلى الثَّمَر</div><h1>'+esc(title)+'</h1><p class="subtitle">'+esc(desc)+'</p></div>'+(action?'<div class="page-actions">'+action+'</div>':'')+'</div>'}
 function empty(text){return '<div class="empty"><strong>لا توجد بيانات بعد</strong>'+esc(text)+'</div>'}
