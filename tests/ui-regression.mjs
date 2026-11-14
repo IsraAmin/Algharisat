@@ -68,3 +68,13 @@ test('password visibility control works in sign-in and sign-up without changing 
  assert.match(app,/aria-pressed/);
  assert.match(css,/\.auth-password-field input\{padding-inline-end:55px\}/);
 });
+
+test('family coordinator never sees other family selector and may only edit assigned family',()=>{
+ assert.match(app,/const ownFamilyId=\(\)=>state\.profile\?\.family_id\|\|null/);
+ assert.match(app,/r\.family_id===ownFamilyId\(\)/);
+ assert.match(app,/state\.family=team\(\)\?\(remembered\.family\|\|state\.family\):ownFamilyId\(\)/);
+ assert.match(app,/state\.family=team\(\)\?\(state\.family\|\|rows\('families'\)\[0\]\?\.id\|\|null\):ownFamilyId\(\)/);
+ assert.match(app,/aria-label="الأسرة المسندة لكِ"/);
+ assert.match(app,/if\(!team\(\)\)\{el\.value=ownFamilyId\(\)\|\|''/);
+ assert.match(app,/familyId!==ownFamily/);
+});

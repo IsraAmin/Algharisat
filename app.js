@@ -29,7 +29,8 @@ const teamNav=[['dashboard','اللوحة'],['weeks','البرنامج والأ�
 const studentNav=[['myweek','أسبوعي'],['myreport','تقريري الأسبوعي'],['myfamily','أسرتي'],['myfollowup','متابعة الأسرة'],['mycard','بطاقتي'],['program','البرنامج'],['myquestions','أسئلتي'],['notices','الإعلانات'],['survey','صوت الغارسة'],['myaccount','حسابي']];
 const team=()=>['admin','murafiqa','musaida'].includes(state.account?.role);
 const leadership=()=>['admin','murafiqa'].includes(state.account?.role);
-const coordinator=()=>state.rows.roles_family?.some(r=>r.student_id===state.account?.student_id&&r.task==='munassiqa'&&r.cycle===Number(setting('current_cycle',1)));
+const ownFamilyId=()=>state.profile?.family_id||null;
+const coordinator=()=>!team()&&!!ownFamilyId()&&state.rows.roles_family?.some(r=>r.student_id===state.account?.student_id&&r.family_id===ownFamilyId()&&r.task==='munassiqa'&&r.cycle===Number(setting('current_cycle',1)))===true;
 const setting=(key,fallback='')=>state.rows.settings?.find(s=>s.key===key)?.value??fallback;
 const rows=t=>state.rows[t]||[];
 const option=(v,label,current)=>'<option value="'+esc(v)+'" '+(String(current??'')===String(v)?'selected':'')+'>'+esc(label)+'</option>';
@@ -49,7 +50,7 @@ const tables=[...base,...(team()?staff:student),...(leadership()?['accounts','do
 await Promise.all(tables.map(t=>read(t).catch(err=>{console.warn(t,err.message);state.rows[t]=[]})));
 if(!team()&&state.account?.student_id){state.profile=rows('students').find(s=>s.id===state.account.student_id);const result=await db.rpc('family_directory');if(!result.error&&result.data){const own=rows('students');state.rows.students=[...own,...result.data.filter(s=>!own.some(m=>m.id===s.id))]}const pub=await db.rpc('published_questions');if(!pub.error&&pub.data){const mine=rows('questions');state.rows.questions=[...mine,...pub.data.filter(q=>!mine.some(m=>m.id===q.id))]}}
 state.week ||= currentWeek()?.id;
-state.family ||= state.profile?.family_id||rows('families')[0]?.id;
+state.family=team()?(state.family||rows('families')[0]?.id||null):ownFamilyId();
 }
 const withTimeout=(promise,ms=15000)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('استغرق الاتصال وقتًا أطول من المتوقع. تحققي من الإنترنت وحاولي مرة أخرى.')),ms))]);
 // Page memory is scoped to the signed-in account (not shared across accounts).
@@ -92,7 +93,7 @@ const allowed=team()?new Set([...teamNav.map(([key])=>key),'dashboardStudent','s
 state.page=remembered&&allowed.has(remembered.page)&&(!['dashboardStudent','studentReport'].includes(remembered.page)||remembered.dashboardStudent)?remembered.page:(team()?'dashboard':'myweek');
 if(remembered&&state.page===remembered.page){
 state.week=remembered.week||state.week;
-state.family=remembered.family||state.family;
+state.family=team()?(remembered.family||state.family):ownFamilyId();
 state.dashboardStudent=remembered.dashboardStudent||state.dashboardStudent;
 state.studentReportWeek=remembered.studentReportWeek||state.studentReportWeek;
 state.studentFileReturn=remembered.studentFileReturn||state.studentFileReturn;
@@ -470,7 +471,7 @@ return '<div class="students-register">'+heading('الغارسات','سجل ال
 '<div class="card table-wrap students-table-wrap"><table class="students-table"><thead><tr>'+['الاسم','الأسرة','الجامعة','الهاتف','الحال','ربط الحساب','الإجراء'].map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table><div class="students-empty-results" hidden>'+empty('لا توجد غارسات تطابق البحث أو الفلاتر الحالية')+'</div></div></div>';
 }
 function families(){
-const fam=rows('families').find(f=>f.id===state.family),members=rows('students').filter(s=>s.family_id===fam?.id),isTeam=team();
+const familyId=team()?state.family:ownFamilyId(),fam=rows('families').find(f=>f.id===familyId),members=rows('students').filter(s=>s.family_id===fam?.id),isTeam=team();
 return heading(isTeam?'الأسر':'أسرتي','الأخوات، والمهام الدوارة، ولقاءات الأسرة',isTeam?btn('newfamily','إضافة أسرة','goldbtn')+' '+btn('assignrole','توزيع المهام')+' '+btn('assignleader','مديرات اللقاء'):'')+'<div class="toolbar">'+(isTeam?selectFamilies():'')+'</div>'+(fam?'<div class="grid two"><div class="card"><h3>'+esc(fam.name)+'</h3><p class="muted">موعد اللقاء: '+esc(fam.meeting_day||'لم يحدد')+' '+esc(fam.meeting_time||'')+'</p>'+(fam.meeting_url?'<p><a target="_blank" rel="noopener noreferrer" href="'+esc(safeUrl(fam.meeting_url))+'">رابط اللقاء</a></p>':'')+'<div class="separator"></div>'+members.map(s=>'<div class="list-row"><div><strong>'+esc(s.name)+'</strong><p class="muted">'+esc(rows('roles_family').find(r=>r.student_id===s.id&&r.cycle===Number(setting('current_cycle',1)))?.task||'لم توزع المهمة')+'</p></div>'+(s.phone?'<a class="btn secondary smallbtn" href="https://wa.me/'+encodeURIComponent(s.phone.replace(/[^0-9]/g,''))+'" target="_blank" rel="noopener">واتساب</a>':'')+'</div>').join('')+'</div><div class="card"><h3>وثائق الأسرة</h3>'+[['wird','قدر الورد'],['page_need','صفحة الحاجة'],['initiative','المبادرة'],['charter','الميثاق']].map(([key,t])=>'<div class="list-row"><span>'+t+'</span>'+btn('doc:'+key,rows('docs_family').some(d=>d.kind===key&&d.family_id===fam.id)?'عرض وتعديل':'كتابة','secondary smallbtn')+'</div>').join('')+'<div class="separator"></div><h3>محاضر اللقاءات</h3>'+rows('minutes').filter(m=>m.family_id===fam.id).map(m=>'<div class="list-row">'+date(m.meeting_date)+' | '+esc(m.summary?.slice(0,45))+'</div>').join('')+btn('newminute','إضافة محضر','goldbtn')+'</div></div>':empty('أضيفي أسرة أولًا'));
 }
 const followAttendanceOptions=[['','لم يُسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']];
@@ -483,7 +484,7 @@ const weeks=sortedWeeks().filter(w=>w.kind==='program').slice(0,8);
 const selected=weeks.find(w=>w.id===state.week)||weeks.find(weekCurrent)||weeks[0];
 if(selected)state.week=selected.id;
 const canEdit=team()||coordinator();
-const familyId=team()?state.family:state.profile?.family_id;
+const familyId=team()?state.family:ownFamilyId();
 const families=rows('families');
 const family=families.find(f=>f.id===familyId);
 const members=rows('students').filter(s=>s.family_id===familyId&&s.stage==='active').sort((a,b)=>a.name.localeCompare(b.name,'ar'));
@@ -491,7 +492,7 @@ const existing=rows('followups'),studentReports=rows('reports_self');
 const attSelect=(studentId,field,value)=>'<select data-followup-field="'+field+'" aria-label="'+(field==='majlis'?'حضور المجلس':'حضور لقاء الأسرة')+' · '+esc(studentId)+'">'+followAttendanceOptions.map(([valueKey,label])=>option(valueKey,label,value||'')).join('')+'</select>';
 const taskSelect=(field,value)=>'<select data-followup-field="'+field+'" aria-label="'+esc(({triple_task:'المهمة الثلاثية',transferred_lesson:'الدرس المنقول',rotating_task:'المهمة الدوّارة'})[field])+'">'+followTaskOptions.map(([key,label])=>option(key,label,value||'')).join('')+'</select>';
 const weekNav='<div class="followup-week-nav" role="group" aria-label="اختيار أسبوع المتابعة">'+weeks.map((w,i)=>'<button type="button" data-follow-week="'+esc(w.id)+'" class="followup-week-pill'+(w.id===selected?.id?' active':'')+'" aria-pressed="'+(w.id===selected?.id?'true':'false')+'">الأسبوع '+(i+1)+'</button>').join('')+'</div>';
-const familyChoice=team()?'<label class="followup-family-selector"><span>الأسرة</span><select data-select="family" aria-label="اختيار الأسرة"><option value="">اختاري الأسرة</option>'+families.map(f=>option(f.id,f.name,familyId)).join('')+'</select></label>':'<div class="followup-current-family"><span class="muted small">الأسرة</span><strong>'+esc(family?.name||'لم تُحدّد أسرتك بعد')+'</strong></div>';
+const familyChoice=team()?'<label class="followup-family-selector"><span>الأسرة</span><select data-select="family" aria-label="اختيار الأسرة"><option value="">اختاري الأسرة</option>'+families.map(f=>option(f.id,f.name,familyId)).join('')+'</select></label>':'<div class="followup-current-family" aria-label="الأسرة المسندة لكِ"><span class="muted small">أسرتكِ فقط</span><strong>'+esc(family?.name||'لم تُحدّد أسرتكِ بعد')+'</strong></div>';
 if(!canEdit)return heading('المتابعة الأسبوعية','متابعة الحضور والورد والمهام للأسابيع الثمانية')+
 '<div class="card followup-access"><h3>المتابعة مخصصة للفريق ومنسقة الأسرة</h3><p class="muted">إذا كنتِ منسقة الأسرة لهذه الدورة، فتأكدي من ربط حسابك بسجلك وتعيينك في المهمة الدوّارة.</p></div>';
 const activeCount=members.length,recordCount=members.filter(m=>existing.some(f=>f.student_id===m.id&&f.week_id===selected?.id&&f.majlis)).length;
@@ -523,7 +524,7 @@ async function saveFollowupTable(form){
 if(!(team()||coordinator()))throw Error('حفظ المتابعة للفريق ومنسقة الأسرة فقط');
 const weekId=form.dataset.weekId,familyId=form.dataset.familyId;
 if(!weekId||!sortedWeeks().some(w=>w.id===weekId&&w.kind==='program'))throw Error('اختاري أسبوعًا صحيحًا');
-const ownFamily=state.profile?.family_id;
+const ownFamily=ownFamilyId();
 if(!team()&&(!ownFamily||familyId!==ownFamily))throw Error('يمكنكِ متابعة أسرتك فقط');
 const allowed=rows('students').filter(s=>s.family_id===familyId&&s.stage==='active');
 const validIds=new Set(allowed.map(x=>x.id));
@@ -1131,7 +1132,7 @@ if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStu
 else if(el.dataset.select==='week'){if(!(await confirmFollowupLeave())){el.value=state.week;return}state.week=el.value;render()}
 else if(el.dataset.select==='cardStage'){state.cardStage=el.value;render()}
 else if(el.dataset.select==='period'){state.period=el.value;render()}
-else if(el.dataset.select==='family'){if(!(await confirmFollowupLeave())){el.value=state.family||'';return}state.family=el.value;render()}
+else if(el.dataset.select==='family'){if(!team()){el.value=ownFamilyId()||'';throw Error('يمكنكِ عرض أسرتكِ فقط')}if(!(await confirmFollowupLeave())){el.value=state.family||'';return}state.family=el.value;render()}
 else if(el.dataset.cardGoal){if(!team())throw Error('تعديل إنجاز الأهداف للفريق فقط');const goalId=el.dataset.cardGoal,studentId=el.dataset.cardStudent;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',studentId);if(error)throw error;await read('goals');render()}
 else if(el.dataset.profileGoal){if(!team())throw Error('تعديل الأهداف للفريق فقط');const goalId=el.dataset.profileGoal;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',state.dashboardStudent);if(error)throw error;await read('goals');render()}
 else if(el.dataset.milestone){
