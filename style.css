@@ -1244,3 +1244,10 @@ td .btn{margin:2px;vertical-align:middle}
 @media(max-width:950px){.communications-page .comms-resource.has-cover{align-items:start}.communications-page .resource-cover{width:125px;height:90px}}
 @media(max-width:570px){.communications-page .resource-cover{width:106px;height:91px;border-radius:10px}.communications-page .comms-resource.has-cover{gap:11px}.communications-page .comms-resource.has-cover .comms-resource-main{min-width:0;flex-basis:calc(100% - 117px)}.communications-page .comms-resource.has-cover .comms-resource-actions{flex-basis:100%}.communications-page .comms-resource.is-text-only{gap:10px}}
 @media(max-width:390px){.communications-page .resource-cover{width:90px;height:94px}.communications-page .comms-resource.has-cover .comms-resource-main{flex-basis:calc(100% - 101px)}.communications-page .comms-resource-top{gap:5px}.communications-page .comms-resource.has-cover .comms-tag{font-size:.66rem;padding:4px 7px}}
+
+/* Sources week selector */
+.communications-page .comms-resource-filter{display:flex;align-items:center;gap:12px;justify-content:flex-start;flex-wrap:wrap;padding:13px 17px;background:#fff;border:1px solid #e1e7ed;border-radius:14px}
+.communications-page .comms-resource-filter label{color:#2c4861;font-size:.85rem;font-weight:800;white-space:nowrap}
+.communications-page .comms-resource-filter select{width:auto;min-width:230px;max-width:100%;min-height:43px;border:1px solid #d9e3ea;border-radius:10px;background:#f8fafb;color:#29485d;padding:9px 12px;font-size:.83rem}
+.communications-page .comms-resource-filter select:focus-visible{outline:2px solid #b79867;outline-offset:2px}
+@media(max-width:580px){.communications-page .comms-resource-filter{align-items:stretch;flex-direction:column;gap:8px;padding:12px}.communications-page .comms-resource-filter select{width:100%;min-width:0}}
