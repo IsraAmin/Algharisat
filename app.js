@@ -869,7 +869,7 @@ function reports(){
  }).join('');
  const closing=rows('tasks').filter(t=>t.section==='closing'&&(!t.week_id||periodIds.has(t.week_id)));
  const closingRows=closing.map(t=>'<div class="report-closing-row"><span class="report-state '+(t.done?'is-done':'is-pending')+'">'+(t.done?'مكتمل':'لم يكتمل')+'</span><div><strong>'+esc(t.body)+'</strong>'+(t.owner?'<small>المسؤولة: '+esc(t.owner)+'</small>':'')+(t.result?'<p>'+esc(t.result)+'</p>':'')+'</div></div>').join('');
- const notes=leadership()?rows('observations').filter(o=>!o.secret&&activeIds.has(o.student_id)&&(!o.week_id||periodIds.has(o.week_id))):[];
+ const notes=leadership()?rows('observations').filter(o=>o.secret===false&&o.kind!=='حدود الستر'&&activeIds.has(o.student_id)&&(!o.week_id||periodIds.has(o.week_id))):[];
  const noteRows=notes.slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).map(o=>{
   const student=members.find(s=>s.id===o.student_id);
   return '<div class="report-note"><strong>'+esc(student?.name||'غارسة')+'</strong><span class="report-note-kind">'+esc(o.kind||'ملاحظة')+'</span><p>'+esc(o.note||'')+'</p></div>';
