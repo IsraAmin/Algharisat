@@ -505,7 +505,48 @@ flash('حُفظ جدول المتابعة بالكامل بنجاح ('+entries.l
 const aspects=['الفقهي الشرعي','التربوي التزكوي','الفكري','التنظيمي','الاجتماعي','البيت المسلم وصناعة الجيل'];
 const levels=['لم تبدأ','في الطريق','متحققة','متميزة'];
 const cardStages=[['self','التقييم الذاتي'],['first','التقييم الأول'],['second','التقييم الثاني'],['third','التقييم الثالث'],['fourth','التقييم الرابع']];
+// Guide appendix 2: the four levels and their evidence sources.
+const cardRubric=[
+{aspect:'الفقهي الشرعي',descriptions:['لا تضبط فرائض الوضوء والصلاة، ولم تبدأ الحفظ','تصح طهارتها دون صلاتها أو العكس، أو حفظت دون عشرة أحاديث، أو في تلاوتها أخطاء جلية','تصح طهارتها وصلاتها على المذهب المالكي، وتحفظ عشرة أحاديث من الأربعين، وتتلو جزء عمّ تلاوة صحيحة','ذلك كله، وتعلم غيرها صفة الوضوء والصلاة تعليمًا صحيحًا'],source:'التسميع، وفحص معلمة التلاوة، والتطبيق العملي في اللقاءين الحضوريين'},
+{aspect:'التربوي التزكوي',descriptions:['لا ورد ثابت ولا محاسبة','ورد متقطع، أو محاسبة غير منتظمة','ورد يومي ثابت أربعة أسابيع متتالية، ومحاسبة أسبوعية مكتوبة','ذلك، وتعين أخواتها على وردهن، وتحسن إلقاء المجلس الإيماني'],source:'جدول المتابعة للورد؛ والمحاسبة بإفادتها دون اطلاع على دفترها'},
+{aspect:'الفكري',descriptions:['لم تقرأ المقرر','قرأت وناقشت، ولم تكتب صفحتها','تشرح دور المرأة المسلمة كما يقدمه الإسلام في صفحة واحدة','ذلك، وتشرحه لزميلة شرحًا واضحًا'],source:'الصفحة المكتوبة؛ ويقاس أنها كتبت وشرحت، لا رأيها'},
+{aspect:'التنظيمي',descriptions:['لم تحمل مهمتها','حملتها بنقص أو تأخر','تؤدي مهمتها الدوارة، وتكتب محضر لقاء','ذلك، وأدارت لقاء أسرتها في دورها بقاعدة الثلث'],source:'المحاضر، وملاحظة المرافقة'},
+{aspect:'الاجتماعي',descriptions:['غياب متكرر بلا صلة بأخواتها','تحضر ولا تعرف أحوال أخواتها، أو غابت عن لقاء حضوري','تعرف أخواتها في الأسرة وأحوالهن، وتلتزم باللقاء الحضوري','ذلك، وتبادر بالسؤال والتزاور'],source:'الحضور، وملاحظة المرافقة'},
+{aspect:'البيت المسلم وصناعة الجيل',descriptions:['لم تكتب صفحة البيت، ولم تختر عادة بر','كتبت الصفحة أو اختارت العادة ولم تثبت','تصف البيت المسلم الذي تريد بناءه، وتلتزم عادة بر ثابتة','ذلك، وتنقل ما تتعلمه إلى أهل بيتها كل أسبوع'],source:'إفادتها عن فعلها وحده، بلا أخبار عن أهلها'}
+];
 function cards(){
+if(!team())return cardsPersonal();
+const allStudents=rows('students').filter(s=>s.stage==='active');
+const stage=cardStages.some(([key])=>key===state.cardStage)?state.cardStage:'first';
+const scoreRows=rows('cards').filter(c=>c.stage===stage);
+const getScore=(studentId,aspect)=>scoreRows.find(c=>c.student_id===studentId&&c.aspect===aspect);
+const levelCell=(score,studentId)=>score&&Number.isInteger(Number(score.level))&&Number(score.level)>=0&&Number(score.level)<=3?
+'<button type="button" class="batch-level level-'+Number(score.level)+'" data-action="'+(stage==='self'?'reviewcard:':'card:')+esc(studentId)+'" title="عرض تقييم الغارسة">'+esc(levels[Number(score.level)])+'</button>':
+'<button type="button" class="batch-level unrated" data-action="'+(stage==='self'?'reviewcard:':'card:')+esc(studentId)+'">لم يُقيّم</button>';
+const selectedStage=cardStages.find(([key])=>key===stage)?.[1]||'التقييم الأول';
+const stagePicker='<section class="batch-stage card"><div><label for="card-stage-select">اختيار التقييم</label><p class="small muted">اختاري المرحلة التي تريدين عرض نتائجها في الدفعة.</p></div><select id="card-stage-select" data-select="cardStage">'+cardStages.map(([key,label])=>option(key,label,stage)).join('')+'</select></section>';
+const totals='<section class="batch-section"><div class="batch-section-heading"><div><h2>الجوانب في الدفعة</h2><p class="muted small">عدد من بلغن «متحققة» أو «متميزة» في '+esc(selectedStage)+' من إجمالي '+allStudents.length+' غارسة في البرنامج.</p></div><span class="chip">٦ جوانب</span></div><div class="batch-summary-grid">'+aspects.map(aspect=>{
+const achieved=allStudents.filter(student=>{const score=getScore(student.id,aspect);return score&&Number(score.level)>=2}).length;
+const assessed=allStudents.filter(student=>!!getScore(student.id,aspect)).length;
+const percent=allStudents.length?Math.round(achieved/allStudents.length*100):0;
+return '<article class="batch-summary-card"><div class="batch-summary-title">'+esc(aspect)+'</div><div class="batch-summary-metric"><strong>'+achieved+'</strong><span>من '+allStudents.length+'</span></div><div class="batch-summary-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'" aria-label="'+esc(aspect)+'"><span style="width:'+percent+'%"></span></div><div class="batch-summary-meta"><span>'+percent+'٪ حققن المطلوب</span><span>'+assessed+' تم تقييمهن</span></div></article>';
+}).join('')+'</div></section>';
+const familyOptions=rows('families');
+const grouped=new Map();
+for(const student of allStudents){
+const family=familyOptions.find(f=>f.id===student.family_id);
+const key=family?.id||'unassigned',title=family?.name||'غير موزعات على أسرة';
+if(!grouped.has(key))grouped.set(key,{title,members:[]});
+grouped.get(key).members.push(student);
+}
+const families=[...grouped.values()].sort((a,b)=>a.title.localeCompare(b.title,'ar'));
+const columnHeads='<th scope="col">الغارسة</th>'+aspects.map(a=>'<th scope="col">'+esc(a)+'</th>').join('');
+const familyRows=families.map(group=>'<section class="batch-family"><div class="batch-family-heading"><h3>'+esc(group.title)+'</h3><span class="chip">'+group.members.length+' غارسات</span></div><div class="batch-table-scroll"><table class="batch-table"><thead><tr>'+columnHeads+'</tr></thead><tbody>'+group.members.sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(student=>'<tr><th scope="row"><button type="button" class="batch-student-name" data-action="'+(stage==='self'?'reviewcard:':'card:')+esc(student.id)+'">'+esc(student.name)+'</button></th>'+aspects.map(aspect=>'<td data-label="'+esc(aspect)+'">'+levelCell(getScore(student.id,aspect),student.id)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div></section>').join('');
+const tableSection='<section class="batch-section"><div class="batch-section-heading"><div><h2>تقييم الغارسات بحسب الأسر</h2><p class="muted small">اضغطي اسم الغارسة أو مستواها لفتح تقييمها وملاحظات الجوانب الستة. التقييم الذاتي للعرض فقط.</p></div><div class="batch-color-legend"><span class="batch-legend-value level-0">لم تبدأ</span><span class="batch-legend-value level-1">في الطريق</span><span class="batch-legend-value level-2">متحققة</span><span class="batch-legend-value level-3">متميزة</span><span class="batch-legend-value unrated">لم يُقيّم</span></div></div>'+(familyRows||empty('لا توجد غارسات بحالة «في البرنامج» لعرض التقييم'))+'</section>';
+const rubric='<details class="card batch-rubric"><summary><span>أوصاف المستويات ومصدر الحكم</span><span class="small muted">اضغطي للاطلاع على المعايير المعتمدة</span></summary><div class="batch-rubric-body"><p class="muted small">المستويات أربعة: ٠ لم تبدأ، ١ في الطريق، ٢ متحققة، ٣ متميزة. «متحققة» هي المستوى المطلوب في ختام المرحلة الأولى.</p>'+cardRubric.map(item=>'<section class="batch-rubric-item"><h3>'+esc(item.aspect)+'</h3><div class="batch-rubric-grid">'+item.descriptions.map((description,i)=>'<div><span class="batch-legend-value level-'+i+'">'+i+' · '+esc(levels[i])+'</span><p>'+esc(description)+'</p></div>').join('')+'</div><div class="batch-rubric-source"><strong>مصدر الحكم:</strong> '+esc(item.source)+'</div></section>').join('')+'<p class="muted small">مراحل التقييم حسب الدليل: الذاتي في الأسبوع الثاني تكتبه الغارسة، والأول في الأسبوع الثامن تكتبه المرافقة، وما يضاف للمراحل التالية تكتبه المرافقة ومن تسمى.</p></div></details>';
+return '<div class="batch-cards-page">'+heading('بطاقة الغارسة','تقييم جوانب الغارسات الستة، ومؤشرات الدفعة، والمستويات وفق الدليل')+stagePicker+totals+tableSection+rubric+'</div>';
+}
+function cardsPersonal(){
 const mine=!team(),students=mine?[state.profile].filter(Boolean):rows('students').filter(s=>s.stage==='active');
 const stage=mine?'self':(cardStages.some(([id])=>id===state.cardStage)?state.cardStage:'first');
 const scores=rows('cards'),allGoals=rows('goals'),allMilestones=rows('milestones');
@@ -600,6 +641,16 @@ case 'newfamily':dialog('إضافة أسرة',field('اسم الأسرة','name'
 case 'bulkstudents':dialog('إضافة قائمة',field('الأسماء، اسم في كل سطر (ثم الهاتف والجامعة مفصولة بفاصلة)','bulk','','textarea',true));break;
 case 'editweek':o=rows('weeks').find(w=>w.id===state.week)||{};dialog('تعديل جميع بيانات الأسبوع',field('رمز الأسبوع','code',o.code,'text',true)+field('العنوان','title',o.title,'text',true)+field('النوع','kind',o.kind,'text',true,[['prep','التحضير'],['program','المرحلة'],['break','ما بعدها']])+field('الترتيب','sort_order',o.sort_order,'number',true)+field('من','starts_on',o.starts_on,'date',true)+field('إلى','ends_on',o.ends_on,'date',true)+[['reflection','وقفة التدبر'],['lesson','الدرس العلمي'],['hadith','الأربعون'],['tilawa','جزء عمّ'],['riyad','رياض الصالحين'],['task_self','في نفسي'],['task_home','في بيتي'],['task_community','في محيطي'],['discussion','أسئلة مدارسة الأسرة'],['activity','نشاط الأسبوع'],['team_work','ما يجري سوى الإيقاع الثابت / عمل الفريق'],['deliverable','ما يكون في اليد في آخر الأسبوع']].map(([key,title])=>field(title,key,o[key],'textarea')).join(''));break;
 case 'followup':o=rows('followups').find(f=>f.student_id===id&&f.week_id===state.week)||{};dialog('متابعة '+name('students',id),field('المجلس','majlis',o.majlis||'','text',false,[['','لم يسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']])+field('لقاء الأسرة','family_meeting',o.family_meeting||'','text',false,[['','لم يسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']])+field('أيام الورد','wird_days',o.wird_days??'','number')+['triple_task','transferred_lesson','rotating_task'].map((k,i)=>field(['المهمة الثلاثية','الدرس المنقول','المهمة الدوارة'][i],k,o[k]||'','text',false,[['','لم يسجل'],['done','أنجزت'],['partial','بعضها'],['none','لم تنجز']])).join('')+field('ملاحظة','note',o.note,'textarea'));break;
+case 'reviewcard':{
+const student=rows('students').find(student=>student.id===id);
+const assessment=rows('cards').filter(c=>c.student_id===id&&c.stage==='self');
+dialog('التقييم الذاتي · '+(student?.name||'الغارسة'),'<p class="muted small card-modal-hint">هذا التقييم سجلته الغارسة بنفسها، ويمكن للفريق الاطلاع عليه دون تعديله.</p>'+aspects.map(aspect=>{
+const score=assessment.find(c=>c.aspect===aspect);
+return '<div class="batch-review-row"><strong>'+esc(aspect)+'</strong><span class="batch-legend-value '+(score?'level-'+score.level:'unrated')+'">'+(score?esc(levels[score.level]||'لم يُقيّم'):'لم يُقيّم')+'</span>'+(score?.note?'<p>'+esc(score.note)+'</p>':'')+'</div>';
+}).join(''));
+document.querySelector('#modalForm button[type="submit"]')?.remove();
+break;
+}
 case 'card':{
 o=rows('cards').filter(c=>c.student_id===id);
 const stage=team()?(cardStages.some(([key])=>key===state.cardStage)&&state.cardStage!=='self'?state.cardStage:'first'):'self';
