@@ -100,3 +100,21 @@ test('dark authentication submit buttons are gold with white labels',()=>{
  assert.match(css,/color:#fff!important/);
  assert.match(css,/html\[data-theme="dark"\] \.auth-panel #authForm button\[type="submit"\]\.btn:hover:not\(:disabled\)/);
 });
+
+test('dark account table uses dark alternating row and cell backgrounds',()=>{
+ assert.match(css,/html\[data-theme="dark"\] \.content \.table-wrap > table tbody tr:nth-child\(even\) > :is\(td,th\)/);
+ assert.match(css,/html\[data-theme="dark"\] \.content \.table-wrap > table tbody tr > :is\(td,th\)/);
+ assert.match(css,/background:var\(--dm-surface-muted\)!important/);
+ assert.match(css,/color:var\(--dm-text\)!important/);
+});
+test('communications status labels, icons and destructive controls use dark-safe colors',()=>{
+ for(const name of ['.comms-heading-icon','.comms-metric-icon','.comms-resource-symbol','.comms-section-count','.comms-delete','.comms-date','.comms-tag.pinned','.comms-announcement.is-pinned']){
+  assert.ok(css.includes(name), 'missing dark contrast rule '+name);
+ }
+ assert.match(css,/background:#334e65!important/);
+ assert.match(css,/color:#f4d29e!important/);
+ assert.match(css,/background:#56353c!important/);
+});
+test('no global forced white text on all spans and table cells',()=>{
+ assert.doesNotMatch(css,/html\[data-theme="dark"\] \.content :is\(div,span,p,small,th,td,label,summary,a,button\)/);
+});
