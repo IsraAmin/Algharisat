@@ -619,9 +619,52 @@ const studentsSection='<section class="outcomes-section"><div class="outcomes-se
 return '<div class="outcomes-page">'+heading('المخرجات','متابعة وثائق الأسر ومحاضرها، وعلامات الإنجاز الإحدى عشرة لكل غارسة')+
 familiesSection+studentsSection+'</div>';
 }
+const questionKinds={fiqh:'فقهي',fikr:'فكري',general:'عام'};
+const questionStatuses={open:'جديد',sent:'عند المرجعية',answered:'أُجيب'};
+async function refreshQuestions(){
+await read('questions');
+if(!team()){
+const {data,error}=await db.rpc('published_questions');
+if(error)throw error;
+const owned=rows('questions');
+state.rows.questions=[...owned,...(data||[]).filter(q=>!owned.some(own=>own.id===q.id)).map(q=>({...q,anonymous:true}))];
+}
+}
 function questions(){
-const mine=!team(),data=mine?rows('questions').filter(q=>q.student_id===state.account?.student_id||q.published):rows('questions');
-return heading(mine?'أسئلتي':'الأسئلة','الأسئلة الفقهية والفكرية والعامة',mine?btn('newquestion','إرسال سؤال','goldbtn'):'')+data.map(q=>'<div class="card" style="margin-bottom:12px"><div class="chips"><span class="chip">'+esc(q.kind==='fiqh'?'فقهي':q.kind==='fikr'?'فكري':'عام')+'</span><span class="chip '+(q.status==='answered'?'ok':'warn')+'">'+esc(q.status==='answered'?'أجيب':q.status==='sent'?'عند المرجعية':'جديد')+'</span>'+(q.published?'<span class="chip">منشور للجميع</span>':'')+'</div><p class="text-content" style="margin-top:12px">'+esc(q.body)+'</p>'+(q.answer?'<p style="border-right:3px solid #b79867;padding-right:12px;margin-top:12px">'+esc(q.answer)+'</p>':'')+(team()?'<div class="form-actions">'+btn('answer:'+q.id,'إجابة السؤال','goldbtn')+'</div>':'')+'</div>').join('')||empty('لم تُرسل أسئلة بعد');
+const staff=team(),all=rows('questions');
+const ownId=state.account?.student_id;
+const own=staff?[]:all.filter(q=>q.student_id===ownId);
+const shared=staff?[]:all.filter(q=>q.published&&q.status==='answered'&&q.student_id!==ownId);
+const data=staff?all:state.questionsTab==='public'?shared:own;
+const sections=staff?[['open','جديدة'],['sent','عند المرجعية'],['answered','أُجيبت'],['all','الكل']]:[['mine','أسئلتي'],['public','أُجيبت للجميع']];
+const active=sections.some(([id])=>id===state.questionsTab)?state.questionsTab:sections[0][0];
+const countFor=key=>staff?(key==='all'?all.length:all.filter(q=>q.status===key).length):(key==='mine'?own.length:shared.length);
+const shown=staff?(active==='all'?all:all.filter(q=>q.status===active)):(active==='public'?shared:own);
+const sorted=[...shown].sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+const intro='<div class="questions-intro"><div class="questions-intro-icon">'+iconSvg('message-circle-question')+'</div><div><h2>'+(staff?'مساحة متابعة الأسئلة':'أسئلتك وإجابات الفريق')+'</h2><p>'+(staff?'تابعي الأسئلة الجديدة والمحالة للمرجعية والمجاب عنها، مع إمكانية النشر دون اسم السائلة.':'أرسلي سؤالك وتابعي الإجابة، أو استفيدي من الأسئلة المنشورة بدون كشف هوية صاحباتها.')+'</p></div>'+(staff?'':btn('newquestion','إرسال سؤال جديد','goldbtn'))+'</div>';
+const tabs='<div class="questions-tabs" role="group" aria-label="حالة الأسئلة">'+sections.map(([id,label])=>'<button type="button" data-question-tab="'+id+'" class="'+(active===id?'active':'')+'" aria-pressed="'+(active===id?'true':'false')+'"><span>'+label+'</span><span class="questions-tab-count">'+countFor(id)+'</span></button>').join('')+'</div>';
+const cards=sorted.map(q=>{
+const student=staff?rows('students').find(s=>s.id===q.student_id):null;
+const ownQuestion=!staff&&q.student_id===ownId;
+const kind=questionKinds[q.kind]||q.kind||'عام';
+const status=questionStatuses[q.status]||'جديد';
+const nameLabel=student?.name||'غير مربوط بسجل';
+const familyLabel=student?name('families',student.family_id):'—';
+const canDelete=staff||(ownQuestion&&q.status==='open');
+const canRefer=staff&&q.kind==='fiqh'&&q.status==='open';
+const canAnswer=staff;
+const ownerLine=staff?'<div class="question-owner"><span>'+iconSvg('user-round')+' '+esc(nameLabel)+'</span><span>'+iconSvg('users')+' '+esc(familyLabel)+'</span></div>':(ownQuestion?'<span class="question-own-indicator">سؤالكِ</span>':'<span class="question-anonymous">'+iconSvg('shield-check')+' سؤال منشور دون اسم السائلة</span>');
+const actions=canAnswer||canRefer||canDelete?'<div class="question-actions">'+(canAnswer?btn('answer:'+q.id,q.status==='answered'?'مراجعة الإجابة':'كتابة الجواب','goldbtn smallbtn'):'')+(canRefer?btn('referquestion:'+q.id,'أُرسل إلى المرجعية','secondary smallbtn'):'')+(canDelete?btn('deletequestion:'+q.id,'حذف','question-delete smallbtn'):'')+'</div>':'';
+return '<article class="question-item"><div class="question-item-head"><div class="question-pills"><span class="question-pill kind-'+esc(q.kind||'general')+'">'+esc(kind)+'</span><span class="question-pill state-'+esc(q.status||'open')+'">'+esc(status)+'</span>'+(q.published&&q.status==='answered'?'<span class="question-pill state-published">منشور للجميع</span>':'')+'</div><time class="question-time">'+esc(date(q.created_at))+'</time></div>'+
+'<div class="question-item-meta">'+ownerLine+'</div><div class="question-body">'+esc(q.body)+'</div>'+
+(q.answer&&q.status==='answered'?'<div class="question-answer"><div class="question-answer-title">'+iconSvg('check-circle')+' الإجابة'+(q.published?' المنشورة':'')+'</div><p>'+esc(q.answer)+'</p></div>':q.status==='sent'?'<div class="question-reference-hint">بانتظار ورود الجواب المعتمد من المرجعية الفقهية.</div>':'')+
+actions+'</article>';
+}).join('');
+const noData=staff?(active==='open'?'لا توجد أسئلة جديدة':active==='sent'?'لا توجد أسئلة بانتظار المرجعية':active==='answered'?'لا توجد أسئلة مجابة بعد':'لم تُرسل أسئلة بعد'):(active==='public'?'لم تُنشر أسئلة مجابة للجميع بعد':'لم تُرسلي سؤالًا بعد');
+return '<div class="questions-page">'+heading(staff?'الأسئلة':'أسئلتي',staff?'متابعة أسئلة الغارسات والإجابات المعتمدة والنشر':'اسألي وتابعي إجاباتكِ دون كشف اسمكِ في المنشورات العامة')+intro+tabs+
+'<div class="questions-results-header"><h3>'+(sections.find(([key])=>key===active)?.[1]||'الأسئلة')+'</h3><span class="muted small">'+sorted.length+' سؤال</span></div>'+
+'<div class="questions-list">'+(cards||'<div class="questions-empty">'+iconSvg('inbox')+'<strong>'+noData+'</strong><p class="muted small">ستظهر الأسئلة هنا عند توفرها.</p></div>')+'</div>'+
+(staff?'<p class="questions-footnote">إحالة السؤال الفقهي تغيّر حالته إلى «عند المرجعية» لتتابعي إرساله خارج المنصة واستلام جوابه المعتمد؛ لا ترسل المنصة رسالة تلقائيًا للمعهد.</p>':'')+'</div>';
 }
 function announcements(){
 return heading('الإعلانات والمصادر','المواعيد المهمة والمواد المساعدة',team()?btn('newannouncement','إعلان جديد','goldbtn')+' '+btn('newresource','إضافة مصدر'):'')+'<div class="grid two"><div class="card"><h3>الإعلانات</h3>'+rows('announcements').map(a=>'<div class="list-row"><div><strong>'+esc(a.title)+'</strong><p>'+esc(a.body)+'</p></div><span class="chip">'+(a.pinned?'مثبت':'إعلان')+'</span></div>').join('')||empty('لا توجد إعلانات')+'</div><div class="card"><h3>المصادر</h3>'+rows('resources').map(r=>'<div class="list-row"><div><a href="'+esc(safeUrl(r.url))+'" target="_blank" rel="noopener noreferrer"><strong>'+esc(r.title)+'</strong></a><p class="muted">'+esc(r.kind)+'</p></div></div>').join('')||empty('لا توجد مصادر')+'</div></div>';
@@ -696,7 +739,10 @@ aspects.map((aspect,i)=>field(aspect,'aspect'+i,o.find(c=>c.aspect===aspect&&c.s
 (team()?field('ملاحظة المرافقة · '+aspect,'note'+i,o.find(c=>c.aspect===aspect&&c.stage===stage)?.note||'','textarea'):'')).join(''));break;
 }
 case 'newquestion':dialog('سؤال جديد',field('نوع السؤال','kind','general','text',true,[['fiqh','فقهي'],['fikr','فكري'],['general','عام']])+field('نص السؤال','body','','textarea',true));break;
-case 'answer':o=rows('questions').find(x=>x.id===id)||{};dialog('إجابة السؤال',field('السؤال','question',o.body,'textarea')+field('الإجابة','answer',o.answer||'','textarea',true)+field('الحال','status',o.status||'open','text',true,[['open','جديد'],['sent','عند المرجعية'],['answered','أجيب']])+field('النشر للجميع دون اسم','published',String(!!o.published),'text',true,[['false','لا'],['true','نعم']]));break;
+case 'answer':
+if(!team())throw Error('الإجابة من صلاحيات الفريق');
+o=rows('questions').find(x=>x.id===id)||{};
+dialog('الجواب ومتابعة السؤال','<div class="question-modal-intro"><span class="question-pill kind-'+esc(o.kind||'general')+'">'+esc(questionKinds[o.kind]||'عام')+'</span><p>'+esc(o.body||'')+'</p></div>'+field('الجواب المعتمد','answer',o.answer||'','textarea')+field('الحالة','status',o.status||'open','text',true,[['open','جديد'],['sent','عند المرجعية'],['answered','أُجيب']])+field('النشر لجميع الغارسات دون اسم السائلة','published',String(!!o.published),'text',true,[['false','لا، لا يُنشر'],['true','نعم، ينشر بدون اسم']])+'<p class="muted small question-modal-help">لا يُنشر السؤال إلا إذا كانت حالته «أُجيب» وكانت الإجابة مكتوبة. للسؤال الفقهي المحال للمرجعية، سجّلي الجواب المعتمد حين يصل.</p>');break;
 case 'newannouncement':dialog('إعلان جديد',field('العنوان','title','','text',true)+field('نص الإعلان','body','','textarea',true)+field('الأُسرة','family_id','','text',false,stSelect)+field('مثبت','pinned','false','text',false,[['false','لا'],['true','نعم']]));break;
 case 'newresource':dialog('مصدر جديد',field('العنوان','title','','text',true)+field('الرابط','url','','url',true)+field('النوع','kind','link','text',true,[['recording','تسجيل'],['file','ملف'],['link','رابط']]));break;
 case 'newtask':dialog('مهمة جديدة',field('القسم','section','task','text',true,[['decision','قرار'],['task','مهمة'],['launch','شرط انطلاق'],['closing','قائمة الختام']])+field('الأسبوع (للمهام الأسبوعية)','week_id',(sortedWeeks().find(w=>w.kind==='program')?.starts_on>todayISO()?(sortedWeeks().find(w=>w.kind==='prep'&&weekCurrent(w))||sortedWeeks().find(w=>w.kind==='prep'&&w.starts_on>todayISO())||sortedWeeks().find(w=>w.kind==='prep'))?.id:state.week)||'','text',false,[['','غير مرتبطة بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('المهمة','body','','textarea',true)+field('المسؤول','owner')+field('موعد الإنجاز','due_on','','date'));break;
@@ -731,7 +777,16 @@ const{error}=await db.from('cards').upsert(objects,{onConflict:'student_id,aspec
 await read('cards');flash('حُفظ التقييم');
 }
 else if(a==='newquestion')await save('questions',{...x,student_id:state.account.student_id});
-else if(a==='answer')await save('questions',{id,answer:x.answer,status:x.status,published:bo(x.published),answered_at:x.status==='answered'?new Date().toISOString():null});
+else if(a==='answer'){
+if(!team())throw Error('الإجابة من صلاحيات الفريق');
+const question=rows('questions').find(q=>q.id===id);
+if(!question)throw Error('تعذر العثور على السؤال');
+if(!['open','sent','answered'].includes(x.status))throw Error('حالة السؤال غير صحيحة');
+if(x.status==='sent'&&question.kind!=='fiqh')throw Error('الإحالة إلى المرجعية الفقهية للأسئلة الفقهية فقط');
+if(x.status==='answered'&&!String(x.answer||'').trim())throw Error('اكتبي الجواب قبل تغيير الحالة إلى أُجيب');
+if(bo(x.published)&&x.status!=='answered')throw Error('النشر متاح بعد الإجابة فقط');
+await save('questions',{id,answer:String(x.answer||'').trim()||null,status:x.status,published:bo(x.published)&&x.status==='answered',answered_at:x.status==='answered'?(question.answered_at||new Date().toISOString()):null});
+}
 else if(a==='newannouncement')await save('announcements',{...x,family_id:x.family_id||null,pinned:bo(x.pinned),author_id:state.user.id});
 else if(a==='newresource'){if(!/^https?:\/\//i.test(x.url))throw Error('رابط المصدر يجب أن يبدأ بـ https:// أو http://');await save('resources',x)}
 else if(a==='newtask')await save('tasks',{...x,due_on:x.due_on||null,week_id:x.section==='task'?(x.week_id||null):null});
@@ -745,8 +800,9 @@ else if(a==='newminute')await save('minutes',{...x,family_id:state.family,attend
 $('.dialog-backdrop')?.remove();state.editing=null;render();
 }
 document.addEventListener('click',async e=>{
-const el=e.target.closest('[data-action],[data-page],[data-week],[data-students-tab],[data-profile-tab],[data-follow-week],[data-follow-all],[data-followup-reset]');
+const el=e.target.closest('[data-action],[data-page],[data-week],[data-students-tab],[data-profile-tab],[data-follow-week],[data-follow-all],[data-followup-reset],[data-question-tab]');
 if(!el)return;
+if(el.dataset.questionTab){state.questionsTab=el.dataset.questionTab;render();return}
 if(el.dataset.studentsTab){state.studentsTab=el.dataset.studentsTab;updateStudentsView();rememberCurrentPage();return}
 if(el.dataset.profileTab){state.studentProfileTab=el.dataset.profileTab;render();return}
 if(el.dataset.followWeek){if(el.dataset.followWeek===state.week)return;if(!confirmFollowupLeave())return;state.week=el.dataset.followWeek;render();return}
@@ -787,16 +843,36 @@ else if(action==='more'){showMobileMore()}
 else if(action==='closeMore'){closeMobileMore()}
 else if(action==='backStudentProfile'){state.page='dashboardStudent';render();window.scrollTo(0,0)}
 else if(action.startsWith('studentReport:')){state.studentReportWeek=action.split(':')[1];state.page='studentReport';render();window.scrollTo(0,0)}
+else if(action.startsWith('deletequestion:')){
+const id=action.split(':')[1],q=rows('questions').find(item=>item.id===id);
+if(!q)throw Error('تعذر العثور على السؤال');
+if(!team()&&!(q.student_id===state.account?.student_id&&q.status==='open'))throw Error('يمكنكِ حذف سؤالك قبل الإجابة فقط');
+openDeleteConfirmation({type:'question',id,name:'السؤال'});
+}
+else if(action.startsWith('referquestion:')){
+if(!team())throw Error('الإحالة إلى المرجعية للفريق فقط');
+const id=action.split(':')[1],q=rows('questions').find(item=>item.id===id);
+if(!q||q.kind!=='fiqh'||q.status!=='open')throw Error('يمكن إحالة سؤال فقهي جديد فقط');
+const{error}=await db.from('questions').update({status:'sent',published:false}).eq('id',id).eq('kind','fiqh').eq('status','open');
+if(error)throw error;
+await read('questions');state.questionsTab='sent';render();flash('سُجّلت إحالة السؤال إلى المرجعية. أرسليه خارج المنصة واستلمي الجواب المعتمد.');
+}
 else if(action.startsWith('deleteStudent:')){if(!leadership())throw Error('حذف السجل للإدارة والمرافقة فقط');const id=action.split(':')[1],student=rows('students').find(x=>x.id===id);if(!student)throw Error('تعذر العثور على السجل');if(rows('accounts').some(a=>a.student_id===id))throw Error('السجل مربوط بحساب. افصلي ربط الحساب من صفحة الحسابات قبل الحذف');openDeleteConfirmation({type:'student',id,name:student.name})}
 else if(action==='cancelDelete'){closeDeleteConfirmation()}
 else if(action==='confirmDelete'){
-const pending=deletePending;if(!pending)return;if(!leadership())throw Error('الحذف للإدارة والمرافقة فقط');
+const pending=deletePending;if(!pending)return;if(pending.type==='student'&&!leadership())throw Error('حذف السجل للإدارة والمرافقة فقط');
 el.disabled=true;
 try{
 if(pending.type==='student'){
 const{error}=await db.from('students').delete().eq('id',pending.id);
 if(error)throw new Error('تعذر حذف السجل؛ قد تكون له متابعات أو تقارير مرتبطة. '+error.message);
 await read('students');closeDeleteConfirmation();state.page='students';render();flash('حُذف سجل الغارسة');
+}else if(pending.type==='question'){
+const q=rows('questions').find(x=>x.id===pending.id);
+if(!q||(!team()&&!(q.student_id===state.account?.student_id&&q.status==='open')))throw Error('غير مصرح بحذف هذا السؤال');
+const{error}=await db.from('questions').delete().eq('id',pending.id);
+if(error)throw error;
+closeDeleteConfirmation();await refreshQuestions();render();flash('حُذف السؤال بنجاح');
 }
 }finally{el.disabled=false}
 }
