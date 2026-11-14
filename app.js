@@ -111,7 +111,7 @@ function closeDeleteConfirmation(){document.querySelector('.delete-confirm-backd
 function openDeleteConfirmation(item){
 closeDeleteConfirmation();deletePending=item;
 const layer=document.createElement('div');layer.className='delete-confirm-backdrop';
-layer.innerHTML='<div class="delete-confirm-scrim" data-action="cancelDelete"></div><section class="delete-confirm" role="alertdialog" aria-modal="true" aria-labelledby="delete-confirm-title" aria-describedby="delete-confirm-description"><div class="delete-confirm-icon">'+iconSvg('shield-check')+'</div><h2 id="delete-confirm-title">تأكيد الحذف</h2><p id="delete-confirm-description">هل تريدين حذف سجل «'+esc(item.name)+'» نهائيًا؟ <strong>لا يمكن التراجع عن الحذف.</strong></p><div class="delete-confirm-actions"><button type="button" class="btn secondary" data-action="cancelDelete">إلغاء</button><button type="button" class="btn delete-accept" data-action="confirmDelete">نعم، احذف السجل</button></div></section>';
+layer.innerHTML='<div class="delete-confirm-scrim" data-action="cancelDelete"></div><section class="delete-confirm" role="alertdialog" aria-modal="true" aria-labelledby="delete-confirm-title" aria-describedby="delete-confirm-description"><div class="delete-confirm-icon">'+iconSvg('shield-check')+'</div><h2 id="delete-confirm-title">تأكيد الحذف</h2><p id="delete-confirm-description">'+(item.type==='question'?'هل تريدين حذف هذا السؤال نهائيًا؟':'هل تريدين حذف سجل «'+esc(item.name)+'» نهائيًا؟')+' <strong>لا يمكن التراجع عن الحذف.</strong></p><div class="delete-confirm-actions"><button type="button" class="btn secondary" data-action="cancelDelete">إلغاء</button><button type="button" class="btn delete-accept" data-action="confirmDelete">'+(item.type==='question'?'نعم، احذف السؤال':'نعم، احذف السجل')+'</button></div></section>';
 document.body.appendChild(layer);layer.querySelector('[data-action="cancelDelete"]').focus();
 }
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&deletePending)closeDeleteConfirmation()});
@@ -650,7 +650,7 @@ const kind=questionKinds[q.kind]||q.kind||'عام';
 const status=questionStatuses[q.status]||'جديد';
 const nameLabel=student?.name||'غير مربوط بسجل';
 const familyLabel=student?name('families',student.family_id):'—';
-const canDelete=staff||(ownQuestion&&q.status==='open');
+const canDelete=staff||(ownQuestion&&q.status!=='answered');
 const canRefer=staff&&q.kind==='fiqh'&&q.status==='open';
 const canAnswer=staff;
 const ownerLine=staff?'<div class="question-owner"><span>'+iconSvg('user-round')+' '+esc(nameLabel)+'</span><span>'+iconSvg('users')+' '+esc(familyLabel)+'</span></div>':(ownQuestion?'<span class="question-own-indicator">سؤالكِ</span>':'<span class="question-anonymous">'+iconSvg('shield-check')+' سؤال منشور دون اسم السائلة</span>');
@@ -846,7 +846,7 @@ else if(action.startsWith('studentReport:')){state.studentReportWeek=action.spli
 else if(action.startsWith('deletequestion:')){
 const id=action.split(':')[1],q=rows('questions').find(item=>item.id===id);
 if(!q)throw Error('تعذر العثور على السؤال');
-if(!team()&&!(q.student_id===state.account?.student_id&&q.status==='open'))throw Error('يمكنكِ حذف سؤالك قبل الإجابة فقط');
+if(!team()&&!(q.student_id===state.account?.student_id&&q.status!=='answered'))throw Error('يمكنكِ حذف سؤالك قبل الإجابة فقط');
 openDeleteConfirmation({type:'question',id,name:'السؤال'});
 }
 else if(action.startsWith('referquestion:')){
@@ -869,7 +869,7 @@ if(error)throw new Error('تعذر حذف السجل؛ قد تكون له متا
 await read('students');closeDeleteConfirmation();state.page='students';render();flash('حُذف سجل الغارسة');
 }else if(pending.type==='question'){
 const q=rows('questions').find(x=>x.id===pending.id);
-if(!q||(!team()&&!(q.student_id===state.account?.student_id&&q.status==='open')))throw Error('غير مصرح بحذف هذا السؤال');
+if(!q||(!team()&&!(q.student_id===state.account?.student_id&&q.status!=='answered')))throw Error('غير مصرح بحذف هذا السؤال');
 const{error}=await db.from('questions').delete().eq('id',pending.id);
 if(error)throw error;
 closeDeleteConfirmation();await refreshQuestions();render();flash('حُذف السؤال بنجاح');
