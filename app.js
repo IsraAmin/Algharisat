@@ -504,9 +504,39 @@ flash('حُفظ جدول المتابعة بالكامل بنجاح ('+entries.l
 }
 const aspects=['الفقهي الشرعي','التربوي التزكوي','الفكري','التنظيمي','الاجتماعي','البيت المسلم وصناعة الجيل'];
 const levels=['لم تبدأ','في الطريق','متحققة','متميزة'];
+const cardStages=[['self','التقييم الذاتي'],['first','التقييم الأول'],['second','التقييم الثاني'],['third','التقييم الثالث'],['fourth','التقييم الرابع']];
 function cards(){
-const mine=!team(),st=mine?[state.profile].filter(Boolean):rows('students').filter(s=>s.stage==='active');
-return heading(mine?'بطاقتي':'بطاقة الغارسة','ستة جوانب وأربعة مستويات: من لم تبدأ إلى متميزة')+(mine?'<div class="notice">لا تحاكمك البطاقة، بل ترسم موضعك وتُبنى عليها خطتكِ.</div>':'')+st.map(s=>'<div class="card" style="margin-bottom:14px"><h3>'+esc(s.name)+'</h3><div class="grid three">'+aspects.map(a=>{const c=rows('cards').find(c=>c.student_id===s.id&&c.aspect===a&&c.stage===(mine?'self':'first'));return '<div><div class="small muted">'+a+'</div><strong>'+esc(levels[c?.level]||'لم تقيم بعد')+'</strong><div class="progress" style="margin-top:7px"><span style="width:'+((Number(c?.level||0)+1)*25)+'%"></span></div>'+'</div>'}).join('')+'</div><div style="margin-top:15px">'+btn('card:'+s.id,mine?'تقييمي الذاتي':'تقييم الغارسة','goldbtn')+'</div></div>').join('')||empty('لا توجد بطاقة لعرضها');
+const mine=!team(),students=mine?[state.profile].filter(Boolean):rows('students').filter(s=>s.stage==='active');
+const stage=mine?'self':(cardStages.some(([id])=>id===state.cardStage)?state.cardStage:'first');
+const scores=rows('cards'),allGoals=rows('goals'),allMilestones=rows('milestones');
+const stagePicker=mine?'':'<div class="card-stage-picker"><label for="card-stage-select">مرحلة التقييم</label><select id="card-stage-select" data-select="cardStage">'+cardStages.map(([key,label])=>option(key,label,stage)).join('')+'</select></div>';
+const progressFor=records=>records.length?Math.round(records.reduce((total,r)=>total+Number(r.level||0),0)/(records.length*3)*100):0;
+const body=students.map(student=>{
+const assessments=scores.filter(c=>c.student_id===student.id);
+const current=assessments.filter(c=>c.stage===stage);
+const currentCount=current.length;
+const goals=allGoals.filter(g=>g.student_id===student.id);
+const doneGoals=goals.filter(g=>g.done).length;
+const milestones=allMilestones.filter(m=>m.student_id===student.id&&m.done);
+const canEvaluate=mine||stage!=='self';
+const aspectCards='<div class="card-aspects-grid">'+aspects.map(aspect=>{
+const assessment=current.find(c=>c.aspect===aspect);
+const assessed=!!assessment&&Number.isInteger(Number(assessment.level))&&Number(assessment.level)>=0&&Number(assessment.level)<=3;
+const value=assessed?Number(assessment.level):null;
+return '<article class="card-aspect '+(assessed?'is-assessed':'is-unassessed')+'"><div class="card-aspect-top"><span>'+esc(aspect)+'</span><span class="card-aspect-level '+(assessed?'level-'+value:'')+'">'+(assessed?'المستوى '+value:'لم يُقيّم')+'</span></div><strong class="card-aspect-status">'+(assessed?esc(levels[value]):'لم يُقيَّم بعد')+'</strong><div class="card-aspect-meter" role="progressbar" aria-label="'+esc(aspect)+'" aria-valuemin="0" aria-valuemax="3" '+(assessed?'aria-valuenow="'+value+'"':'')+'><span style="width:'+(assessed?(value+1)*25:0)+'%"></span></div>'+(assessment?.note?'<p class="card-aspect-note">'+esc(assessment.note)+'</p>':'')+'</article>';
+}).join('')+'</div>';
+const goalSection='<section class="card-plan"><div class="card-subhead"><div><h3>الخطة الفردية</h3><p class="muted small">أهداف محددة ومقاييس واضحة للتحقق · ثلاثة أهداف كحد أقصى</p></div>'+(team()&&goals.length<3?btn('newgoal:'+student.id,'إضافة هدف','secondary smallbtn'):'')+'</div>'+
+'<div class="card-goals-progress"><span>المنجز: '+doneGoals+' من '+goals.length+'</span><div class="card-goals-meter"><span style="width:'+(goals.length?Math.round(doneGoals/goals.length*100):0)+'%"></span></div></div>'+
+(goals.length?'<div class="card-goals-list">'+goals.map((goal,i)=>'<div class="card-goal-item"><div class="card-goal-main"><span class="card-goal-index">'+(i+1)+'</span><div><span class="card-goal-aspect">'+esc(goal.aspect)+'</span><h4>'+esc(goal.goal)+'</h4><p><strong>مقياس التحقق:</strong> '+esc(goal.measure||'غير محدد')+'</p></div></div><div class="card-goal-progress"><span class="chip '+(goal.done?'ok':'')+'">'+(goal.done?'منجز':'قيد التنفيذ')+'</span>'+(team()?'<label class="card-goal-toggle"><input type="checkbox" data-card-goal="'+esc(goal.id)+'" data-card-student="'+esc(student.id)+'" '+(goal.done?'checked':'')+'/> تم الإنجاز</label>':'')+'</div></div>').join('')+'</div>':'<div class="card-plan-empty"><strong>لم تُسجّل خطة فردية بعد</strong><p class="muted small">'+(mine?'تُوضع خطتك الفردية مع المرافقة بعد التقييم، وستظهر أهدافها هنا عند تسجيلها.':'أضيفي أهدافًا عملية لهذه الغارسة مرتبطة بالجوانب الستة، مع مقياس واضح لكل هدف.')+'</p>'+(team()?btn('newgoal:'+student.id,'إعداد الخطة الفردية','goldbtn smallbtn'):'')+'</div>')+'</section>';
+const secondary=mine?'<div class="card-other-stages"><h3>تقييمات المرافقة</h3><div class="card-evaluation-tags">'+cardStages.filter(([key])=>key!=='self').map(([key,label])=>{const entries=assessments.filter(c=>c.stage===key);return '<span class="chip '+(entries.length?'ok':'')+'">'+label+': '+(entries.length?entries.length+' من ٦ جوانب':'لم تُسجّل بعد')+'</span>'}).join('')+'</div></div>':'';
+const milestoneSummary=mine?'<div class="card-milestone-summary"><strong>المخرجات المنجزة: '+milestones.length+' من ١١</strong><p class="small muted">يمكنكِ متابعة تفاصيل المخرجات من سجل الغارسة.</p></div>':'';
+return '<section class="card card-assessment-panel"><div class="card-assessment-header"><div><div class="card-student-eyebrow">'+(mine?'بطاقتي':'بطاقة الغارسة')+'</div><h2>'+esc(student.name)+'</h2><p class="muted small">'+esc(cardStages.find(([key])=>key===stage)?.[1]||'التقييم')+' · '+currentCount+' من ٦ جوانب تم تقييمها</p></div><div class="card-assessment-actions">'+(canEvaluate?btn('card:'+student.id,mine?'تسجيل / تحديث تقييمي الذاتي':'تقييم الغارسة','goldbtn'):'<span class="chip">التقييم الذاتي تكتبه الغارسة فقط</span>')+'</div></div>'+
+(currentCount===0?'<div class="card-waiting"><strong>التقييم لم يُسجّل بعد</strong><p>لن يظهر مستوى «لم تبدأ» إلا إذا اختير فعليًا في التقييم.</p></div>':'')+
+aspectCards+secondary+goalSection+milestoneSummary+'</section>';
+}).join('');
+return '<div class="card-assessment-page">'+heading(mine?'بطاقتي':'بطاقة الغارسة',mine?'ستة جوانب، وتقييم ذاتي، وخطة فردية تبنى على موضعك الحالي.':'مستويات الجوانب الستة والتقييمات والخطة الفردية لكل غارسة')+
+(mine?'<div class="notice card-guidance">لا تحاكمكِ البطاقة، بل ترسم موضعكِ وتُبنى عليها خطتكِ.</div>':stagePicker)+
+(body||empty('لا توجد غارسات في المرحلة الحالية لعرض بطاقاتهن'))+'</div>';
 }
 const milestoneNames=[['iqrar','إقرار البداية موقعًا'],['letter','رسالة إلى نفسي محفوظة'],['parents','رسالة الأهل مسلمة'],['guardian','تعريف ولي الأمر (دون العشرين)'],['tilawa','الفحص المبدئي للتلاوة'],['individual','اللقاء الفردي'],['plan','الخطة الفردية'],['need5','ورقة الحاجة: خمس مستمعات'],['nabtpage','نبت كما أفهمه'],['hadith10','تسميع الأحاديث العشرة'],['mithaq','ميثاق الغارسة موقعًا']];
 function milestones(){
@@ -570,7 +600,14 @@ case 'newfamily':dialog('إضافة أسرة',field('اسم الأسرة','name'
 case 'bulkstudents':dialog('إضافة قائمة',field('الأسماء، اسم في كل سطر (ثم الهاتف والجامعة مفصولة بفاصلة)','bulk','','textarea',true));break;
 case 'editweek':o=rows('weeks').find(w=>w.id===state.week)||{};dialog('تعديل جميع بيانات الأسبوع',field('رمز الأسبوع','code',o.code,'text',true)+field('العنوان','title',o.title,'text',true)+field('النوع','kind',o.kind,'text',true,[['prep','التحضير'],['program','المرحلة'],['break','ما بعدها']])+field('الترتيب','sort_order',o.sort_order,'number',true)+field('من','starts_on',o.starts_on,'date',true)+field('إلى','ends_on',o.ends_on,'date',true)+[['reflection','وقفة التدبر'],['lesson','الدرس العلمي'],['hadith','الأربعون'],['tilawa','جزء عمّ'],['riyad','رياض الصالحين'],['task_self','في نفسي'],['task_home','في بيتي'],['task_community','في محيطي'],['discussion','أسئلة مدارسة الأسرة'],['activity','نشاط الأسبوع'],['team_work','ما يجري سوى الإيقاع الثابت / عمل الفريق'],['deliverable','ما يكون في اليد في آخر الأسبوع']].map(([key,title])=>field(title,key,o[key],'textarea')).join(''));break;
 case 'followup':o=rows('followups').find(f=>f.student_id===id&&f.week_id===state.week)||{};dialog('متابعة '+name('students',id),field('المجلس','majlis',o.majlis||'','text',false,[['','لم يسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']])+field('لقاء الأسرة','family_meeting',o.family_meeting||'','text',false,[['','لم يسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']])+field('أيام الورد','wird_days',o.wird_days??'','number')+['triple_task','transferred_lesson','rotating_task'].map((k,i)=>field(['المهمة الثلاثية','الدرس المنقول','المهمة الدوارة'][i],k,o[k]||'','text',false,[['','لم يسجل'],['done','أنجزت'],['partial','بعضها'],['none','لم تنجز']])).join('')+field('ملاحظة','note',o.note,'textarea'));break;
-case 'card':o=rows('cards').filter(c=>c.student_id===id);dialog('تقييم جوانب الغارسة',team()?field('دورة التقييم','stage','first','text',true,[['first','التقييم الأول'],['second','التقييم الثاني'],['third','التقييم الثالث'],['fourth','التقييم الرابع']])+aspects.map((aspect,i)=>field(aspect,'aspect'+i,o.find(c=>c.aspect===aspect&&c.stage==='first')?.level??0,'text',true,levels.map((t,n)=>[n,t]))).join(''):aspects.map((aspect,i)=>field(aspect,'aspect'+i,o.find(c=>c.aspect===aspect&&c.stage==='self')?.level??0,'text',true,levels.map((t,n)=>[n,t]))).join(''));break;
+case 'card':{
+o=rows('cards').filter(c=>c.student_id===id);
+const stage=team()?(cardStages.some(([key])=>key===state.cardStage)&&state.cardStage!=='self'?state.cardStage:'first'):'self';
+dialog('تقييم جوانب الغارسة',field('مرحلة التقييم','stage',stage,'text',true,team()?cardStages.filter(([key])=>key!=='self'):cardStages.filter(([key])=>key==='self'))+
+'<p class="muted small card-modal-hint">اختاري مستوى كل جانب عن قصد؛ عدم وجود تقييم لا يعني «لم تبدأ».</p>'+
+aspects.map((aspect,i)=>field(aspect,'aspect'+i,o.find(c=>c.aspect===aspect&&c.stage===stage)?.level??'','text',true,[['','اختاري المستوى'],...levels.map((t,n)=>[String(n),t])])+
+(team()?field('ملاحظة المرافقة · '+aspect,'note'+i,o.find(c=>c.aspect===aspect&&c.stage===stage)?.note||'','textarea'):'')).join(''));break;
+}
 case 'newquestion':dialog('سؤال جديد',field('نوع السؤال','kind','general','text',true,[['fiqh','فقهي'],['fikr','فكري'],['general','عام']])+field('نص السؤال','body','','textarea',true));break;
 case 'answer':o=rows('questions').find(x=>x.id===id)||{};dialog('إجابة السؤال',field('السؤال','question',o.body,'textarea')+field('الإجابة','answer',o.answer||'','textarea',true)+field('الحال','status',o.status||'open','text',true,[['open','جديد'],['sent','عند المرجعية'],['answered','أجيب']])+field('النشر للجميع دون اسم','published',String(!!o.published),'text',true,[['false','لا'],['true','نعم']]));break;
 case 'newannouncement':dialog('إعلان جديد',field('العنوان','title','','text',true)+field('نص الإعلان','body','','textarea',true)+field('الأُسرة','family_id','','text',false,stSelect)+field('مثبت','pinned','false','text',false,[['false','لا'],['true','نعم']]));break;
@@ -595,7 +632,17 @@ else if(a==='newobservation'){if(!leadership())throw Error('الملاحظات �
 else if(a==='bulkstudents'){const arr=x.bulk.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(line=>{const [name,phone,university]=line.split(',');return{name:name.trim(),phone:phone?.trim(),university:university?.trim(),stage:'candidate'}});const{error}=await db.from('students').insert(arr);if(error)throw error;await read('students');flash('تمت إضافة '+arr.length+' غارسة')}
 else if(a==='editweek'){x.sort_order=Number(x.sort_order);if(x.ends_on<x.starts_on)throw Error('تاريخ النهاية لا يمكن أن يسبق البداية');await save('weeks',{...x,id:state.week})}
 else if(a==='followup'){for(const k of ['majlis','family_meeting','triple_task','transferred_lesson','rotating_task'])x[k]||=null;x.wird_days=x.wird_days===''?null:Number(x.wird_days);await save('followups',{...x,student_id:id,week_id:state.week,recorded_by:state.user.id},'student_id,week_id')}
-else if(a==='card'){const objects=aspects.map((aspect,i)=>({student_id:id,aspect,stage:team()?(x.stage||'first'):'self',level:Number(x['aspect'+i]),evaluator_id:state.user.id}));const{error}=await db.from('cards').upsert(objects,{onConflict:'student_id,aspect,stage'});if(error)throw error;await read('cards');flash('حُفظ التقييم')}
+else if(a==='card'){
+const stage=team()?x.stage:'self';
+if(!cardStages.some(([key])=>key===stage)||(team()&&stage==='self'))throw Error('مرحلة التقييم غير مسموحة');
+const objects=aspects.map((aspect,i)=>{
+const raw=x['aspect'+i];
+if(raw===''||raw===undefined||!['0','1','2','3'].includes(String(raw)))throw Error('اختاري مستوى واضحًا لكل جانب، ولا يُعتبر الجانب غير المقيّم «لم تبدأ»');
+return {student_id:id,aspect,stage,level:Number(raw),note:team()?(x['note'+i]||null):null,evaluator_id:state.user.id};
+});
+const{error}=await db.from('cards').upsert(objects,{onConflict:'student_id,aspect,stage'});if(error)throw error;
+await read('cards');flash('حُفظ التقييم');
+}
 else if(a==='newquestion')await save('questions',{...x,student_id:state.account.student_id});
 else if(a==='answer')await save('questions',{id,answer:x.answer,status:x.status,published:bo(x.published),answered_at:x.status==='answered'?new Date().toISOString():null});
 else if(a==='newannouncement')await save('announcements',{...x,family_id:x.family_id||null,pinned:bo(x.pinned),author_id:state.user.id});
@@ -680,8 +727,10 @@ try{
 if(el.closest('#followupForm')&&el.matches('[data-followup-field]')){markFollowupDirty();return}
 if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView();rememberCurrentPage()}
 else if(el.dataset.select==='week'){if(!confirmFollowupLeave()){el.value=state.week;return}state.week=el.value;render()}
+else if(el.dataset.select==='cardStage'){state.cardStage=el.value;render()}
 else if(el.dataset.select==='period'){state.period=el.value;render()}
 else if(el.dataset.select==='family'){if(!confirmFollowupLeave()){el.value=state.family||'';return}state.family=el.value;render()}
+else if(el.dataset.cardGoal){if(!team())throw Error('تعديل إنجاز الأهداف للفريق فقط');const goalId=el.dataset.cardGoal,studentId=el.dataset.cardStudent;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',studentId);if(error)throw error;await read('goals');render()}
 else if(el.dataset.profileGoal){if(!team())throw Error('تعديل الأهداف للفريق فقط');const goalId=el.dataset.profileGoal;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',state.dashboardStudent);if(error)throw error;await read('goals');render()}
 else if(el.dataset.milestone){const[student_id,code]=el.dataset.milestone.split(':');await save('milestones',{student_id,code,done:el.checked,done_at:el.checked?new Date().toISOString():null},'student_id,code')}
 else if(el.dataset.task){const{error}=await db.from('tasks').update({done:el.checked,done_at:el.checked?new Date().toISOString():null}).eq('id',el.dataset.task);if(error)throw error;await read('tasks');render()}
