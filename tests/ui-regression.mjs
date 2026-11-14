@@ -132,3 +132,16 @@ test('dark headings are scoped without breaking status badge contrast',()=>{
  assert.match(css,/\.followup-week-pill\.active/);
  assert.match(css,/\.mobile-more-link\.is-selected/);
 });
+
+test('all native dropdowns share premium light/dark theme and keyboard focus',()=>{
+ assert.match(css,/--select-arrow:/);
+ assert.match(css,/html select,/);
+ assert.match(css,/html \.content select,/);
+ assert.match(css,/html \.dialog select,/);
+ assert.match(css,/-webkit-appearance:none!important/);
+ assert.match(css,/background-image:var\(--select-arrow\)!important/);
+ assert.match(css,/html select:focus-visible/);
+ assert.match(css,/html\[data-theme="dark"\] select option/);
+ assert.match(css,/@media \(pointer:coarse\)/);
+ assert.match(css,/font-size:16px!important/);
+});
