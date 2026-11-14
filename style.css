@@ -1144,3 +1144,23 @@ td .btn{margin:2px;vertical-align:middle}
 .question-modal-help{grid-column:1/-1;line-height:1.9;padding:8px 11px;background:#f6f8fa;border-radius:8px}
 @media(max-width:740px){.questions-intro{display:grid;grid-template-columns:auto minmax(0,1fr);padding:17px;gap:11px}.questions-intro>.btn{grid-column:1/-1;width:100%}.questions-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.questions-tabs button{justify-content:space-between;padding:10px}.question-item{padding:16px}.question-body{font-size:.87rem}.question-actions>.btn{flex:1}.question-item-head{align-items:flex-start}}
 @media(max-width:440px){.questions-page{gap:12px}.questions-tabs button{font-size:.75rem;padding:9px 8px}.question-tab-count{min-width:22px}.question-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.question-actions>.btn{white-space:normal;min-width:0}.questions-intro h2{font-size:.99rem}.questions-intro p{font-size:.75rem}}
+
+/* Navigation groups: official Algharisat team page structure */
+.sidebar{scrollbar-width:thin;scrollbar-color:#40536b transparent}
+.sidebar-groups{display:flex;flex-direction:column;gap:8px;padding-bottom:23px}
+.sidebar-section{display:grid;gap:4px;min-width:0}
+.sidebar-section:not(:first-child){border-top:1px solid rgba(230,220,199,.12);padding-top:12px;margin-top:3px}
+.sidebar-section-title{display:flex;align-items:center;gap:9px;margin:0;padding:7px 14px 6px;color:#ceb58b;font-size:.72rem;font-weight:800;line-height:1.6;letter-spacing:.01em}
+.sidebar-section-title:before{content:'';display:block;width:5px;height:5px;background:#b79867;transform:rotate(45deg);border-radius:1px;flex:none}
+.sidebar-section-links{display:grid;gap:3px}
+.sidebar-groups .nav-item{min-height:39px;gap:11px;padding:9px 12px;font-size:.84rem;line-height:1.6;cursor:pointer;transition:background .15s,color .15s}
+.sidebar-groups .nav-item .sidebar-nav-icon{display:grid;place-items:center;flex:none;width:20px;height:20px;color:#b79867;opacity:.92}
+.sidebar-groups .nav-item .sidebar-nav-icon svg{width:18px;height:18px}
+.sidebar-groups .nav-item.active{background:rgba(183,152,103,.18);box-shadow:inset -2px 0 0 #b79867}
+.sidebar-groups .nav-item.active .sidebar-nav-icon{color:#e6c99c;opacity:1}
+.sidebar-groups .nav-item:hover{background:rgba(255,255,255,.09)}
+.sidebar-groups .nav-item:focus-visible{outline:2px solid #c9ad7d;outline-offset:2px}
+.mobile-more-section{margin-top:19px}
+.mobile-more-section h3{display:flex;align-items:center;gap:8px;color:#5d7084;padding-bottom:10px;border-bottom:1px solid #e7edf1}
+.mobile-more-section h3:before{content:'';width:5px;height:5px;transform:rotate(45deg);background:#b79867;flex:none}
+@media(max-width:800px){.sidebar-groups{display:none}}
