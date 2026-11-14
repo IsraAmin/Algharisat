@@ -580,8 +580,44 @@ return '<div class="card-assessment-page">'+heading(mine?'بطاقتي':'بطا�
 (body||empty('لا توجد غارسات في المرحلة الحالية لعرض بطاقاتهن'))+'</div>';
 }
 const milestoneNames=[['iqrar','إقرار البداية موقعًا'],['letter','رسالة إلى نفسي محفوظة'],['parents','رسالة الأهل مسلمة'],['guardian','تعريف ولي الأمر (دون العشرين)'],['tilawa','الفحص المبدئي للتلاوة'],['individual','اللقاء الفردي'],['plan','الخطة الفردية'],['need5','ورقة الحاجة: خمس مستمعات'],['nabtpage','نبت كما أفهمه'],['hadith10','تسميع الأحاديث العشرة'],['mithaq','ميثاق الغارسة موقعًا']];
+const familyMilestoneDocs=[['wird','قدر الورد'],['page_need','صفحة الحاجة'],['initiative','المبادرة'],['charter','الميثاق']];
 function milestones(){
-return heading('المخرجات','إحدى عشرة علامة لإنجاز الغارسة')+table(['الغارسة',...milestoneNames.map(x=>x[1])],rows('students').filter(s=>s.stage==='active').map(s=>'<tr><td>'+esc(s.name)+'</td>'+milestoneNames.map(([code])=>'<td><input style="width:18px;min-height:18px" type="checkbox" data-milestone="'+esc(s.id+':'+code)+'" '+(rows('milestones').some(m=>m.student_id===s.id&&m.code===code&&m.done)?'checked':'')+' '+(code==='guardian'&&!s.under_twenty?'disabled':'')+' /></td>').join('')+'</tr>').join('')||'<tr><td colspan="12">'+empty('لا توجد غارسات نشطات')+'</td></tr>');
+if(!team())return heading('المخرجات','هذه الصفحة مخصصة للفريق');
+const families=rows('families').sort((a,b)=>(a.sort_order??999)-(b.sort_order??999)||a.name.localeCompare(b.name,'ar'));
+const docs=rows('docs_family'),minutes=rows('minutes');
+const members=rows('students').filter(s=>s.stage==='active').sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+const marks=rows('milestones');
+const weekIds=new Set(sortedWeeks().filter(w=>w.kind==='program').slice(0,8).map(w=>w.id));
+const docIsDone=(familyId,kind)=>docs.some(d=>d.family_id===familyId&&d.kind===kind&&String(d.body||'').trim());
+const familyRows=families.map(f=>{
+const written=familyMilestoneDocs.filter(([kind])=>docIsDone(f.id,kind)).length;
+const count= new Set(minutes.filter(m=>m.family_id===f.id&&weekIds.has(m.week_id)).map(m=>m.week_id)).size;
+return '<tr><th scope="row">'+esc(f.name)+'</th>'+
+familyMilestoneDocs.map(([kind,title])=>'<td data-label="'+esc(title)+'"><span class="outcome-doc-status '+(docIsDone(f.id,kind)?'done':'pending')+'">'+(docIsDone(f.id,kind)?'كُتبت':'لم تُكتب')+'</span></td>').join('')+
+'<td data-label="المحاضر"><span class="outcome-minutes-count">'+count+' <span>من ٨</span></span></td>'+
+'<td data-label="المكتمل"><span class="outcome-family-count">'+written+' من ٤ وثائق</span></td></tr>';
+}).join('');
+const familiesSection='<section class="outcomes-section"><div class="outcomes-section-title"><div><h2>أولًا: إنجاز الأسر</h2><p class="muted small">الوثائق الأربع، وعدد الأسابيع التي كُتب لها محضر لقاء من الأسابيع الثمانية.</p></div><span class="chip">'+families.length+' أسر</span></div>'+
+'<div class="outcomes-surface"><div class="outcomes-scroll"><table class="outcomes-table outcomes-family-table"><thead><tr><th scope="col">الأسرة</th>'+familyMilestoneDocs.map(([,title])=>'<th scope="col">'+esc(title)+'</th>').join('')+'<th scope="col">محاضر اللقاءات</th><th scope="col">الوثائق المكتوبة</th></tr></thead><tbody>'+
+(familyRows||'<tr><td colspan="7">'+empty('لم تُضف أسر بعد')+'</td></tr>')+'</tbody></table></div></div></section>';
+const eligible=(s,code)=>code!=='guardian'||s.under_twenty===true;
+const countDone=code=>members.filter(s=>eligible(s,code)&&marks.some(m=>m.student_id===s.id&&m.code===code&&m.done===true)).length;
+const countEligible=code=>members.filter(s=>eligible(s,code)).length;
+const studentRows=members.map(s=>'<tr><th scope="row" class="outcomes-student-name">'+esc(s.name)+'<span class="outcomes-student-family">'+esc(name('families',s.family_id))+'</span></th>'+
+milestoneNames.map(([code,label])=>{
+const applicable=eligible(s,code),record=marks.find(m=>m.student_id===s.id&&m.code===code);
+return '<td data-label="'+esc(label)+'">'+
+(applicable?'<label class="outcome-check" title="'+esc(record?.done&&record?.done_at?'أُنجزت: '+date(record.done_at):'تحديد إنجاز المخرج')+'"><input type="checkbox" data-milestone="'+esc(s.id+':'+code)+'" '+(record?.done?'checked':'')+' aria-label="'+esc(label+' للغارسة '+s.name)+'"/><span class="outcome-check-icon" aria-hidden="true"></span><span class="outcome-check-date">'+(record?.done?(record.done_at?'أُنجزت '+esc(date(record.done_at)):'منجزة'):'لم تُنجز')+'</span></label>':
+'<span class="outcome-not-required">غير مطلوب</span>')+'</td>';
+}).join('')+'</tr>').join('');
+const totalRow='<tr class="outcomes-totals-row"><th scope="row">المُنجز من المستحقات</th>'+milestoneNames.map(([code])=>'<td><strong>'+countDone(code)+'</strong><span> من '+countEligible(code)+'</span></td>').join('')+'</tr>';
+const totalsCards='<div class="outcomes-mobile-totals"><h3>إجمالي المنجز لكل مخرج</h3><div class="outcomes-total-grid">'+milestoneNames.map(([code,label])=>'<div><span>'+esc(label)+'</span><strong>'+countDone(code)+' <small>من '+countEligible(code)+'</small></strong></div>').join('')+'</div></div>';
+const studentsSection='<section class="outcomes-section"><div class="outcomes-section-title"><div><h2>ثانيًا: مخرجات الغارسات</h2><p class="muted small">إحدى عشرة علامة لكل غارسة. اضغطي علامة الإنجاز لحفظها وتاريخها مباشرةً.</p></div><span class="chip">'+members.length+' غارسات</span></div>'+
+'<div class="outcomes-surface"><div class="outcomes-scroll outcomes-students-scroll"><table class="outcomes-table outcomes-students-table"><thead><tr><th scope="col">الغارسة</th>'+milestoneNames.map(([,label])=>'<th scope="col">'+esc(label)+'</th>').join('')+'</tr></thead><tbody>'+
+(studentRows||'<tr><td colspan="12">'+empty('لا توجد غارسات في البرنامج')+'</td></tr>')+'</tbody>'+(members.length?'<tfoot>'+totalRow+'</tfoot>':'')+'</table></div>'+ (members.length?totalsCards:'')+'</div>'+
+'<p class="outcomes-help"><strong>تنبيه:</strong> «تعريف ولي الأمر» مطلوب فقط ممن هن دون العشرين، ولا تُحسب الأخريات في إجمالي المستحقات لهذه العلامة.</p></section>';
+return '<div class="outcomes-page">'+heading('المخرجات','متابعة وثائق الأسر ومحاضرها، وعلامات الإنجاز الإحدى عشرة لكل غارسة')+
+familiesSection+studentsSection+'</div>';
 }
 function questions(){
 const mine=!team(),data=mine?rows('questions').filter(q=>q.student_id===state.account?.student_id||q.published):rows('questions');
@@ -783,7 +819,18 @@ else if(el.dataset.select==='period'){state.period=el.value;render()}
 else if(el.dataset.select==='family'){if(!confirmFollowupLeave()){el.value=state.family||'';return}state.family=el.value;render()}
 else if(el.dataset.cardGoal){if(!team())throw Error('تعديل إنجاز الأهداف للفريق فقط');const goalId=el.dataset.cardGoal,studentId=el.dataset.cardStudent;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',studentId);if(error)throw error;await read('goals');render()}
 else if(el.dataset.profileGoal){if(!team())throw Error('تعديل الأهداف للفريق فقط');const goalId=el.dataset.profileGoal;const{error}=await db.from('goals').update({done:el.checked}).eq('id',goalId).eq('student_id',state.dashboardStudent);if(error)throw error;await read('goals');render()}
-else if(el.dataset.milestone){const[student_id,code]=el.dataset.milestone.split(':');await save('milestones',{student_id,code,done:el.checked,done_at:el.checked?new Date().toISOString():null},'student_id,code')}
+else if(el.dataset.milestone){
+if(!team())throw Error('تعديل المخرجات للفريق فقط');
+const [student_id,code]=el.dataset.milestone.split(':');
+const student=rows('students').find(s=>s.id===student_id);
+if(!student||student.stage!=='active'||!milestoneNames.some(([id])=>id===code))throw Error('بيانات الغارسة أو المخرج غير صحيحة');
+if(code==='guardian'&&!student.under_twenty)throw Error('تعريف ولي الأمر غير مطلوب لهذه الغارسة');
+el.disabled=true;
+const previously=rows('milestones').find(m=>m.student_id===student_id&&m.code===code);
+try{
+await save('milestones',{student_id,code,done:el.checked,done_at:el.checked?(previously?.done_at||new Date().toISOString()):null},'student_id,code');
+}catch(error){el.checked=!el.checked;throw error}
+}
 else if(el.dataset.task){const{error}=await db.from('tasks').update({done:el.checked,done_at:el.checked?new Date().toISOString():null}).eq('id',el.dataset.task);if(error)throw error;await read('tasks');render()}
 }catch(err){flash(err.message||'تعذر الحفظ',true)}
 });
