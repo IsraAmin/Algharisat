@@ -187,7 +187,7 @@ test('weekly report statistics exclude empty/unrecorded values',()=>{
  assert.match(app,/items\.length\?reportValue\(items\.filter\(predicate\)\.length\/items\.length\*100,0\)\+'٪':'—'/);
 });
 test('report cards honor stage rules and milestone guardian exception',()=>{
- assert.match(app,/period==='month1'\?\['self'\]:\['fourth','third','second','first'\]/);
+ assert.match(app,/period==='month1'\?\['self'\]:cardStages\.filter\(/);
  assert.match(app,/cardEntries\.filter\(r=>r\.student_id===studentId&&r\.aspect===aspect/);
  assert.match(app,/code!=='guardian'\|\|studentUnder20\(s\)===true/);
  assert.match(app,/new Set\(familyMinutes\.filter\(m=>m\.family_id===familyId\)\.map\(m=>m\.week_id\)\)/);
@@ -326,4 +326,37 @@ test('accounts pages retain high-contrast custom light and dark design',()=>{
  assert.match(css,/html\[data-theme="dark"\] \.account-role-badge\.is-rejected/);
  assert.match(css,/html\[data-theme="dark"\] \.account-reject-button/);
  assert.match(css,/@media\(max-width:690px\)/);
+});
+
+
+test('configuration page contains accessible program settings and all guide sections',()=>{
+ for(const phrase of ['معلومات البرنامج','إزاحة التقويم','مراحل التقييم في بطاقة الغارسة','إدارة الأسر','رقم الدورة الجارية','عبارة الترحيب','رقم التواصل البديل'])assert.ok(app.includes(phrase),phrase);
+ assert.match(app,/function backupContactNotice\(\)/);
+ assert.match(app,/backupContactNotice\(\)/);
+ assert.match(app,/public_welcome_message/);
+ assert.match(app,/state\.publicWelcome\|\|/);
+});
+test('calendar rescheduling previews direction and absolute day count before committing',()=>{
+ assert.match(app,/amount>0\?'تأخير':'تقديم'/);
+ assert.match(app,/Math\.abs\(amount\)/);
+ assert.match(app,/new Date\(next\+'T12:00:00Z'\)\.getUTCDay\(\)!==6/);
+ assert.match(app,/appConfirm\(\{title:'تأكيد '\+verb\+' التقويم'/);
+ assert.match(app,/db\.rpc\('shift_program'/);
+});
+test('assessment stages are data backed and fully integrated into cards and reports',()=>{
+ assert.match(app,/const base=\['settings','assessment_stages'/);
+ assert.match(app,/function syncAssessmentStages\(\)/);
+ assert.match(app,/cardStages\.splice\(0,cardStages\.length/);
+ assert.match(app,/case 'newassessmentstage':case 'editassessmentstage'/);
+ assert.match(app,/db\.from\('assessment_stages'\)\.insert\(/);
+ assert.match(app,/db\.from\('assessment_stages'\)\.update\(/);
+ assert.match(app,/db\.from\('assessment_stages'\)\.delete\(/);
+ assert.match(app,/cardStages\.filter\(\(\[code\]\)=>code!=='self'\)\.map/);
+ assert.match(app,/if\(rows\('cards'\)\.some\(c=>c\.stage===code\)\)/);
+});
+test('new setting controls retain readable colors in dark mode',()=>{
+ assert.match(css,/\.settings-stage-list\{display:grid/);
+ assert.match(css,/\.backup-contact-note\{display:flex/);
+ assert.match(css,/html\[data-theme="dark"\] \.settings-section/);
+ assert.match(css,/html\[data-theme="dark"\] \.backup-contact-note/);
 });
