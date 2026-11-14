@@ -380,3 +380,20 @@ test('mobile auth uses one viewport-fitting column even with desktop site layout
  assert.match(css,/\.auth>\.auth-panel \.tabs button\{[\s\S]*?min-inline-size:0!important;/);
  assert.match(css,/\.auth>\.auth-panel #authForm :is\(input:not\(\[type="checkbox"\]\),textarea,select\)/);
 });
+
+test('theme control renders only SVG icon with accessible labels and current theme state',()=>{
+ assert.match(app,/function themeControl\(\)/);
+ assert.match(app,/class="theme-toggle theme-toggle-icon"/);
+ assert.match(app,/aria-label="'\+name\+'"/);
+ assert.match(app,/aria-pressed="'\+dark\+'"/);
+ assert.doesNotMatch(app,/☀ الوضع الفاتح|☾ الوضع الداكن/);
+ assert.match(css,/\.theme-toggle\.theme-toggle-icon\{/);
+ assert.match(css,/\.theme-toggle-icon:focus-visible\{/);
+});
+test('active bottom navigation stays dark with visible white icon and label',()=>{
+ assert.match(css,/html\[data-theme="dark"\] \.mobile-nav button\[data-page\]\.active/);
+ assert.match(css,/background:#36526a!important/);
+ assert.match(css,/color:#fff!important/);
+ assert.match(css,/html\[data-theme="dark"\] \.mobile-nav button\.active svg \*/);
+ assert.match(css,/border-top:1px solid #445c70!important/);
+});

@@ -20,7 +20,12 @@ const storedTheme=()=>{try{return localStorage.getItem('algharisat-theme')}catch
 const currentTheme=()=>storedTheme()||(window.matchMedia?.('(prefers-color-scheme: dark)')?.matches?'dark':'light');
 function applyTheme(mode){document.documentElement.dataset.theme=mode;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',mode==='dark'?'#111c29':'#183044')}
 function toggleTheme(){const next=document.documentElement.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('algharisat-theme',next)}catch{}applyTheme(next);render()}
-function themeControl(){return '<button type="button" class="theme-toggle" data-action="toggleTheme" aria-label="تبديل الوضع الفاتح والداكن">'+(document.documentElement.dataset.theme==='dark'?'☀ الوضع الفاتح':'☾ الوضع الداكن')+'</button>'}
+function themeControl(){
+ const dark=document.documentElement.dataset.theme==='dark';
+ const name=dark?'التبديل إلى الوضع الفاتح':'التبديل إلى الوضع الداكن';
+ const symbol=dark?'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>':'<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>';
+ return '<button type="button" class="theme-toggle theme-toggle-icon" data-action="toggleTheme" aria-label="'+name+'" title="'+name+'" aria-pressed="'+dark+'"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+symbol+'</svg></button>';
+}
 applyTheme(currentTheme());
 window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change',()=>{if(!storedTheme()){applyTheme(currentTheme());render()}});
 const asciiDigits=value=>String(value||'').replace(/[٠-٩]/g,ch=>String(ch.charCodeAt(0)-1632)).replace(/[۰-۹]/g,ch=>String(ch.charCodeAt(0)-1776));
