@@ -798,7 +798,34 @@ function tasks(){
  '<div class="prep-summary"><span>إجمالي البنود: <strong>'+taskList.length+'</strong></span><span>المكتمل: <strong>'+completed+'</strong></span><span>المتبقي: <strong>'+(taskList.length-completed)+'</strong></span></div>'+
  readiness+'<div class="prep-sections">'+sections+'</div></div>';
 }
-function journal(){return heading('سجل التجربة','ما نجح، وما تعثر، وما تقرر في كل أسبوع',btn('newjournal','تدوين أسبوع','goldbtn'))+rows('journal').map(j=>'<div class="card" style="margin-bottom:12px"><h3>'+esc(weekName(j.week_id))+'</h3><p><strong>نجح:</strong> '+esc(j.success)+'</p><p><strong>تعثر:</strong> '+esc(j.obstacle)+'</p><p><strong>القرار:</strong> '+esc(j.decision)+'</p></div>').join('')||empty('لا توجد تدوينات بعد')}
+/* One reflection per program week, shown with an independent council review. */
+function journal(){
+ if(!team())return heading('سجل التجربة','هذا السجل مخصص لفريق الغارسات فقط');
+ const weeks=sortedWeeks().filter(w=>w.kind==='program');
+ const entries=rows('journal');
+ const byWeek=new Map(entries.map(item=>[item.week_id,item]));
+ const recorded=weeks.filter(w=>byWeek.has(w.id)),remaining=weeks.length-recorded.length;
+ const isReview=state.journalView==='review';
+ const cells=weeks.map((w,index)=>{
+  const item=byWeek.get(w.id),hasEntry=!!item;
+  const caption=String(w.title||'الأسبوع '+(index+1));
+  const status='<span class="journal-status '+(hasEntry?'is-saved':'is-empty')+'">'+(hasEntry?'تم التدوين':'بانتظار التدوين')+'</span>';
+  const summary=v=>'<div class="journal-cell-copy">'+(String(v||'').trim()?esc(v):'<span class="journal-missing">لم يُدوّن</span>')+'</div>';
+  return '<tr><th scope="row"><div class="journal-week-label"><strong>الأسبوع '+(index+1)+'</strong><span>'+esc(caption)+'</span>'+status+'</div></th><td>'+summary(item?.success)+'</td><td>'+summary(item?.obstacle)+'</td><td>'+summary(item?.decision)+'</td><td class="journal-actions">'+btn(hasEntry?'editjournal:'+item.id:'newjournal:'+w.id,hasEntry?'تعديل':'تدوين',hasEntry?'secondary':'goldbtn')+'</td></tr>';
+ }).join('');
+ const reviewItems=recorded.map((w,index)=>({week:w,item:byWeek.get(w.id),number:weeks.indexOf(w)+1}));
+ const list=(key)=>{
+  const filtered=reviewItems.filter(({item})=>String(item[key]||'').trim());
+  if(!filtered.length)return '<div class="journal-empty-review">لا توجد تدوينات لهذا المحور بعد.</div>';
+  return filtered.map(({week,item,number})=>'<article class="journal-review-item"><span class="journal-review-week">الأسبوع '+number+'</span><div><strong>'+esc(week.title)+'</strong><p>'+esc(item[key])+'</p></div></article>').join('');
+ };
+ const review='<section class="journal-review-panel" aria-labelledby="journal-review-title"><header class="journal-review-header"><div><span class="journal-kicker">مجلس التطوير • الأسبوع الفاصل</span><h2 id="journal-review-title">خلاصة تجربة الغارسات</h2><p>تجميع تلقائي من سجل الأسابيع الثمانية، لمناقشة النجاحات والتعثّرات والقرارات. لا تُنشأ قرارات جديدة تلقائيًا.</p></div>'+btn('print','طباعة الخلاصة / حفظ PDF','secondary no-print')+'</header><div class="journal-review-coverage">'+iconSvg('clipboard-check')+' موثّق '+recorded.length+' من '+weeks.length+' أسابيع'+(remaining?' • بانتظار تدوين '+remaining+' أسبوع':' • السجل مكتمل')+'</div><div class="journal-review-columns"><section><h3>'+iconSvg('check-circle')+' ما نجح</h3>'+list('success')+'</section><section><h3>'+iconSvg('alert-triangle')+' ما تعثّر</h3>'+list('obstacle')+'</section><section><h3>'+iconSvg('clipboard-list')+' القرارات المتخذة</h3>'+list('decision')+'</section></div><footer>هذه الخلاصة للاستخدام الداخلي للفريق في مجلس التطوير، ولا تُعرض للغارسات.</footer></section>';
+ const table='<section class="journal-weekly-panel"><header><div><h2>سجل الأسابيع</h2><p>صف واحد لكل أسبوع من أسابيع البرنامج. أضيفي التدوين أو عدّليه متى لزم.</p></div></header><div class="journal-table-scroll" role="region" aria-label="جدول سجل التجربة قابل للتمرير أفقيًا" tabindex="0"><table class="journal-table"><thead><tr><th scope="col">الأسبوع</th><th scope="col">ما نجح</th><th scope="col">ما تعثّر</th><th scope="col">القرار المتخذ</th><th scope="col">الإجراء</th></tr></thead><tbody>'+cells+'</tbody></table></div></section>';
+ return '<div class="journal-page">'+heading('سجل التجربة','توثيق التجربة أسبوعًا بعد أسبوع، ومادة مجلس التطوير في الأسبوع الفاصل',btn('newjournal','تدوين أسبوع','goldbtn no-print'))+
+ '<div class="journal-overview"><div><span>أسابيع البرنامج</span><strong>'+weeks.length+'</strong></div><div><span>أسابيع موثّقة</span><strong>'+recorded.length+'</strong></div><div><span>بانتظار التدوين</span><strong>'+remaining+'</strong></div></div>'+
+ '<nav class="journal-view-switch no-print" aria-label="طريقة عرض سجل التجربة"><button type="button" data-action="journalView:weeks" class="'+(!isReview?'is-active':'')+'" aria-pressed="'+(!isReview)+'">جدول الأسابيع</button><button type="button" data-action="journalView:review" class="'+(isReview?'is-active':'')+'" aria-pressed="'+isReview+'">ملخص مجلس التطوير</button></nav>'+
+ (isReview?review:table)+'</div>';
+}
 
 /* Report calculations follow section 6 of the Algharisat build guide.
    A missing entry is not an absence or a failed task. */
@@ -960,7 +987,7 @@ function formData(f){const o={};new FormData(f).forEach((v,k)=>o[k]=v);return o}
 async function save(t,obj,conflict){const q=db.from(t).upsert(obj,conflict?{onConflict:conflict}:{});const{error}=await q;if(error)throw error;await read(t);flash('حُفظت التغييرات بنجاح')}
 async function modal(action){
 const [a,id]=action.split(':');state.editing={a,id};let o={};
-if(a.startsWith('edit')){const tab={editstudent:'students',editweek:'weeks',editaccount:'accounts',edittask:'tasks'}[a];o=rows(tab).find(x=>x.id===id||x.user_id===id)||{}}
+if(a.startsWith('edit')){const tab={editstudent:'students',editweek:'weeks',editaccount:'accounts',edittask:'tasks',editjournal:'journal'}[a];o=rows(tab).find(x=>x.id===id||x.user_id===id)||{}}
 const stSelect=[['','بلا أسرة'],...rows('families').map(x=>[x.id,x.name])];
 switch(a){
 case 'newstudent':case 'editstudent':
@@ -1022,7 +1049,19 @@ field('الترتيب (الأقل يظهر أولًا)','sort_order',o.sort_orde
 '<p class="muted small">يمكنكِ الاحتفاظ بالغلاف الحالي دون إعادة رفعه عند تعديل المصدر.</p></div>');break;
 }
 case 'newtask':case 'edittask':{if(!team())throw Error('إدارة التحضير والتشغيل للفريق فقط');const previous=a==='edittask';if(previous&&!o.id)throw Error('تعذر العثور على البند');dialog(previous?'تعديل البند':'إضافة بند جديد',field('القسم','section',o.section||'task','text',true,preparationSections.map(([value,label])=>[value,label]))+field('الأسبوع (للمهام الأسبوعية)','week_id',o.week_id||'','text',false,[['','غير مرتبطة بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('نص البند','body',o.body||'','textarea',true)+field('المسؤولة','owner',o.owner||'')+field('موعد الإنجاز','due_on',o.due_on||'','date')+field('ملاحظات التنفيذ','note',o.note||'','textarea')+(previous?'<div class="notice">يمكنكِ تعديل التفاصيل، وستظل حالة الإنجاز وتاريخها محفوظين.</div>':''));break;}
-case 'newjournal':dialog('تدوين التجربة',field('الأسبوع','week_id',state.week,'text',true,rows('weeks').filter(w=>w.kind==='program').map(w=>[w.id,w.title]))+field('ما نجح','success','','textarea')+field('ما تعثر','obstacle','','textarea')+field('القرار','decision','','textarea'));break;
+case 'newjournal':case 'editjournal':{
+ if(!team())throw Error('سجل التجربة متاح للفريق فقط');
+ const weeks=sortedWeeks().filter(w=>w.kind==='program');
+ const existing=a==='editjournal';
+ if(existing&&!o.id)throw Error('تعذر العثور على التدوين');
+ const preferred=existing?o.week_id:(weeks.some(w=>w.id===id)?id:(weeks.some(w=>w.id===state.week)?state.week:weeks[0]?.id));
+ dialog(existing?'تعديل تدوين الأسبوع':'تدوين أسبوع',field('الأسبوع','week_id',preferred||'','text',true,weeks.map(w=>[w.id,w.code?.replace('w','الأسبوع ')+' — '+w.title]))+
+ field('ما نجح','success',o.success||'','textarea')+
+ field('ما تعثّر','obstacle',o.obstacle||'','textarea')+
+ field('القرار المتخذ','decision',o.decision||'','textarea')+
+ '<p class="muted small">اكتبي ما حدث فعلًا في الأسبوع؛ ستظهر التدوينة في خلاصة مجلس التطوير.</p>');
+ break;
+}
 case 'editaccount':dialog('مراجعة الحساب',field('الاسم','name',o.name,'text',true)+field('الصفة','role',o.role,'text',true,[['pending','ينتظر'],['gharisa','غارسة'],['musaida','مساعدة المرافقة'],['murafiqa','المرافقة'],...(state.account?.role==='admin'?[['admin','الإدارة']]:[]),['disabled','موقوف']])+field('اللقب','title',o.title)+field('سجل الغارسة','student_id',o.student_id||(o.role==='gharisa'?state.studentToLink:'')||'','text',false,[['','بدون ربط'],...rows('students').map(s=>[s.id,s.name])]));break;
 case 'doc':o=rows('docs_family').find(d=>d.family_id===state.family&&d.kind===id)||{};dialog('وثيقة الأسرة',field('نص الوثيقة','body',o.body,'textarea',true));break;
 case 'assignrole':dialog('توزيع مهمة دوارة',field('المهمة','task','munassiqa','text',true,[['munassiqa','المنسقة'],['fiqhiya','المسؤولة الفقهية'],['fikriya','المسؤولة الفكرية'],['ijtimaiya','المسؤولة الاجتماعية'],['ataa','مسؤولة العطاء']])+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name]))+field('الدورة','cycle',setting('current_cycle',1),'number',true));break;
@@ -1129,7 +1168,25 @@ else if(a==='newtask'||a==='edittask'){
  }else{const {data,error}=await db.from('tasks').insert(value).select('id');if(error)throw error;if(!data?.length)throw Error('تعذرت إضافة البند')}
  await read('tasks');flash(a==='edittask'?'عُدّل البند بنجاح':'أُضيف البند بنجاح');
 }
-else if(a==='newjournal')await save('journal',{...x,author_id:state.user.id});
+else if(a==='newjournal'||a==='editjournal'){
+ if(!team())throw Error('التدوين والتعديل للفريق فقط');
+ const week=rows('weeks').find(w=>w.id===x.week_id&&w.kind==='program');
+ if(!week)throw Error('اختاري أسبوعًا من أسابيع البرنامج');
+ const content={success:String(x.success||'').trim(),obstacle:String(x.obstacle||'').trim(),decision:String(x.decision||'').trim()};
+ if(!Object.values(content).some(Boolean))throw Error('أدخلي ما نجح أو ما تعثّر أو القرار المتخذ على الأقل');
+ if(a==='newjournal'&&rows('journal').some(j=>j.week_id===week.id))throw Error('هذا الأسبوع له تدوين بالفعل. استخدمي زر تعديل في الجدول.');
+ if(a==='editjournal'){
+  const old=rows('journal').find(j=>j.id===id);
+  if(!old)throw Error('التدوين المطلوب غير موجود');
+  if(rows('journal').some(j=>j.week_id===week.id&&j.id!==id))throw Error('الأسبوع المختار له تدوين بالفعل');
+  const {data,error}=await db.from('journal').update({...content,week_id:week.id}).eq('id',id).select('id');
+  if(error)throw error;if(!data?.length)throw Error('تعذر تعديل التدوين؛ تحققي من الصلاحيات');
+ }else{
+  const {data,error}=await db.from('journal').insert({...content,week_id:week.id,author_id:state.user.id}).select('id');
+  if(error)throw error;if(!data?.length)throw Error('تعذر حفظ التدوين؛ تحققي من الصلاحيات');
+ }
+ await read('journal');flash(a==='editjournal'?'تم تحديث تدوين الأسبوع':'تم حفظ تدوين الأسبوع');
+}
 else if(a==='editaccount'){const{error}=await db.from('accounts').update({...x,student_id:x.student_id||null}).eq('user_id',id);if(error)throw error;await read('accounts');state.studentToLink=null;flash('حُفظت صلاحية الحساب وربطه')}
 else if(a==='doc')await save('docs_family',{...x,kind:id,family_id:state.family},'family_id,kind');
 else if(a==='assignrole')await save('roles_family',{family_id:state.family,student_id:x.student_id,task:x.task,cycle:Number(x.cycle)},'family_id,task,cycle');
@@ -1191,6 +1248,7 @@ else if(action==='refresh')await start();
 else if(action==='reset'){const email=await appConfirm({title:'استعادة كلمة المرور',message:'أدخلي بريدكِ الإلكتروني لإرسال رابط إعادة التعيين.',input:true,placeholder:'name@example.com',confirmText:'إرسال الرابط'});if(email){const{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;flash('إن كان البريد مسجلاً، سيصلك رابط إعادة كلمة المرور')}}
 else if(action==='close')$('.dialog-backdrop')?.remove();
 else if(action==='print')window.print();
+ else if(action.startsWith('journalView:')){if(!team())throw Error('هذه الصفحة للفريق فقط');state.journalView=action.split(':')[1]==='review'?'review':'weeks';render()}
 else if(action==='shiftcalendar'){const newDate=$('#f_first_start')?.value;if(!newDate)throw Error('اختاري التاريخ الجديد');if(!(await appConfirm({title:'تأكيد إزاحة التقويم',message:'سيتم تغيير تواريخ جميع الأسابيع والمواعيد المرتبطة بها. هل تريدين المتابعة؟',confirmText:'نعم، تطبيق الإزاحة',danger:true})))return;const {data,error}=await db.rpc('shift_program',{p_first_week:newDate});if(error)throw error;await load();flash('تمت إزاحة التقويم بمقدار '+data+' يوم')}
 else if(action==='clearstudents'){state.studentsSearch='';state.studentsFamily='';state.studentsTab='all';render();updateStudentsView()}
 else if(action.startsWith('studentaccounts:')){if(!leadership())throw Error('ربط الحسابات متاح للإدارة والمرافقة فقط');state.studentToLink=action.split(':')[1];state.page='accounts';render();window.scrollTo(0,0)}

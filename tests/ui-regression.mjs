@@ -261,3 +261,34 @@ test('preparation design is responsive and safe in dark mode',()=>{
  assert.match(css,/html\[data-theme="dark"\] \.prep-delete/);
  assert.match(css,/@media\(max-width:1100px\)\{\.prep-sections\{grid-template-columns:1fr\}\}/);
 });
+
+
+test('journal lists each program week exactly once in a scrollable table',()=>{
+ assert.match(app,/function journal\(\)/);
+ assert.match(app,/const weeks=sortedWeeks\(\)\.filter\(w=>w\.kind==='program'\)/);
+ assert.match(app,/const byWeek=new Map\(entries\.map\(item=>\[item\.week_id,item\]\)\)/);
+ assert.match(app,/journal-table-scroll/);
+ assert.match(app,/journal-week-label/);
+ assert.match(app,/journal-status/);
+ assert.match(app,/data-action="journalView:review"/);
+});
+test('journal supports team-only create and edit without duplicate weeks',()=>{
+ assert.match(app,/case 'newjournal':case 'editjournal'/);
+ assert.match(app,/editjournal:'journal'/);
+ assert.match(app,/if\(!team\(\)\)throw Error\('سجل التجربة متاح للفريق فقط'\)/);
+ assert.match(app,/rows\('journal'\)\.some\(j=>j\.week_id===week\.id\)/);
+ assert.match(app,/db\.from\('journal'\)\.update\(/);
+ assert.match(app,/db\.from\('journal'\)\.insert\(/);
+ assert.match(app,/const content=\{success:String\(x\.success\|\|''\)\.trim\(\),obstacle:String\(x\.obstacle\|\|''\)\.trim\(\),decision:String\(x\.decision\|\|''\)\.trim\(\)\}/);
+});
+test('council review is sourced from saved journal entries and printable',()=>{
+ assert.match(app,/const reviewItems=recorded\.map\(/);
+ assert.match(app,/list\('success'\)/);
+ assert.match(app,/list\('obstacle'\)/);
+ assert.match(app,/list\('decision'\)/);
+ assert.match(app,/مجلس التطوير • الأسبوع الفاصل/);
+ assert.match(app,/القرارات المتخذة/);
+ assert.match(css,/\.journal-review-columns\{display:grid/);
+ assert.match(css,/@media print\{/);
+ assert.match(css,/html\[data-theme="dark"\] \.journal-table/);
+});
