@@ -42,6 +42,20 @@ state.week ||= currentWeek()?.id;
 state.family ||= state.profile?.family_id||rows('families')[0]?.id;
 }
 const withTimeout=(promise,ms=15000)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('استغرق الاتصال وقتًا أطول من المتوقع. تحققي من الإنترنت وحاولي مرة أخرى.')),ms))]);
+// Page memory is scoped to the signed-in account (not shared across accounts).
+const pageMemoryKey=userId=>'algharisat-page-'+userId;
+function readCurrentPage(userId){
+try{const value=JSON.parse(localStorage.getItem(pageMemoryKey(userId))||'null');return value&&typeof value.page==='string'?value:null}catch(e){return null}
+}
+function rememberCurrentPage(){
+if(!state.user||!state.account||['pending','disabled'].includes(state.account.role))return;
+try{localStorage.setItem(pageMemoryKey(state.user.id),JSON.stringify({
+page:state.page,week:state.week,family:state.family,dashboardStudent:state.dashboardStudent,
+studentReportWeek:state.studentReportWeek,studentFileReturn:state.studentFileReturn,
+studentProfileTab:state.studentProfileTab,studentsTab:state.studentsTab,
+studentsSearch:state.studentsSearch,studentsFamily:state.studentsFamily
+}))}catch(e){}
+}
 let bootSequence=0;
 async function start(){
 const sequence=++bootSequence;
@@ -62,7 +76,21 @@ if(data.role==='gharisa'&&!data.student_id){
   if(profileError)throw new Error('تعذر تجهيز ملف الغارسة المرتبط بحسابك: '+profileError.message);
   state.account={...data,student_id:studentId};
 }
-state.page=team()?'dashboard':'myweek';
+// Restore the current user's own last page; never force the dashboard on refresh.
+const remembered=readCurrentPage(state.user.id);
+const allowed=team()?new Set([...teamNav.map(([key])=>key),'dashboardStudent','studentReport','weeks','weekdetail','program']):new Set([...studentNav.map(([key])=>key),'weekdetail','program']);
+state.page=remembered&&allowed.has(remembered.page)&&(!['dashboardStudent','studentReport'].includes(remembered.page)||remembered.dashboardStudent)?remembered.page:(team()?'dashboard':'myweek');
+if(remembered&&state.page===remembered.page){
+state.week=remembered.week||state.week;
+state.family=remembered.family||state.family;
+state.dashboardStudent=remembered.dashboardStudent||state.dashboardStudent;
+state.studentReportWeek=remembered.studentReportWeek||state.studentReportWeek;
+state.studentFileReturn=remembered.studentFileReturn||state.studentFileReturn;
+state.studentProfileTab=remembered.studentProfileTab||state.studentProfileTab;
+state.studentsTab=remembered.studentsTab||state.studentsTab;
+state.studentsSearch=remembered.studentsSearch||'';
+state.studentsFamily=remembered.studentsFamily||'';
+}
 render();
 try{await withTimeout(load(),20000)}catch(error){console.warn('تعذر تحميل بعض بيانات الحساب',error);flash('تم تسجيل الدخول، لكن تعذّر تحميل بعض البيانات. حاولي تحديث الصفحة.',true)}
 if(sequence===bootSequence)render();
@@ -77,6 +105,16 @@ function installNotice(){
 if(!shouldShowInstall())return '';
 return '<section class="install-notice" role="status" aria-label="اقتراح تثبيت الغارسات"><div class="install-notice-mark" aria-hidden="true">✦</div><div class="install-notice-copy"><strong>الغارسات على شاشة تلفونك</strong><p>أضيفي المنصة للشاشة الرئيسية وافتحيها بسهولة مثل التطبيق.</p></div><div class="install-notice-actions"><button type="button" class="btn goldbtn smallbtn" data-action="install">إضافة للشاشة الرئيسية</button><button type="button" class="install-notice-dismiss" data-action="dismissInstall" aria-label="إخفاء اقتراح التثبيت" title="إخفاء">×</button></div></section>';
 }
+// All permanent deletion flows must pass through this confirmation dialog.
+let deletePending=null;
+function closeDeleteConfirmation(){document.querySelector('.delete-confirm-backdrop')?.remove();deletePending=null}
+function openDeleteConfirmation(item){
+closeDeleteConfirmation();deletePending=item;
+const layer=document.createElement('div');layer.className='delete-confirm-backdrop';
+layer.innerHTML='<div class="delete-confirm-scrim" data-action="cancelDelete"></div><section class="delete-confirm" role="alertdialog" aria-modal="true" aria-labelledby="delete-confirm-title" aria-describedby="delete-confirm-description"><div class="delete-confirm-icon">'+iconSvg('shield-check')+'</div><h2 id="delete-confirm-title">تأكيد الحذف</h2><p id="delete-confirm-description">هل تريدين حذف سجل «'+esc(item.name)+'» نهائيًا؟ <strong>لا يمكن التراجع عن الحذف.</strong></p><div class="delete-confirm-actions"><button type="button" class="btn secondary" data-action="cancelDelete">إلغاء</button><button type="button" class="btn delete-accept" data-action="confirmDelete">نعم، احذف السجل</button></div></section>';
+document.body.appendChild(layer);layer.querySelector('[data-action="cancelDelete"]').focus();
+}
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&deletePending)closeDeleteConfirmation()});
 function logoutConfirmDialog(){
 if(document.querySelector('.logout-confirm-backdrop'))return;
 const layer=document.createElement('div');
@@ -119,7 +157,7 @@ try{main=page()}catch(err){console.error(err);main='<div class="card"><p>تعذ�
 const top=team()?'الفريق':'الغارسة';
 return '<div class="app"><aside class="sidebar"><div class="brand"><div class="brandmark">'+iconSvg('sprout')+'</div><span>الغارسات<small style="display:block;font-weight:400;color:#acb5c3">معهد التأسيس الشرعي</small></span></div><div class="side-label">مساحة '+top+'</div>'+visible.map(([p,t])=>'<button class="nav-item '+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="width:20px;text-align:center;color:#b79867">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'</aside><main class="main"><header class="topbar"><div class="mobile-brand brand"><div class="brandmark" style="width:32px;height:32px">✦</div>الغارسات</div><div class="muted small user-title">منصة برنامج الغارسات | '+esc(setting('stage_name','المرحلة الأولى'))+'</div><div style="display:flex;align-items:center;gap:12px"><span class="small">'+esc(state.account?.name||'')+' <span class="muted">| '+esc(state.account?.title||top)+'</span></span><button type="button" data-action="logout" class="logout-icon" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header><div class="content">'+installNotice()+main+'</div></main><nav class="mobile-nav">'+visible.slice(0,4).map(([p,t])=>'<button class="'+(p===state.page?'active':'')+'" data-page="'+p+'"><span style="font-size:20px">'+iconSvg(icons[p])+'</span>'+t+'</button>').join('')+'<button type="button" data-action="more" aria-haspopup="dialog" aria-label="فتح جميع الصفحات"><span class="mobile-icon">'+iconSvg('grid')+'</span>المزيد</button></nav></div>';
 }
-function heading(title,desc,action=''){return '<div class="page-head"><div><div class="eyebrow">مِن الغَرْسِ إلى الثَّمَر</div><h1>'+esc(title)+'</h1><p class="subtitle">'+esc(desc)+'</p></div>'+action+'</div>'}
+function heading(title,desc,action=''){return '<div class="page-head"><div><div class="eyebrow">مِن الغَرْسِ إلى الثَّمَر</div><h1>'+esc(title)+'</h1><p class="subtitle">'+esc(desc)+'</p></div>'+(action?'<div class="page-actions">'+action+'</div>':'')+'</div>'}
 function empty(text){return '<div class="empty"><strong>لا توجد بيانات بعد</strong>'+esc(text)+'</div>'}
 function table(headers,body){return '<div class="card table-wrap"><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div>'}
 function selectWeeks(){return '<select id="weekSelect" data-select="week">'+rows('weeks').filter(w=>w.kind==='program').map(w=>option(w.id,'الأسبوع '+esc(w.code.slice(1))+' | '+w.title,state.week)).join('')+'</select>'}
@@ -439,7 +477,7 @@ function page(){
 switch(state.page){
 case 'dashboard':return dashboard();case 'dashboardStudent':return dashboardStudentFile();case 'studentReport':return studentReportDetail();case 'weeks':case 'program':return weeks();case 'weekdetail':return weekDetails();case 'students':return students();case 'families':case 'myfamily':return families();case 'followups':case 'myfollowup':return followups();case 'cards':case 'mycard':return cards();case 'milestones':return milestones();case 'questions':case 'myquestions':return questions();case 'announcements':case 'notices':return announcements();case 'tasks':return tasks();case 'journal':return journal();case 'reports':return reports();case 'survey':return survey();case 'accounts':return accounts();case 'settings':return settings();case 'myweek':return myweek();case 'myreport':return myreport();case 'myaccount':return myaccount();default:return dashboard();}
 }
-function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');if(state.page==='students'&&team())updateStudentsView();}
+function render(){window.__algharisatReady=true;document.title='الغارسات | معهد التأسيس الشرعي';$('#root').innerHTML=(!state.user?auth():!state.account||['pending','disabled'].includes(state.account.role)?pending():shell())+(state.notice?'<div class="toast" role="status">'+esc(state.notice)+'</div>':'');if(state.page==='students'&&team())updateStudentsView();rememberCurrentPage();}
 function dialog(title,body,submit='حفظ'){const old=$('.dialog-backdrop');if(old)old.remove();const e=document.createElement('div');e.className='dialog-backdrop';e.innerHTML='<form id="modalForm" class="dialog"><div class="page-head"><h2>'+esc(title)+'</h2><button type="button" class="btn secondary smallbtn" data-action="close">إغلاق</button></div><div class="form-grid">'+body+'</div><div class="form-actions"><button class="btn" type="submit">'+esc(submit)+'</button></div></form>';document.body.appendChild(e)}
 function formData(f){const o={};new FormData(f).forEach((v,k)=>o[k]=v);return o}
 async function save(t,obj,conflict){const q=db.from(t).upsert(obj,conflict?{onConflict:conflict}:{});const{error}=await q;if(error)throw error;await read(t);flash('حُفظت التغييرات بنجاح')}
@@ -499,7 +537,7 @@ $('.dialog-backdrop')?.remove();state.editing=null;render();
 document.addEventListener('click',async e=>{
 const el=e.target.closest('[data-action],[data-page],[data-week],[data-students-tab],[data-profile-tab]');
 if(!el)return;
-if(el.dataset.studentsTab){state.studentsTab=el.dataset.studentsTab;updateStudentsView();return}
+if(el.dataset.studentsTab){state.studentsTab=el.dataset.studentsTab;updateStudentsView();rememberCurrentPage();return}
 if(el.dataset.profileTab){state.studentProfileTab=el.dataset.profileTab;render();return}
 if(el.dataset.page){state.page=el.dataset.page;closeMobileMore();$('.dialog-backdrop')?.remove();render();window.scrollTo({top:0,behavior:'instant'});return}
 if(el.dataset.week){state.week=el.dataset.week;state.page='weekdetail';render();window.scrollTo(0,0);return}
@@ -536,7 +574,19 @@ else if(action==='more'){showMobileMore()}
 else if(action==='closeMore'){closeMobileMore()}
 else if(action==='backStudentProfile'){state.page='dashboardStudent';render();window.scrollTo(0,0)}
 else if(action.startsWith('studentReport:')){state.studentReportWeek=action.split(':')[1];state.page='studentReport';render();window.scrollTo(0,0)}
-else if(action.startsWith('deleteStudent:')){if(!leadership())throw Error('حذف السجل للإدارة والمرافقة فقط');const id=action.split(':')[1],student=rows('students').find(x=>x.id===id);if(!student)throw Error('تعذر العثور على السجل');if(rows('accounts').some(a=>a.student_id===id))throw Error('السجل مربوط بحساب. افصلي ربط الحساب من صفحة الحسابات قبل الحذف');if(!confirm('هل تريدين حذف سجل «'+student.name+'» نهائيًا؟ لا يمكن التراجع عن الحذف.'))return;const{error}=await db.from('students').delete().eq('id',id);if(error)throw new Error('تعذر حذف السجل؛ قد تكون له متابعات أو تقارير مرتبطة. '+error.message);await read('students');state.page='students';render();flash('حُذف سجل الغارسة')}
+else if(action.startsWith('deleteStudent:')){if(!leadership())throw Error('حذف السجل للإدارة والمرافقة فقط');const id=action.split(':')[1],student=rows('students').find(x=>x.id===id);if(!student)throw Error('تعذر العثور على السجل');if(rows('accounts').some(a=>a.student_id===id))throw Error('السجل مربوط بحساب. افصلي ربط الحساب من صفحة الحسابات قبل الحذف');openDeleteConfirmation({type:'student',id,name:student.name})}
+else if(action==='cancelDelete'){closeDeleteConfirmation()}
+else if(action==='confirmDelete'){
+const pending=deletePending;if(!pending)return;if(!leadership())throw Error('الحذف للإدارة والمرافقة فقط');
+el.disabled=true;
+try{
+if(pending.type==='student'){
+const{error}=await db.from('students').delete().eq('id',pending.id);
+if(error)throw new Error('تعذر حذف السجل؛ قد تكون له متابعات أو تقارير مرتبطة. '+error.message);
+await read('students');closeDeleteConfirmation();state.page='students';render();flash('حُذف سجل الغارسة');
+}
+}finally{el.disabled=false}
+}
 else if(action.startsWith('viewstudent:')){state.studentProfileTab='data';state.studentFileReturn=state.page==='students'?'students':'dashboard';state.dashboardStudent=action.split(':')[1];state.page='dashboardStudent';render();window.scrollTo(0,0)}
 else if(action.startsWith('go:')){state.page=action.split(':')[1];render()}
 else if(action==='changepassword'){const password=$('#f_newpassword').value;if(password.length<6)throw Error('كلمة المرور يجب أن تتكون من ستة أحرف على الأقل');const{error}=await db.auth.updateUser({password});if(error)throw error;flash('تغيرت كلمة المرور')}
@@ -544,11 +594,11 @@ else if(action==='togglesurvey'){await save('settings',{key:'survey_open',value:
 else await modal(action);
 }catch(err){flash(err.message||'تعذر تنفيذ الإجراء',true)}
 });
-document.addEventListener('input',event=>{if(event.target?.id==='studentsSearch'){state.studentsSearch=event.target.value;updateStudentsView()}});
+document.addEventListener('input',event=>{if(event.target?.id==='studentsSearch'){state.studentsSearch=event.target.value;updateStudentsView();rememberCurrentPage()}});
 document.addEventListener('change',async e=>{
 const el=e.target;
 try{
-if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView()}
+if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView();rememberCurrentPage()}
 else if(el.dataset.select==='week'){state.week=el.value;render()}
 else if(el.dataset.select==='period'){state.period=el.value;render()}
 else if(el.dataset.select==='family'){state.family=el.value;render()}
