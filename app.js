@@ -785,7 +785,12 @@ if(!['open','sent','answered'].includes(x.status))throw Error('حالة السؤ
 if(x.status==='sent'&&question.kind!=='fiqh')throw Error('الإحالة إلى المرجعية الفقهية للأسئلة الفقهية فقط');
 if(x.status==='answered'&&!String(x.answer||'').trim())throw Error('اكتبي الجواب قبل تغيير الحالة إلى أُجيب');
 if(bo(x.published)&&x.status!=='answered')throw Error('النشر متاح بعد الإجابة فقط');
-await save('questions',{id,answer:String(x.answer||'').trim()||null,status:x.status,published:bo(x.published)&&x.status==='answered',answered_at:x.status==='answered'?(question.answered_at||new Date().toISOString()):null});
+const changes={answer:String(x.answer||'').trim()||null,status:x.status,published:bo(x.published)&&x.status==='answered',answered_at:x.status==='answered'?(question.answered_at||new Date().toISOString()):null};
+const {data:updated,error}=await db.from('questions').update(changes).eq('id',id).select('id');
+if(error)throw error;
+if(!updated?.length)throw Error('تعذر تحديث السؤال. تحققي من صلاحيات الحساب.');
+await refreshQuestions();
+flash('حُفظت إجابة السؤال وحالته بنجاح');
 }
 else if(a==='newannouncement')await save('announcements',{...x,family_id:x.family_id||null,pinned:bo(x.pinned),author_id:state.user.id});
 else if(a==='newresource'){if(!/^https?:\/\//i.test(x.url))throw Error('رابط المصدر يجب أن يبدأ بـ https:// أو http://');await save('resources',x)}
