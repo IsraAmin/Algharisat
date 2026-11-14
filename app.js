@@ -689,6 +689,28 @@ return '<div class="questions-page">'+heading(staff?'الأسئلة':'أسئلت
 (staff?'<p class="questions-footnote">إحالة السؤال الفقهي تغيّر حالته إلى «عند المرجعية» لتتابعي إرساله خارج المنصة واستلام جوابه المعتمد؛ لا ترسل المنصة رسالة تلقائيًا للمعهد.</p>':'')+'</div>';
 }
 const resourceTypes={recording:'تسجيل',file:'ملف',link:'رابط'};
+// Covers are uploaded image files in a dedicated Supabase Storage bucket, never image URLs entered by users.
+const RESOURCE_COVER_BUCKET='resource-covers';
+function youtubeThumbnail(sourceUrl){
+try{
+const u=new URL(sourceUrl),host=u.hostname.toLowerCase().replace(/^www\./,'');
+let id='';
+if(host==='youtu.be')id=u.pathname.split('/')[1]||'';
+else if(['youtube.com','m.youtube.com','youtube-nocookie.com','music.youtube.com'].includes(host)){
+id=u.searchParams.get('v')||'';
+if(!id){const p=u.pathname.split('/').filter(Boolean);if(['shorts','embed','live','v'].includes(p[0]))id=p[1]||''}
+}
+return /^[\w-]{11}$/.test(id)?'https://i.ytimg.com/vi/'+id+'/hqdefault.jpg':'';
+}catch{return ''}
+}
+const resourceCoverUrl=path=>path?db.storage.from(RESOURCE_COVER_BUCKET).getPublicUrl(path).data?.publicUrl||'':'';
+function resourceImage(resource){
+if(resource.cover_mode==='none')return '';
+let image='';
+if(resource.cover_mode==='upload'&&resource.cover_path)image=resourceCoverUrl(resource.cover_path);
+else if(!resource.cover_mode||resource.cover_mode==='auto')image=youtubeThumbnail(resource.url);
+return image?'<div class="resource-cover"><img src="'+esc(image)+'" alt="غلاف '+esc(resource.title)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer"/></div>':'';
+}
 function announcements(){
 const staff=team();
 const announcementsSorted=[...rows('announcements')].sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned)||(b.created_at||'').localeCompare(a.created_at||''));
@@ -706,7 +728,8 @@ const itemsR=resourcesSorted.map(r=>{
 const type=resourceTypes[r.kind]||r.kind||'رابط';
 const week=r.week_id?weekName(r.week_id):'مصدر عام';
 const link=safeUrl(r.url);
-return '<article class="comms-resource"><div class="comms-resource-symbol">'+iconSvg(r.kind==='recording'?'video':r.kind==='file'?'file-text':'link')+'</div><div class="comms-resource-main"><div class="comms-resource-top"><span class="comms-tag resource-type">'+esc(type)+'</span><span class="comms-tag resource-week">'+iconSvg('calendar-days')+' '+esc(week)+'</span></div><h3>'+esc(r.title)+'</h3>'+(r.note?'<p class="comms-resource-note">'+esc(r.note)+'</p>':'')+'<div class="comms-resource-bottom"><a href="'+esc(link)+'" target="_blank" rel="noopener noreferrer" class="comms-open-link">'+iconSvg('external-link')+' فتح المصدر</a>'+(staff?'<span class="comms-order">ترتيب '+Number(r.sort_order||0)+'</span>':'')+'</div></div>'+
+const thumbnail=resourceImage(r);
+return '<article class="comms-resource'+(thumbnail?' has-cover':' is-text-only')+'">'+(thumbnail||'<div class="comms-resource-symbol">'+iconSvg(r.kind==='recording'?'video':r.kind==='file'?'file-text':'link')+'</div>')+'<div class="comms-resource-main"><div class="comms-resource-top"><span class="comms-tag resource-type">'+esc(type)+'</span><span class="comms-tag resource-week">'+iconSvg('calendar-days')+' '+esc(week)+'</span></div><h3>'+esc(r.title)+'</h3>'+(r.note?'<p class="comms-resource-note">'+esc(r.note)+'</p>':'')+'<div class="comms-resource-bottom"><a href="'+esc(link)+'" target="_blank" rel="noopener noreferrer" class="comms-open-link">'+iconSvg('external-link')+' فتح المصدر</a>'+(staff?'<span class="comms-order">ترتيب '+Number(r.sort_order||0)+'</span>':'')+'</div></div>'+
 (staff?'<div class="comms-resource-actions">'+btn('editresource:'+r.id,'تعديل','secondary smallbtn')+' '+btn('deleteresource:'+r.id,'حذف','comms-delete smallbtn')+'</div>':'')+'</article>';
 }).join('');
 return '<div class="communications-page">'+heading('الإعلانات والمصادر',staff?'نشر أخبار البرنامج وموادّه التعليمية وإدارتها':'آخر أخبار البرنامج والمصادر التعليمية التي تحتاجين إليها',managementBtns)+info+
@@ -813,7 +836,12 @@ field('رابط المصدر','url',o.url||'','url',true)+
 field('نوع المصدر','kind',o.kind||'link','text',true,[['recording','تسجيل'],['file','ملف'],['link','رابط']])+
 field('الأسبوع المرتبط بالمصدر','week_id',o.week_id||'','text',false,[['','مصدر عام (لا يرتبط بأسبوع)'],...sortedWeeks().map(w=>[w.id,w.title])])+
 field('ملاحظة','note',o.note||'','textarea')+
-field('الترتيب (الأقل يظهر أولًا)','sort_order',o.sort_order??0,'number'));break;
+field('الترتيب (الأقل يظهر أولًا)','sort_order',o.sort_order??0,'number')+
+'<div class="field resource-cover-field"><label for="resourceCoverMode">عرض صورة الغلاف (اختياري)</label><select name="cover_mode" id="resourceCoverMode">'+
+[['auto','تلقائي لفيديو يوتيوب فقط'],['upload','رفع صورة من الجهاز'],['none','بدون غلاف']].map(([val,label])=>option(val,label,o.cover_mode||'auto')).join('')+'</select><p class="muted small">لو اخترتِ صورة، ارفعي ملف PNG أو JPG أو WebP. ما محتاج رابط للصورة.</p></div>'+
+'<div id="resourceCoverUpload" class="resource-cover-upload" '+((o.cover_mode||'auto')!=='upload'?'hidden':'')+'><label for="resourceCoverFile">صورة الغلاف (حد أقصى ٣ ميغابايت)</label><input type="file" id="resourceCoverFile" name="cover_file" accept="image/jpeg,image/png,image/webp"/>'+
+(o.cover_path?'<img class="resource-cover-preview" src="'+esc(resourceCoverUrl(o.cover_path))+'" alt="الغلاف الحالي" />':'<img class="resource-cover-preview" id="resourceCoverPreview" alt="معاينة الغلاف" hidden />')+
+'<p class="muted small">يمكنكِ الاحتفاظ بالغلاف الحالي دون إعادة رفعه عند تعديل المصدر.</p></div>');break;
 }
 case 'newtask':dialog('مهمة جديدة',field('القسم','section','task','text',true,[['decision','قرار'],['task','مهمة'],['launch','شرط انطلاق'],['closing','قائمة الختام']])+field('الأسبوع (للمهام الأسبوعية)','week_id',(sortedWeeks().find(w=>w.kind==='program')?.starts_on>todayISO()?(sortedWeeks().find(w=>w.kind==='prep'&&weekCurrent(w))||sortedWeeks().find(w=>w.kind==='prep'&&w.starts_on>todayISO())||sortedWeeks().find(w=>w.kind==='prep'))?.id:state.week)||'','text',false,[['','غير مرتبطة بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('المهمة','body','','textarea',true)+field('المسؤول','owner')+field('موعد الإنجاز','due_on','','date'));break;
 case 'newjournal':dialog('تدوين التجربة',field('الأسبوع','week_id',state.week,'text',true,rows('weeks').filter(w=>w.kind==='program').map(w=>[w.id,w.title]))+field('ما نجح','success','','textarea')+field('ما تعثر','obstacle','','textarea')+field('القرار','decision','','textarea'));break;
@@ -881,10 +909,35 @@ if(!/^https?:\/\/\S+$/i.test(url))throw Error('الرابط يجب أن يبدأ
 if(!Object.hasOwn(resourceTypes,x.kind))throw Error('نوع المصدر غير صحيح');
 const order=Number(x.sort_order??0);
 if(!Number.isSafeInteger(order)||order<0)throw Error('الترتيب يجب أن يكون عددًا صحيحًا غير سالب');
-const obj={title,url,kind:x.kind,week_id:x.week_id||null,note:String(x.note||'').trim()||null,sort_order:order};
+const oldResource=a==='editresource'?rows('resources').find(r=>r.id===id):null;
+if(a==='editresource'&&!oldResource)throw Error('المصدر غير موجود');
+const mode=x.cover_mode||'auto';
+if(!['auto','upload','none'].includes(mode))throw Error('اختيار عرض الغلاف غير صحيح');
+const file=f.querySelector('#resourceCoverFile')?.files?.[0];
+if(mode==='upload'&&!file&&!oldResource?.cover_path)throw Error('اختاري صورة الغلاف من جهازك، أو اختاري بدون غلاف');
+if(mode==='upload'&&file){
+if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('صورة الغلاف يجب أن تكون JPG أو PNG أو WebP');
+if(file.size>3*1024*1024)throw Error('حجم صورة الغلاف أكبر من ٣ ميغابايت');
+if(!file.size)throw Error('الصورة المختارة فارغة');
+}
+const obj={title,url,kind:x.kind,week_id:x.week_id||null,note:String(x.note||'').trim()||null,sort_order:order,cover_mode:mode,cover_path:mode==='upload'?(oldResource?.cover_path||null):null};
+let uploadedPath='';
+try{
+if(mode==='upload'&&file){
+const suffix=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+uploadedPath=state.user.id+'/'+crypto.randomUUID()+'.'+suffix;
+const{error:uploadError}=await db.storage.from(RESOURCE_COVER_BUCKET).upload(uploadedPath,file,{cacheControl:'3600',contentType:file.type,upsert:false});
+if(uploadError)throw new Error('تعذر رفع صورة الغلاف: '+uploadError.message);
+obj.cover_path=uploadedPath;
+}
 const request=a==='editresource'?db.from('resources').update(obj).eq('id',id).select('id'):db.from('resources').insert(obj).select('id');
 const{data,error}=await request;if(error)throw error;
 if(!data?.length)throw Error('لم يتم حفظ المصدر؛ تحققي من صلاحياتك');
+}catch(error){
+if(uploadedPath)await db.storage.from(RESOURCE_COVER_BUCKET).remove([uploadedPath]).catch(()=>{});
+throw error;
+}
+if(oldResource?.cover_path&&oldResource.cover_path!==obj.cover_path)db.storage.from(RESOURCE_COVER_BUCKET).remove([oldResource.cover_path]).then(({error})=>{if(error)console.warn('تعذر حذف الغلاف القديم',error)});
 await read('resources');flash(a==='editresource'?'عُدّل المصدر بنجاح':'أُضيف المصدر بنجاح');
 }
 else if(a==='newtask')await save('tasks',{...x,due_on:x.due_on||null,week_id:x.section==='task'?(x.week_id||null):null});
@@ -1000,11 +1053,19 @@ else if(action==='togglesurvey'){await save('settings',{key:'survey_open',value:
 else await modal(action);
 }catch(err){flash(err.message||'تعذر تنفيذ الإجراء',true)}
 });
-document.addEventListener('input',event=>{if(event.target?.id==='studentsSearch'){state.studentsSearch=event.target.value;updateStudentsView();rememberCurrentPage()}if(event.target?.closest('#followupForm')&&event.target?.matches('[data-followup-field]'))markFollowupDirty()});
+document.addEventListener('input',event=>{if(event.target?.id==='resourceCoverFile'){
+const file=event.target.files?.[0],preview=document.querySelector('.resource-cover-preview');
+if(preview&&file){
+if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>3*1024*1024){event.target.value='';flash('الصورة يجب أن تكون JPG أو PNG أو WebP وأقل من ٣ ميغابايت',true);return}
+const reader=new FileReader();reader.onload=()=>{if(document.body.contains(preview)){preview.src=reader.result;preview.hidden=false}};reader.readAsDataURL(file)
+}
+}
+if(event.target?.id==='studentsSearch'){state.studentsSearch=event.target.value;updateStudentsView();rememberCurrentPage()}if(event.target?.closest('#followupForm')&&event.target?.matches('[data-followup-field]'))markFollowupDirty()});
 document.addEventListener('change',async e=>{
 const el=e.target;
 try{
 if(el.closest('#followupForm')&&el.matches('[data-followup-field]')){markFollowupDirty();return}
+if(el.id==='resourceCoverMode'){const field=document.querySelector('#resourceCoverUpload');if(field)field.hidden=el.value!=='upload';return}
 if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView();rememberCurrentPage()}
 else if(el.dataset.select==='week'){if(!confirmFollowupLeave()){el.value=state.week;return}state.week=el.value;render()}
 else if(el.dataset.select==='cardStage'){state.cardStage=el.value;render()}
