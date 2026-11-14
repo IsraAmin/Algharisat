@@ -177,10 +177,10 @@ test('comprehensive reports show all required guide sections and period headers'
 });
 test('weekly report statistics exclude empty/unrecorded values',()=>{
  assert.match(app,/function reportAttendance\(records,key\)/);
- assert.match(app,/\\['present','late','excused','absent'\\]/);
+ assert.ok(app.includes("['present','late','excused','absent']"));
  assert.match(app,/r\[key\]==='present'\|\|r\[key\]==='late'/);
  assert.match(app,/function reportTask\(records,key\)/);
- assert.match(app,/\\['done','partial','none'\\]/);
+ assert.ok(app.includes("['done','partial','none']"));
  assert.match(app,/reportRatio\(eligible,r=>r\[key\]==='done'\)/);
  assert.match(app,/function reportWird\(records\)/);
  assert.match(app,/r\.wird_days!==null&&r\.wird_days!==undefined/);
