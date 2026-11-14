@@ -295,7 +295,7 @@ test('council review is sourced from saved journal entries and printable',()=>{
 
 
 test('accounts and permissions page presents separate pending and established tabs',()=>{
- for(const value of ['account-tabs','account-overview','بانتظار الموافقة','الحسابات القائمة','مدة الانتظار','رقم الهاتف','اللقب']){
+ for(const value of ['account-tabs','account-overview','بانتظار الموافقة','الحسابات القائمة','منذ تقديم الطلب','رقم الهاتف','اللقب']){
   assert.ok(app.includes(value)||css.includes(value),'missing account UI: '+value);
  }
  assert.match(app,/state\.accountsTab==='current'\?'current':'pending'/);
