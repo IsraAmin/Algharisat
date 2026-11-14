@@ -1502,3 +1502,25 @@ html[data-theme="dark"] .content :is(.btn.secondary,.theme-toggle){color:var(--d
 html[data-theme="dark"] .content :is(.students-name-link,.dashboard-student-link,.batch-student-name,.comms-open-link){color:#c2e5ff!important}
 html[data-theme="dark"] .content :is(input,select,textarea){color:#f2f6fa!important}
 @media print{html[data-theme="dark"] .content :is(div,span,p,small,th,td,label,summary,a,button,h1,h2,h3,h4,h5,h6,strong){color:#172b3c!important}}
+
+/* Mobile viewport stability: prevent focus auto-zoom without disabling pinch zoom.
+   Safari zooms focused fields when their computed font size is smaller than 16px. */
+@media (pointer:coarse) and (max-width:900px){
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  input:not([type="checkbox"]):not([type="radio"]),select,textarea,
+  .followup-edit-table input,.followup-edit-table select,
+  .communications-page .comms-resource-filter select,
+  .students-search-box input,.students-family-choice select,
+  .signup-phone input,.app-confirm-box input,
+  .dialog input,.dialog select,.dialog textarea{
+    font-size:16px!important;
+  }
+  button,[role="button"],a,select,input,textarea{
+    touch-action:manipulation;
+  }
+}
+/* The page must not widen when a data table is scrolled; its own panel scrolls. */
+html,body,#root{max-width:100%;min-width:0}
+body{overflow-x:clip}
+.app,.main,.content,.card,.table-wrap,.followup-panel,.followup-dashboard{min-width:0}
+.table-wrap,.followup-table-scroll,.batch-table-scroll,.outcomes-scroll{max-width:100%;overscroll-behavior-x:contain}
