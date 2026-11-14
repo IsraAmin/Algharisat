@@ -496,3 +496,72 @@ td .btn{margin:2px;vertical-align:middle}
 @media(max-width:900px){.dashboard-primary-grid,.dashboard-secondary-grid{grid-template-columns:1fr}.dashboard-family-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.dashboard-family-grid{grid-template-columns:1fr}.dashboard-student-details{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-hero{padding:22px 19px}.dashboard-phase{font-size:.71rem}.dashboard-family-card{padding:14px}.dashboard-family-metrics strong{font-size:1rem}.dashboard-family-metrics span{font-size:.64rem}}
 @media(max-width:380px){.dashboard-student-details{grid-template-columns:1fr}}
+
+/* Gharisat registry: stage tabs, forgiving Arabic search, status and linkage */
+.students-register{display:grid;gap:17px;max-width:1480px;margin:0 auto}
+.students-register>.page-head{margin-bottom:0}
+.students-tab-list{display:flex;gap:9px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#d4ded9 transparent;padding:4px 1px 9px}
+.students-tab{display:inline-flex;gap:12px;align-items:center;justify-content:center;white-space:nowrap;flex:none;background:#fff;border:1px solid #e1e8e3;border-radius:13px;padding:11px 16px;color:#607480;font-size:.84rem;font-weight:650;transition:background .15s,border-color .15s,color .15s}
+.students-tab:hover{background:#f2f8f5;border-color:#abc9ba;color:#294f43}
+.students-tab.active{background:#1e4d45;border-color:#1e4d45;color:#fff;box-shadow:0 5px 14px rgba(24,73,62,.14)}
+.students-tab-count{display:inline-grid;place-items:center;min-width:25px;height:25px;border-radius:9px;background:#f1f4f1;color:#64786b;padding:0 6px;font-size:.73rem;font-variant-numeric:tabular-nums}
+.students-tab.active .students-tab-count{background:#386b60;color:#fff}
+.students-filterbar{display:grid;grid-template-columns:minmax(0,1fr) 205px auto;gap:11px;align-items:end;background:#fff;border:1px solid #e4ebe6;padding:15px;border-radius:16px;box-shadow:0 5px 18px rgba(20,49,47,.03)}
+.students-search-box{position:relative;display:block;min-width:0}
+.students-search-box input{width:100%;height:46px;min-height:46px;border:1px solid #d9e3dc;background:#f9fbf9;border-radius:11px;padding-inline:45px 13px;font-size:.84rem}
+.students-search-box input:focus{background:#fff;border-color:#6eaa8a;outline:2px solid #d8eadc}
+.students-search-icon{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);color:#6a9280;pointer-events:none;display:flex;align-items:center}
+.students-search-icon .ui-icon{width:19px;height:19px}
+.students-family-choice{display:grid;gap:5px;min-width:0}
+.students-family-choice span{font-size:.74rem;color:#61766b;font-weight:700}
+.students-family-choice select{min-height:46px;height:46px;border:1px solid #d9e3dc;border-radius:11px;background:#f9fbf9;font-size:.84rem}
+.students-clear{border:1px solid #d9e3dc;background:#fff;color:#506c60;min-height:46px;border-radius:11px;padding:0 15px;font-size:.81rem;font-weight:650}
+.students-clear:hover{background:#f1f7f4}
+.students-filter-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.8rem;font-weight:650;color:#355d4b}
+.students-table-wrap{padding:0;overflow-x:auto}
+.students-table{width:100%;min-width:850px;table-layout:auto;border-collapse:separate;border-spacing:0}
+.students-table th{background:#f7faf7;color:#527063;font-size:.76rem;white-space:nowrap}
+.students-table td{vertical-align:middle;font-size:.81rem}
+.students-table tbody tr:hover{background:#fafdfb}
+.students-table tbody tr[hidden]{display:none!important}
+.students-name{min-width:155px}
+.students-name-link{display:block;font-weight:750;color:#234c5b;padding:0;background:none;border:0;text-align:right;font-size:.86rem;line-height:1.65}
+.students-name-link:hover{text-decoration:underline;color:#216b5c}
+.students-person-flags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.students-person-flags .chip{font-size:.66rem;padding:3px 7px}
+.students-soft-tag{background:#f2eee3;color:#886f49}
+.students-phone{display:inline-block;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+.students-linked{display:flex;align-items:center;gap:5px;color:#2f8264;font-size:.76rem;font-weight:750}
+.students-linked .ui-icon{width:16px;height:16px}
+.students-account-email{display:block;overflow-wrap:anywhere;font-size:.67rem}
+.students-unlinked{font-size:.75rem;color:#a36c40;background:#fff5e9;padding:5px 8px;border-radius:7px}
+.students-row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.students-row-actions .btn{padding:7px 10px;font-size:.73rem;white-space:nowrap}
+.students-empty-results[hidden]{display:none}
+.students-empty-results{padding:22px}
+@media(max-width:940px){.students-filterbar{grid-template-columns:minmax(0,1fr) 180px}.students-clear{grid-column:1/-1;justify-self:start;min-height:38px}}
+@media(max-width:650px){
+.students-register{gap:13px}
+.students-tab-list{gap:7px;margin-inline:-4px;padding-inline:4px}
+.students-tab{padding:9px 11px;font-size:.77rem;border-radius:11px;gap:7px}
+.students-tab-count{min-width:22px;height:22px}
+.students-filterbar{grid-template-columns:1fr;padding:12px}
+.students-clear{grid-column:auto}
+.students-filter-summary{flex-wrap:wrap;font-size:.76rem}
+.students-table-wrap{overflow:visible;background:transparent;border:0;box-shadow:none}
+.students-table{min-width:0;display:block}
+.students-table thead{display:none}
+.students-table tbody{display:grid;gap:12px}
+.students-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 13px;padding:15px;border:1px solid #e3ece5;border-radius:16px;background:#fff;box-shadow:0 5px 16px rgba(12,42,38,.035)}
+.students-table tr[hidden]{display:none}
+.students-table td{display:block;padding:0;border:0;overflow-wrap:anywhere}
+.students-table td::before{content:attr(data-label);display:block;color:#85948d;font-size:.68rem;margin-bottom:4px}
+.students-table td:first-child{grid-column:1/-1;border-bottom:1px solid #eef2ee;padding-bottom:10px}
+.students-table td:first-child::before{display:none}
+.students-table td:last-child{grid-column:1/-1;border-top:1px solid #eef2ee;padding-top:10px}
+.students-table td:last-child::before{display:none}
+.students-name{min-width:0}
+.students-name-link{font-size:.98rem}
+.students-account-email{max-width:100%}
+.students-table tbody tr:hover{background:#fff}
+}
