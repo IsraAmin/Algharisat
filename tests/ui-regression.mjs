@@ -51,3 +51,11 @@ test('dark mode guarantees high contrast for batch scorecard titles and all page
  assert.match(css,/\.batch-summary-card \.batch-summary-meter\{background:#496175!important/);
  assert.match(css,/\.batch-legend-value\.level-2/);
 });
+
+test('mobile fields do not trigger iOS focus zoom and manual zoom remains available',()=>{
+ assert.match(css,/@media \(pointer:coarse\) and \(max-width:900px\)/);
+ assert.match(css,/\.followup-edit-table input,\.followup-edit-table select/);
+ assert.match(css,/font-size:16px!important/);
+ assert.match(css,/touch-action:manipulation/);
+ assert.doesNotMatch(css,/touch-action:none/);
+});
