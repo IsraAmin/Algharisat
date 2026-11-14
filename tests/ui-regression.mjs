@@ -78,3 +78,11 @@ test('family coordinator never sees other family selector and may only edit assi
  assert.match(app,/if\(!team\(\)\)\{el\.value=ownFamilyId\(\)\|\|''/);
  assert.match(app,/familyId!==ownFamily/);
 });
+
+test('signup requires a matching confirmed password, with independently accessible reveal buttons',()=>{
+ assert.match(app,/authPasswordField\('password_confirm','تأكيد كلمة المرور'\)/);
+ assert.match(app,/if\(x\.password!==x\.password_confirm\)throw Error\('كلمة المرور وتأكيدها غير متطابقتين'\)/);
+ assert.match(app,/el\.getAttribute\('aria-controls'\)/);
+ assert.match(app,/input\.id==='f_password_confirm'/);
+ assert.match(app,/authPasswordField\(key='password',label='كلمة المرور'\)/);
+});
