@@ -990,7 +990,7 @@ else if(action==='print')window.print();
 else if(action==='shiftcalendar'){const newDate=$('#f_first_start')?.value;if(!newDate)throw Error('اختاري التاريخ الجديد');if(!confirm('ستتغير تواريخ جميع الأسابيع والمواعيد. هل تؤكدين؟'))return;const {data,error}=await db.rpc('shift_program',{p_first_week:newDate});if(error)throw error;await load();flash('تمت إزاحة التقويم بمقدار '+data+' يوم')}
 else if(action==='clearstudents'){state.studentsSearch='';state.studentsFamily='';state.studentsTab='all';render();updateStudentsView()}
 else if(action.startsWith('studentaccounts:')){if(!leadership())throw Error('ربط الحسابات متاح للإدارة والمرافقة فقط');state.studentToLink=action.split(':')[1];state.page='accounts';render();window.scrollTo(0,0)}
-else if(action==='more'){showMobileMore()}
+else if(action==='more'){try{await read('announcements');refreshAnnouncementIndicators()}catch(error){console.warn('تعذر تحديث الإعلانات قبل فتح القائمة',error)}showMobileMore()}
 else if(action==='closeMore'){closeMobileMore()}
 else if(action==='backStudentProfile'){state.page='dashboardStudent';render();window.scrollTo(0,0)}
 else if(action.startsWith('studentReport:')){state.studentReportWeek=action.split(':')[1];state.page='studentReport';render();window.scrollTo(0,0)}
