@@ -372,3 +372,11 @@ test('mobile auth fits narrow viewport and removes obsolete hero marketing parag
  assert.match(css,/\.auth-panel :is\(input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\),textarea,select\)/);
  assert.doesNotMatch(css,/user-scalable=no/);
 });
+
+test('mobile auth uses one viewport-fitting column even with desktop site layout',()=>{
+ assert.match(css,/@media \(max-width:1100px\), \(pointer:coarse\) and \(orientation:portrait\)/);
+ assert.match(css,/\.auth\{[\s\S]*?display:flex!important;[\s\S]*?flex-direction:column!important;/);
+ assert.match(css,/\.auth>\.auth-panel\{[\s\S]*?inline-size:100%!important;/);
+ assert.match(css,/\.auth>\.auth-panel \.tabs button\{[\s\S]*?min-inline-size:0!important;/);
+ assert.match(css,/\.auth>\.auth-panel #authForm :is\(input:not\(\[type="checkbox"\]\),textarea,select\)/);
+});

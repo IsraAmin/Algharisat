@@ -2482,3 +2482,100 @@ html,body,#root{width:100%;max-width:100%;min-width:0}
  .auth-panel .welcome{font-size:1.55rem}
  .auth-panel .tabs button{font-size:.94rem;padding-inline:7px}
 }
+
+
+/* Narrow-screen authentication: a single stable layout, regardless of old
+   two-column desktop styles or the Android "desktop site" viewport. */
+@media (max-width:1100px), (pointer:coarse) and (orientation:portrait){
+  html,body,#root{inline-size:100%;max-inline-size:100%;min-inline-size:0;overflow-x:clip}
+  #root>.auth,.auth{
+    display:flex!important;
+    flex-direction:column!important;
+    grid-template-columns:none!important;
+    inline-size:100%!important;
+    max-inline-size:100%!important;
+    min-inline-size:0!important;
+    block-size:auto!important;
+    min-block-size:100svh!important;
+    overflow-x:clip!important;
+    overflow-y:visible!important;
+    margin:0!important;
+  }
+  .auth>.auth-hero,
+  .auth>.auth-panel{
+    box-sizing:border-box!important;
+    flex:none!important;
+    inline-size:100%!important;
+    max-inline-size:100%!important;
+    min-inline-size:0!important;
+    block-size:auto!important;
+    min-block-size:0!important;
+    overflow-x:clip!important;
+    overflow-y:visible!important;
+    position:relative;
+  }
+  .auth>.auth-hero{
+    padding:20px max(16px,env(safe-area-inset-right)) 20px max(16px,env(safe-area-inset-left))!important;
+    align-items:stretch;
+    justify-content:flex-start!important;
+    gap:6px;
+  }
+  .auth>.auth-hero .brand{
+    display:flex;flex-wrap:wrap;max-inline-size:100%;
+    min-inline-size:0;line-height:1.6;
+    font-size:clamp(13px,3.5vw,17px);
+  }
+  .auth>.auth-hero h1{
+    margin:4px 0 0!important;
+    font-size:clamp(31px,7vw,41px)!important;
+    line-height:1.4!important;
+    max-inline-size:100%;
+  }
+  .auth>.auth-hero .verse{
+    font-size:clamp(15px,3.8vw,18px)!important;
+    line-height:1.75!important;
+    max-inline-size:100%;
+    overflow-wrap:anywhere;
+  }
+  .auth>.auth-panel{
+    padding:24px max(16px,env(safe-area-inset-right)) 52px max(16px,env(safe-area-inset-left))!important;
+    align-items:stretch;
+    justify-content:flex-start!important;
+  }
+  .auth>.auth-panel :is(.tabs,.field,form,.auth-theme-control){
+    max-inline-size:100%;min-inline-size:0;
+  }
+  .auth>.auth-panel :is(h2,p,label){
+    max-inline-size:100%;overflow-wrap:anywhere;
+  }
+  .auth>.auth-panel .welcome{
+    font-size:clamp(23px,5.3vw,29px)!important;
+    line-height:1.55!important;
+  }
+  .auth>.auth-panel .tabs{
+    display:flex!important;
+    inline-size:100%!important;
+    min-inline-size:0!important;
+  }
+  .auth>.auth-panel .tabs button{
+    flex:1 1 0!important;
+    inline-size:50%!important;
+    min-inline-size:0!important;
+    white-space:normal!important;
+  }
+  .auth>.auth-panel #authForm :is(input:not([type="checkbox"]),textarea,select){
+    inline-size:100%;max-inline-size:100%;min-inline-size:0;
+    font-size:16px!important;
+  }
+  .auth>.auth-panel .signup-phone{inline-size:100%;min-inline-size:0}
+  .auth>.auth-panel .signup-code{flex:0 1 105px;min-inline-size:0}
+  .auth>.auth-panel .signup-local{flex:1 1 0;min-inline-size:0}
+}
+@media(max-width:380px){
+ .auth>.auth-hero{padding-block:16px!important}
+ .auth>.auth-hero .verse{font-size:15px!important}
+ .auth>.auth-panel{padding-block:20px 38px!important}
+ .auth>.auth-panel .welcome{font-size:23px!important}
+}
+/* Browser font enlargement can otherwise overflow long controls. */
+.auth,.auth :is(.auth-hero,.auth-panel,.field,.tabs,.signup-phone){overflow-wrap:anywhere}
