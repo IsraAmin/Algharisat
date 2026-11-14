@@ -19,7 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate JavaScript
-        run: node --input-type=module --check < app.js
+        run: |
+          node --input-type=module --check < app.js
+          node --test tests/ui-regression.mjs
       - name: Build a self-contained browser bundle
         run: |
           npm install --no-save --no-package-lock @supabase/supabase-js@2.57.0 esbuild@0.25.12 sharp@0.34.5
