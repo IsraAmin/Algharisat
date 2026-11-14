@@ -497,7 +497,7 @@ else if(a==='newminute')await save('minutes',{...x,family_id:state.family,attend
 $('.dialog-backdrop')?.remove();state.editing=null;render();
 }
 document.addEventListener('click',async e=>{
-const el=e.target.closest('[data-action],[data-page],[data-week],[data-students-tab]');
+const el=e.target.closest('[data-action],[data-page],[data-week],[data-students-tab],[data-profile-tab]');
 if(!el)return;
 if(el.dataset.studentsTab){state.studentsTab=el.dataset.studentsTab;updateStudentsView();return}
 if(el.dataset.profileTab){state.studentProfileTab=el.dataset.profileTab;render();return}
