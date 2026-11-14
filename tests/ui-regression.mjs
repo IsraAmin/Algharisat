@@ -41,3 +41,13 @@ test('dark palette covers nested operational pages and dialog text',()=>{
  assert.match(css,/\.toast\.app-toast\{/);
  assert.match(app,/app-toast-content/);
 });
+
+test('dark mode guarantees high contrast for batch scorecard titles and all page text',()=>{
+ assert.match(css,/--dark-text-primary:#f2f6fa/);
+ assert.match(css,/html\[data-theme="dark"\] \.content :is\(div,span,p,small,th,td,label,summary,a,button\)/);
+ for(const selector of ['.batch-summary-title','.batch-summary-metric','.batch-section-heading h2','.outcomes-section-title h2','.outcome-minutes-count','.batch-family-heading h3']){
+  assert.ok(css.includes(selector), 'Missing dark contrast rule for '+selector);
+ }
+ assert.match(css,/\.batch-summary-card \.batch-summary-meter\{background:#496175!important/);
+ assert.match(css,/\.batch-legend-value\.level-2/);
+});
