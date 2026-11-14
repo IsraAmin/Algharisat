@@ -56,6 +56,12 @@ if(sequence!==bootSequence)return;
 if(error)throw error;
 state.account=data;
 if(!data||['pending','disabled'].includes(data.role)){render();return}
+// An approved gharisa must have a student record before reports, cards or profile changes can be saved.
+if(data.role==='gharisa'&&!data.student_id){
+  const{data:studentId,error:profileError}=await withTimeout(db.rpc('ensure_my_student_profile'));
+  if(profileError)throw new Error('تعذر تجهيز ملف الغارسة المرتبط بحسابك: '+profileError.message);
+  state.account={...data,student_id:studentId};
+}
 state.page=team()?'dashboard':'myweek';
 render();
 try{await withTimeout(load(),20000)}catch(error){console.warn('تعذر تحميل بعض بيانات الحساب',error);flash('تم تسجيل الدخول، لكن تعذّر تحميل بعض البيانات. حاولي تحديث الصفحة.',true)}
@@ -321,7 +327,7 @@ const w=rows('weeks').find(x=>x.id===state.week)||currentWeek(),report=rows('rep
 return heading('تقريري الأسبوعي','تراه منسقة الأسرة، وتُبنى عليه المتابعة')+'<div class="toolbar">'+selectWeeks()+'</div><form class="card" id="reportForm">'+field('أيام الورد (من ٠ إلى ٧)','wird_days',report.wird_days??0,'number',true)+[['task_self','في نفسي'],['task_home','في بيتي'],['task_community','في محيطي']].map(([key,label])=>field(label,key,report[key]||'none','text',true,[['done','أنجزت'],['partial','بعضها'],['none','لم أنجز']])+field('ماذا فعلتِ؟','note_'+key.split('_')[1],report['note_'+key.split('_')[1]]||'','textarea')).join('')+field('الدرس المنقول: ماذا نقلتِ؟','transferred_lesson',report.transferred_lesson||'','textarea')+field('إلى من؟ (دون أسماء)','transferred_to',report.transferred_to||'')+'<label class="field"><span>القراءة الفكرية</span><select name="thought_read">'+option('true','قرأتها',report.thought_read?'true':'false')+option('false','لم أقرأها',report.thought_read?'true':'false')+'</select></label><div class="notice">تبقى المحاسبة الشخصية في دفتركِ ولا تُكتب هنا.</div><button type="submit" class="btn">حفظ تقريري</button></form>';
 }
 function myaccount(){
-const p=state.profile||{};return heading('حسابي','بيانات التواصل وتغيير كلمة المرور')+'<form class="card" id="profileForm">'+field('البريد الإلكتروني','email',state.account?.email||'','email')+field('الهاتف','phone',p.phone||'','tel')+field('الجامعة','university',p.university||'')+field('الكلية','college',p.college||'')+field('المستوى الدراسي','study_level',p.study_level||'')+field('الحي','neighborhood',p.neighborhood||'')+'<button type="submit" class="btn">حفظ بياناتي</button></form><div class="card" style="margin-top:15px"><h3>كلمة المرور</h3>'+field('كلمة المرور الجديدة','newpassword','','password')+btn('changepassword','تغيير كلمة المرور')+'</div>';
+const p=state.profile||{};return heading('حسابي','بيانات التواصل وتغيير كلمة المرور')+'<form class="card" id="profileForm">'+field('بريد التواصل الإلكتروني','email',p.email||state.account?.email||'','email')+field('الهاتف','phone',p.phone||'','tel')+field('الجامعة','university',p.university||'')+field('الكلية','college',p.college||'')+field('المستوى الدراسي','study_level',p.study_level||'')+field('الحي','neighborhood',p.neighborhood||'')+'<button type="submit" class="btn">حفظ بياناتي</button></form><div class="card" style="margin-top:15px"><h3>كلمة المرور</h3>'+field('كلمة المرور الجديدة','newpassword','','password')+btn('changepassword','تغيير كلمة المرور')+'</div>';
 }
 function page(){
 switch(state.page){
@@ -465,11 +471,11 @@ load().then(()=>render()).catch(err=>{console.error(err);flash('دخلتِ حس�
 finally{loginInProgress=false}
 }}
 else if(f.id==='modalForm')await modalSave(f);
-else if(f.id==='reportForm'){x.wird_days=Number(x.wird_days);x.thought_read=x.thought_read==='true';await save('reports_self',{...x,student_id:state.account.student_id,week_id:state.week},'student_id,week_id')}
+else if(f.id==='reportForm'){if(!state.account?.student_id)throw Error('حسابك غير مربوط بسجل الغارسة؛ أعيدي فتح المنصة بعد تحديث الصفحة');if(!state.week)throw Error('اختاري الأسبوع أولًا');x.wird_days=Number(x.wird_days);x.thought_read=x.thought_read==='true';await save('reports_self',{...x,student_id:state.account.student_id,week_id:state.week},'student_id,week_id')}
 else if(f.id==='settingsForm'){for(const [key,value] of Object.entries(x)){await save('settings',{key,value:key==='current_cycle'?Number(value):value})}render()}
 else if(f.id==='surveyForm'){const{error}=await db.rpc('submit_survey',{p_answers:[0,1,2,3,4].map(i=>x['q'+i]),p_round:'p1'});if(error)throw error;await read('done_survey');render();flash('جزاكِ الله خيرًا. وصلت إجابتكِ')}
-else if(f.id==='profileForm'){const{error}=await db.rpc('update_my_profile',{p_phone:x.phone,p_email:x.email,p_university:x.university,p_college:x.college,p_study_level:x.study_level,p_neighborhood:x.neighborhood});if(error)throw error;await load();flash('حُفظت بياناتكِ الشخصية')}
-}catch(err){console.error(err);const message=String(err?.message||'');const match=message.match(/(?:after|in)\s+(\d+)\s+seconds?/i);const throttled=err?.status===429||/for security purposes|rate limit|too many requests/i.test(message);flash(err?.code==='over_email_send_rate_limit'?'تعذّر إنشاء الحساب: بلغت رسائل تأكيد البريد حدّ الإرسال في Supabase. على الإدارة إيقاف Confirm Email من إعدادات Email؛ لا يكفي الانتظار بضع ثوانٍ.':throttled?'تم رفض الطلب مؤقتًا بسبب كثرة المحاولات. انتظري قليلًا ثم حاولي مرة واحدة.':message||'تعذر الحفظ، تحققي من الاتصال',true)}finally{if(submit)submit.disabled=false}
+else if(f.id==='profileForm'){const{error}=await db.rpc('update_my_profile',{p_phone:x.phone,p_email:x.email,p_university:x.university,p_college:x.college,p_study_level:x.study_level,p_neighborhood:x.neighborhood});if(error)throw error;const{data:accountInfo,error:accountError}=await db.from('accounts').select('student_id').eq('user_id',state.user.id).single();if(accountError)throw accountError;state.account.student_id=accountInfo.student_id;await load();flash('حُفظت بياناتكِ الشخصية بنجاح')}
+}catch(err){console.error(err);const message=String(err?.message||'');const match=message.match(/(?:after|in)\s+(\d+)\s+seconds?/i);const throttled=err?.status===429||/for security purposes|rate limit|too many requests/i.test(message);flash(err?.code==='over_email_send_rate_limit'?'تعذّر إنشاء الحساب: بلغت رسائل تأكيد البريد حدّ الإرسال في Supabase. على الإدارة إيقاف Confirm Email من إعدادات Email؛ لا يكفي الانتظار بضع ثوانٍ.':throttled?'تم رفض الطلب مؤقتًا بسبب كثرة المحاولات. انتظري قليلًا ثم حاولي مرة واحدة.':(/row-level security|permission denied|غير مصرح/i.test(message)?'تعذر الحفظ بسبب صلاحيات الحساب أو عدم ارتباطه بسجل الغارسة. حدّثي الصفحة، وتأكدي من اعتماد الحساب وربطه؛ وإن استمرت المشكلة راجعي الإدارة. ('+esc(err?.code||'')+')':message||'تعذر الحفظ، تحققي من الاتصال'),true)}finally{if(submit)submit.disabled=false}
 });
 render();
 start().catch(err=>{console.error(err);$('#root').innerHTML='<div class="card" style="margin:30px"><h2>تعذر تحميل المنصة</h2><p>تحققي من الاتصال بالإنترنت ثم أعيدي تحميل الصفحة.</p></div>'});
