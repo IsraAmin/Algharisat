@@ -1251,3 +1251,16 @@ td .btn{margin:2px;vertical-align:middle}
 .communications-page .comms-resource-filter select{width:auto;min-width:230px;max-width:100%;min-height:43px;border:1px solid #d9e3ea;border-radius:10px;background:#f8fafb;color:#29485d;padding:9px 12px;font-size:.83rem}
 .communications-page .comms-resource-filter select:focus-visible{outline:2px solid #b79867;outline-offset:2px}
 @media(max-width:580px){.communications-page .comms-resource-filter{align-items:stretch;flex-direction:column;gap:8px;padding:12px}.communications-page .comms-resource-filter select{width:100%;min-width:0}}
+
+/* Two top-level tabs keep long announcement feeds from pushing the source library down. */
+.communications-page .communications-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:7px;background:#edf1f5;border:1px solid #dce4eb;border-radius:16px;min-width:0}
+.communications-page .communications-tab{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0;min-height:54px;background:transparent;border:1px solid transparent;border-radius:12px;color:#65798a;font-size:.92rem;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+.communications-page .communications-tab svg{width:19px;height:19px;flex:none}
+.communications-page .communications-tab:hover{background:rgba(255,255,255,.72);color:#253e54}
+.communications-page .communications-tab.is-active{background:#fff;border-color:#e1e6ea;color:#233e55;box-shadow:0 2px 9px rgba(22,45,62,.07)}
+.communications-page .communications-tab-count{display:grid;place-items:center;min-width:25px;height:25px;padding:0 6px;border-radius:8px;background:#dce5ed;color:#4f667b;font-size:.73rem;font-variant-numeric:tabular-nums}
+.communications-page .communications-tab.is-active .communications-tab-count{background:#f1e9db;color:#896a3b}
+.communications-page .communications-tab .announcement-notice-indicator{min-width:18px;height:18px;font-size:.65rem}
+.communications-page [role="tabpanel"][hidden]{display:none!important}
+.communications-page .communications-tab:focus-visible{outline:2px solid #b79867;outline-offset:2px}
+@media(max-width:530px){.communications-page .communications-tabs{gap:5px;padding:5px;border-radius:13px}.communications-page .communications-tab{min-height:49px;gap:6px;font-size:.82rem;padding:7px 4px}.communications-page .communications-tab svg{width:17px;height:17px}.communications-page .communications-tab-count{min-width:22px;height:22px;font-size:.68rem}}
