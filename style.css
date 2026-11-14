@@ -2062,3 +2062,23 @@ html[data-theme="dark"] .ui-choice-option.is-selected .ui-choice-check{
  .ui-choice-popover,.ui-choice-arrow{display:none!important}
  .ui-choice-trigger{box-shadow:none!important;color:#172b3c!important;background:#fff!important;border-color:#cbd5dc!important}
 }
+
+/* The toolbar should not stretch every dropdown across the entire row. */
+.toolbar>.ui-choice,.toolbar .ui-choice{
+ width:auto;min-width:170px;max-width:min(100%,420px);flex:0 1 auto
+}
+.toolbar .ui-choice-trigger{min-width:170px}
+.students-family-choice .ui-choice,
+.followup-family-selector .ui-choice,
+.card-stage-picker .ui-choice,
+.batch-stage .ui-choice,
+.comms-resource-filter .ui-choice,
+.field .ui-choice,
+.followup-edit-table .ui-choice{
+ width:100%;min-width:0;max-width:100%
+}
+.followup-edit-table td .ui-choice{display:block}
+@media(max-width:580px){
+ .toolbar>.ui-choice,.toolbar .ui-choice{max-width:100%;flex:1 1 170px}
+ .comms-resource-filter .ui-choice{width:100%}
+}
