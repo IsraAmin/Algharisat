@@ -22,3 +22,22 @@ test('brown buttons use white text and follow-up keeps table rows at mobile widt
  assert.match(css,/\.followup-table-scroll[^\n]*overflow-x:auto!important/);
  assert.match(css,/\.followup-edit-table \.followup-name-cell[^\n]*position:sticky!important/);
 });
+
+test('legacy browser confirmations are replaced by themed accessible dialogs',()=>{
+ assert.match(app,/function appConfirm\(/);
+ assert.match(app,/role="alertdialog"/);
+ assert.match(app,/await confirmFollowupLeave\(\)/);
+ assert.match(app,/title:'تأكيد إزاحة التقويم'/);
+ assert.match(app,/title:'استعادة كلمة المرور'/);
+ assert.doesNotMatch(app,/window\.confirm\(/);
+ assert.doesNotMatch(app,/const email=prompt\(/);
+});
+test('dark palette covers nested operational pages and dialog text',()=>{
+ for(const selector of ['.card-aspect','.outcomes-surface','.question-body','.student-file-section>h2','.dashboard-family-metrics>div','.batch-family','.comms-announcement','.followup-name-cell']){
+  assert.ok(css.includes(selector), 'dark coverage '+selector);
+ }
+ assert.match(css,/\[data-theme="dark"\] :is\(/);
+ assert.match(css,/\.app-confirm-box\{/);
+ assert.match(css,/\.toast\.app-toast\{/);
+ assert.match(app,/app-toast-content/);
+});
