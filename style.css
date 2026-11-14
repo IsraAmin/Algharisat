@@ -1847,3 +1847,129 @@ html[data-theme="dark"] .content :is(.btn.goldbtn,.btn:not(.secondary):not(.dang
    .followup-family-selector span,.followup-current-family strong
   ){color:#172b3c!important;-webkit-text-fill-color:#172b3c}
 }
+
+
+/* Unified native-select design system.
+   All select fields stay real HTML selects for keyboard, screen readers, forms,
+   and mobile operating-system pickers, while receiving the same styled control. */
+:root{
+  --select-surface:#fffdf9;
+  --select-text:#1e394d;
+  --select-border:#ccd7d5;
+  --select-border-hover:#ad916c;
+  --select-focus-ring:rgba(177,139,87,.2);
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23715636' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+html[data-theme="dark"]{
+  --select-surface:#203345;
+  --select-text:#f2f6fa;
+  --select-border:#567188;
+  --select-border-hover:#c3a16b;
+  --select-focus-ring:rgba(223,183,121,.26);
+  --select-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e6c28c' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+html select,
+html .content select,
+html .dialog select,
+html .auth-panel select,
+html .followup-edit-table select,
+html .students-family-choice select,
+html .communications-page .comms-resource-filter select{
+  -webkit-appearance:none!important;
+  -moz-appearance:none!important;
+  appearance:none!important;
+  color:var(--select-text)!important;
+  background-color:var(--select-surface)!important;
+  background-image:var(--select-arrow)!important;
+  background-repeat:no-repeat!important;
+  background-position:left 13px center!important;
+  background-size:16px 16px!important;
+  border:1px solid var(--select-border)!important;
+  border-radius:12px!important;
+  min-height:44px;
+  padding-block:9px!important;
+  padding-inline:14px 40px!important;
+  line-height:1.55;
+  font-weight:650;
+  text-overflow:ellipsis;
+  transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease;
+  cursor:pointer;
+}
+html select:hover:not(:disabled),
+html .content select:hover:not(:disabled),
+html .dialog select:hover:not(:disabled){
+  border-color:var(--select-border-hover)!important;
+}
+html select:focus-visible,
+html select:focus,
+html .content select:focus,
+html .dialog select:focus{
+  outline:2px solid var(--select-border-hover)!important;
+  outline-offset:2px!important;
+  border-color:var(--select-border-hover)!important;
+  box-shadow:0 0 0 4px var(--select-focus-ring)!important;
+}
+html select:disabled{
+  opacity:.65;
+  cursor:not-allowed;
+}
+html select option,
+html select optgroup{
+  background:var(--select-surface);
+  color:var(--select-text);
+  font-size:1rem;
+  font-weight:500;
+}
+/* Compact table editors retain one-row tracking and an easily tapped arrow. */
+html .followup-edit-table select{
+  background-position:left 7px center!important;
+  background-size:13px 13px!important;
+  padding-block:5px!important;
+  padding-inline:8px 26px!important;
+  min-height:36px!important;
+  height:36px!important;
+  font-size:.77rem!important;
+  border-radius:9px!important;
+  max-width:100%;
+}
+html .toolbar select,
+html .card-stage-picker select,
+html .batch-stage select,
+html .followup-family-selector select,
+html .students-family-choice select,
+html .communications-page .comms-resource-filter select{
+  max-width:100%;
+  box-shadow:0 2px 7px rgba(13,38,53,.04);
+}
+/* Reapply the finished palette after legacy dark-mode rules with !important. */
+html[data-theme="dark"] select,
+html[data-theme="dark"] .content select,
+html[data-theme="dark"] .dialog select,
+html[data-theme="dark"] .auth-panel select,
+html[data-theme="dark"] .followup-edit-table select,
+html[data-theme="dark"] .communications-page .comms-resource-filter select{
+  background-color:var(--select-surface)!important;
+  color:var(--select-text)!important;
+  border-color:var(--select-border)!important;
+  color-scheme:dark;
+}
+html[data-theme="dark"] select option,
+html[data-theme="dark"] select optgroup{
+  background:#203345!important;
+  color:#f2f6fa!important;
+}
+html:not([data-theme="dark"]) select option,
+html:not([data-theme="dark"]) select optgroup{
+  background:#fffdf9!important;
+  color:#1e394d!important;
+}
+@media (pointer:coarse){
+  html select,html .content select,html .dialog select,
+  html .followup-edit-table select{
+    font-size:16px!important;
+    min-height:44px!important;
+  }
+}
+@media print{
+  html select{background-image:none!important;border-color:#ccd7d5!important;color:#172b3c!important}
+}
