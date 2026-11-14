@@ -118,3 +118,17 @@ test('communications status labels, icons and destructive controls use dark-safe
 test('no global forced white text on all spans and table cells',()=>{
  assert.doesNotMatch(css,/html\[data-theme="dark"\] \.content :is\(div,span,p,small,th,td,label,summary,a,button\)/);
 });
+
+test('dashboard statistical numbers and follow-up labels are bright in dark mode',()=>{
+ for(const selector of ['.stat .value','.dashboard-stats .stat .value','.followup-section-label','.followup-family-selector span','.followup-current-family strong','.dashboard-panel-head h2','.card-goal-main h4','.outcomes-section-title h2']){
+  assert.ok(css.includes(selector), 'missing text contrast selector: '+selector);
+ }
+ assert.match(css,/html\[data-theme="dark"\] \.content :is\(\.stat \.value,\.dashboard-stats \.stat \.value\)/);
+ assert.match(css,/color:#f4f7fb!important/);
+ assert.match(css,/color:#f4d39b!important/);
+});
+test('dark headings are scoped without breaking status badge contrast',()=>{
+ assert.doesNotMatch(css,/html\[data-theme="dark"\] \.content :is\(div,span,p,small,th,td,label,summary,a,button\)/);
+ assert.match(css,/\.followup-week-pill\.active/);
+ assert.match(css,/\.mobile-more-link\.is-selected/);
+});

@@ -1751,3 +1751,99 @@ html[data-theme="dark"] .content :is(input,textarea)::placeholder{color:#b1c3d2}
     background:#f4f4f4!important;color:#172b3c!important;
   }
 }
+
+
+/* Final targeted dark-mode typography audit: dark text hardcoded on dark cards.
+   Scope by class/role, keeping links, state chips and brand/hero accents intact. */
+html[data-theme="dark"] .content :is(
+ .stat .value,.dashboard-stats .stat .value,.dashboard-heading h1,
+ .dashboard-panel-head h2,.dashboard-family-metrics strong,.dashboard-student-details strong,
+ .dashboard-queue strong,.dashboard-alerts strong,.dashboard-week-tasks strong,
+ .program-group-title h2,.week-content-block h3,.page-head h1,
+ .followup-section-label,.followup-family-selector span,.followup-current-family strong,
+ .followup-overview strong,.followup-panel-header h2,.followup-name-cell>strong,
+ .students-search-icon,.students-filter-summary,.students-family-choice span,
+ .students-table th,.students-linked,.students-linked .ui-icon,
+ .card-stage-picker label,.card-assessment-header h2,.card-waiting strong,
+ .card-aspect-status,.card-other-stages h3,.card-subhead h3,
+ .card-goal-main h4,.card-plan-empty strong,.card-milestone-summary strong,
+ .batch-stage label,.batch-section-heading h2,.batch-summary-title,
+ .batch-summary-metric,.batch-family-heading h3,.batch-table tbody th,
+ .batch-rubric>summary,.batch-rubric-item h3,.batch-review-row strong,
+ .outcomes-section-title h2,.outcomes-table tbody th,
+ .outcome-minutes-count,.outcomes-students-table tfoot td strong,
+ .outcomes-mobile-totals h3,.outcomes-total-grid strong,
+ .questions-intro h2,.questions-results-header h3,.questions-empty strong,
+ .question-modal-intro p,.comms-empty strong
+){
+  color:var(--dm-text)!important;
+}
+html[data-theme="dark"] .content :is(
+ .dashboard-stat-note,.dashboard-family-metrics small,.dashboard-heading .subtitle,
+ .dashboard-panel-head p,.dashboard-week-dates,.followup-overview span,
+ .followup-save-state,.followup-no-report,.card-waiting p,
+ .questions-intro p,.comms-section-heading p
+){
+  color:var(--dm-text-muted)!important;
+}
+/* The UI uses --navy as an action BACKGROUND, so do not change that token
+   globally; override the text labels that formerly referenced it instead. */
+html[data-theme="dark"] .content :is(.followup-section-label,.followup-family-selector span,.followup-current-family strong){
+  color:#f4d39b!important;
+}
+html[data-theme="dark"] .content :is(.stat .value,.dashboard-stats .stat .value){
+  color:#f4f7fb!important;
+  -webkit-text-fill-color:#f4f7fb;
+}
+html[data-theme="dark"] .content :is(
+ .card-goal-index,.students-search-icon,.dashboard-alert-icon,
+ .mobile-more-link-icon,.dashboard-task-status
+){
+  background:#344b5f!important;
+  color:#e3cb9f!important;
+  border-color:#4c6579!important;
+}
+html[data-theme="dark"] .content :is(
+ .dashboard-task-status.done,.chip.ok
+){background:#285044!important;color:#d9f7e7!important}
+html[data-theme="dark"] .content :is(
+ .followup-week-pill,.followup-week-nav button
+){
+  background:#2b4155!important;color:#f0f5fb!important;border-color:#526b80!important;
+}
+html[data-theme="dark"] .content :is(
+ .followup-week-pill:hover:not(.active),.followup-week-nav button:hover:not(.active)
+){background:#3a546a!important;color:#fff!important}
+html[data-theme="dark"] .content :is(
+ .followup-week-pill.active,.followup-week-nav button.active
+){background:#956f40!important;color:#fff!important;border-color:#b68b58!important}
+/* Accessible labels inside account/confirmation dialogs and mobile menu. */
+html[data-theme="dark"] :is(
+ .dialog,.delete-confirm,.logout-confirm,.install-help,.mobile-more-sheet
+) :is(h2,h3,label,strong,.mobile-more-section h3,.mobile-more-link-title){
+  color:#f0f5fa!important;
+}
+html[data-theme="dark"] :is(
+ .dialog,.delete-confirm,.logout-confirm,.install-help,.mobile-more-sheet
+) :is(p,.muted,.mobile-more-footer,.mobile-more-header p){
+  color:#c6d5e1!important;
+}
+html[data-theme="dark"] :is(
+ .mobile-more-link,.mobile-more-close,.mobile-more-link-icon
+){
+  background:#2b4255!important;color:#f0f5fa!important;border-color:#4b6477!important;
+}
+html[data-theme="dark"] .mobile-more-link.is-selected{
+  background:#37536a!important;color:#fff!important;border-color:#a58b67!important;
+}
+/* Text within high-contrast state buttons stays white, not navy. */
+html[data-theme="dark"] .content :is(.btn.goldbtn,.btn:not(.secondary):not(.dangerbtn)){
+  color:#fff!important;
+}
+/* Print should remain light and readable even if dark mode was selected. */
+@media print{
+  html[data-theme="dark"] .content :is(
+   .stat .value,.dashboard-stats .stat .value,.followup-section-label,
+   .followup-family-selector span,.followup-current-family strong
+  ){color:#172b3c!important;-webkit-text-fill-color:#172b3c}
+}
