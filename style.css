@@ -2645,3 +2645,48 @@ html[data-theme="dark"] .theme-toggle.theme-toggle-icon:hover{
   outline-offset:1px;
  }
 }
+
+
+/* Admin-only team operations audit in system settings. */
+.admin-audit-section{min-width:0}
+.admin-audit-section>header>div{display:grid;gap:7px}
+.audit-eyebrow{display:inline-flex;align-items:center;gap:7px;width:fit-content;color:#9a753e;font-size:.72rem;font-weight:800}
+.audit-eyebrow svg{width:17px;height:17px}
+.audit-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.audit-summary>div{display:grid;gap:5px;padding:14px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}
+.audit-summary span{font-size:.75rem;color:var(--muted)}
+.audit-summary strong{font-size:1.42rem;font-variant-numeric:tabular-nums;color:var(--ink)}
+.audit-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:12px}
+.audit-filter{display:grid;gap:7px;flex:1 1 170px;min-width:0;font-size:.78rem;font-weight:750;color:var(--ink-2)}
+.audit-filter select{width:100%;max-width:100%}
+.audit-toolbar>.btn{min-height:44px}
+.audit-table-wrap{width:100%;max-width:100%;overflow-x:auto;scrollbar-width:thin;border:1px solid var(--line);border-radius:13px}
+.audit-table{width:100%;min-width:650px;border-collapse:separate;border-spacing:0;line-height:1.75;font-size:.81rem}
+.audit-table th,.audit-table td{padding:13px 14px;text-align:right;vertical-align:middle;border-bottom:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.audit-table thead th{font-size:.78rem;font-weight:800;background:var(--soft);color:var(--ink-2)}
+.audit-table tbody tr:nth-child(even)>td{background:var(--soft)}
+.audit-table tbody tr:last-child td{border-bottom:0}
+.audit-table td:first-child{display:grid;gap:3px}
+.audit-table td:first-child strong{font-weight:750;color:var(--ink)}
+.audit-table td:first-child small{font-size:.72rem;color:var(--muted)}
+.audit-operation{display:inline-flex;border-radius:8px;padding:5px 11px;font-weight:750;font-size:.76rem;border:1px solid var(--line)}
+.audit-operation.operation-insert{background:#e2f1e6;color:#236347;border-color:#b7d7c3}
+.audit-operation.operation-update{background:#f7ecd3;color:#805a22;border-color:#e7cfa1}
+.audit-operation.operation-delete{background:#f9e4df;color:#903c34;border-color:#ebc3bc}
+.audit-time{white-space:nowrap;direction:rtl;font-variant-numeric:tabular-nums}
+.audit-empty{text-align:center!important;padding:28px!important;color:var(--muted)!important}
+.audit-privacy-note{font-size:.75rem;line-height:1.8;color:var(--muted)}
+.audit-error{background:#fae6e2;color:#97362d;border-radius:10px;padding:11px 14px;font-size:.82rem}
+html[data-theme="dark"] .audit-summary>div{background:#283d50!important;border-color:#50697d!important}
+html[data-theme="dark"] .audit-summary strong,html[data-theme="dark"] .audit-table td:first-child strong{color:#f3f7fb!important}
+html[data-theme="dark"] :is(.audit-summary span,.audit-table td:first-child small,.audit-privacy-note){color:#c5d6e3!important}
+html[data-theme="dark"] .audit-table-wrap{border-color:#50677b!important}
+html[data-theme="dark"] .audit-table :is(th,td){background:#203345!important;border-color:#445d71!important;color:#f3f7fb!important}
+html[data-theme="dark"] .audit-table thead th,html[data-theme="dark"] .audit-table tbody tr:nth-child(even)>td{background:#2b4153!important}
+html[data-theme="dark"] .audit-operation.operation-insert{background:#285243!important;color:#d8f9e6!important;border-color:#478062!important}
+html[data-theme="dark"] .audit-operation.operation-update{background:#5e4b32!important;color:#ffe5b6!important;border-color:#8b7049!important}
+html[data-theme="dark"] .audit-operation.operation-delete{background:#613c42!important;color:#ffe2df!important;border-color:#8e565c!important}
+html[data-theme="dark"] .audit-eyebrow{color:#eec794!important}
+html[data-theme="dark"] .audit-error{background:#5d3439!important;color:#ffe2db!important}
+@media(max-width:570px){.audit-summary{gap:7px}.audit-summary>div{padding:10px}.audit-summary span{font-size:.67rem}.audit-summary strong{font-size:1.18rem}.audit-toolbar{gap:9px}.audit-filter{flex:1 1 130px}.audit-toolbar>.btn{width:100%}}
+@media print{.admin-audit-section{display:none!important}}

@@ -11,7 +11,7 @@ const dismissedFlag=()=>state.user?'algharisat-install-dismissed-'+state.user.id
 const shouldShowInstall=()=>!!state.user&&(window.matchMedia?.('(max-width: 800px)')?.matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))&&!installedMode()&&!pwaStorageRead('algharisat-installed')&&!pwaStorageRead(installFlag())&&!pwaStorageRead(dismissedFlag());
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(state.user)render()});
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;pwaStorageWrite('algharisat-installed','1');if(state.user)pwaStorageWrite(installFlag(),'1');if(state.user)render()});
-const state={studentProfileTab:'data',studentReportWeek:null,user:null,account:null,profile:null,page:'dashboard',rows:{},week:null,family:null,editing:null,notice:'',authTab:'signin',publicWelcome:'',period:'all',studentsTab:'all',studentsSearch:'',studentsFamily:''};
+const state={auditActor:'all',auditAction:'all',auditEntity:'all',auditError:'',studentProfileTab:'data',studentReportWeek:null,user:null,account:null,profile:null,page:'dashboard',rows:{},week:null,family:null,editing:null,notice:'',authTab:'signin',publicWelcome:'',period:'all',studentsTab:'all',studentsSearch:'',studentsFamily:''};
 const iconPaths={"layout-dashboard":"<rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/>","calendar-days":"<path d=\"M8 2v4M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01\"/>","users-round":"<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75\"/>","house":"<path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z\"/><path d=\"M9 21v-8h6v8\"/>","clipboard-check":"<rect x=\"5\" y=\"4\" width=\"14\" height=\"18\" rx=\"2\"/><rect x=\"9\" y=\"2\" width=\"6\" height=\"4\" rx=\"1\"/><path d=\"m9 14 2 2 4-4\"/>","id-card":"<rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><circle cx=\"8\" cy=\"11\" r=\"2\"/><path d=\"M4 17a4 4 0 0 1 8 0M15 10h4M15 14h4\"/>","flag":"<path d=\"M4 22V4m0 1c4-4 8 4 12 0v12c-4 4-8-4-12 0\"/>","message-circle-question":"<path d=\"M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z\"/><path d=\"M10 9a2 2 0 1 1 3 1.7c-.7.4-1 1-1 1.8M12 16h.01\"/>","megaphone":"<path d=\"m3 11 18-5v12L3 13z\"/><path d=\"M11 14.5 13 21H8l-2-7\"/>","list-todo":"<rect x=\"3\" y=\"5\" width=\"6\" height=\"6\" rx=\"1\"/><path d=\"m4 8 2 2 3-4M13 8h8M3 17h6M13 17h8\"/>","notebook-pen":"<path d=\"M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9M8 2v20M12 13h4\"/><path d=\"m14 7 5-5 3 3-5 5-4 1z\"/>","chart-column-increasing":"<path d=\"M3 3v18h18M7 16v-4M12 16V9M17 16V5\"/>","heart":"<path d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z\"/>","shield-check":"<path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z\"/><path d=\"m9 12 2 2 4-4\"/>","settings":"<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.65 1.65 0 0 0 .3 1.8l-1.9 1.9A1.65 1.65 0 0 0 16 18.4a1.65 1.65 0 0 0-1.1.6V21h-2.7a1.65 1.65 0 0 0-1.1-1.6 1.65 1.65 0 0 0-1.8.3l-1.9-1.9A1.65 1.65 0 0 0 7.6 16a1.65 1.65 0 0 0-.6-1.1H5v-2.7a1.65 1.65 0 0 0 1.6-1.1 1.65 1.65 0 0 0-.3-1.8l1.9-1.9A1.65 1.65 0 0 0 10 7.6a1.65 1.65 0 0 0 1.1-.6V5h2.7a1.65 1.65 0 0 0 1.1 1.6 1.65 1.65 0 0 0 1.8-.3l1.9 1.9A1.65 1.65 0 0 0 18.4 10c.3.3.5.6.6 1.1H21v2.7a1.65 1.65 0 0 0-1.6 1.2z\"/>","sprout":"<path d=\"M12 22v-9\"/><path d=\"M12 13C7 13 4 10 4 5c5 0 8 3 8 8z\"/><path d=\"M12 17c0-6 3-9 9-9 0 6-3 9-9 9z\"/>","user-round":"<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/>","check-circle":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m8 12 3 3 5-6\"/>","alert-triangle":"<path d=\"m10.3 3.3-8.5 15A2 2 0 0 0 3.5 21h17a2 2 0 0 0 1.7-2.7l-8.5-15a2 2 0 0 0-3.4 0z\"/><path d=\"M12 9v4M12 17h.01\"/>","clipboard-list":"<rect x=\"5\" y=\"4\" width=\"14\" height=\"18\" rx=\"2\"/><rect x=\"9\" y=\"2\" width=\"6\" height=\"4\" rx=\"1\"/><path d=\"M9 12h6M9 16h6\"/>","check":"<path d=\"m5 12 4 4 10-10\"/>","grid":"<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/>","logout":"<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><path d=\"m16 17 5-5-5-5M21 12H9\"/>","download":"<path d=\"M12 3v12m-4-4 4 4 4-4\"/><path d=\"M5 17v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3\"/>"};
 const icons={"dashboard":"layout-dashboard","weeks":"calendar-days","students":"users-round","families":"house","followups":"clipboard-check","cards":"id-card","milestones":"flag","questions":"message-circle-question","announcements":"megaphone","tasks":"list-todo","journal":"notebook-pen","reports":"chart-column-increasing","survey":"heart","accounts":"shield-check","settings":"settings","myweek":"sprout","myreport":"notebook-pen","myfamily":"house","myfollowup":"clipboard-check","mycard":"id-card","program":"calendar-days","myquestions":"message-circle-question","notices":"megaphone","myaccount":"user-round"};
 const iconSvg=(name,cls='ui-icon')=>'<svg class="'+cls+'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(iconPaths[name]||iconPaths.grid)+'</svg>';
@@ -34,6 +34,7 @@ const teamNav=[['dashboard','اللوحة'],['weeks','البرنامج والأ�
 const studentNav=[['myweek','أسبوعي'],['myreport','تقريري الأسبوعي'],['myfamily','أسرتي'],['myfollowup','متابعة الأسرة'],['mycard','بطاقتي'],['program','البرنامج'],['myquestions','أسئلتي'],['notices','الإعلانات'],['survey','صوت الغارسة'],['myaccount','حسابي']];
 const team=()=>['admin','murafiqa','musaida'].includes(state.account?.role);
 const leadership=()=>['admin','murafiqa'].includes(state.account?.role);
+const adminOnly=()=>state.account?.role==='admin';
 const ownFamilyId=()=>state.profile?.family_id||null;
 const coordinator=()=>!team()&&!!ownFamilyId()&&state.rows.roles_family?.some(r=>r.student_id===state.account?.student_id&&r.family_id===ownFamilyId()&&r.task==='munassiqa'&&r.cycle===Number(setting('current_cycle',1)))===true;
 const setting=(key,fallback='')=>state.rows.settings?.find(s=>s.key===key)?.value??fallback;
@@ -52,6 +53,15 @@ const field=(label,key,value='',type='text',required=false,opts=null)=>'<div cla
 const btn=(action,text,cls='secondary',extra='')=>'<button class="btn '+cls+'" data-action="'+esc(action)+'" '+extra+'>'+esc(text)+'</button>';
 function flash(text,error=false){state.notice=text;state.noticeError=error;render();setTimeout(()=>{if(state.notice===text){state.notice='';const el=$('.toast');if(el)el.remove()}},5000)}
 async function read(t){const{data,error}=await db.from(t).select('*').limit(2000);if(error)throw error;state.rows[t]=data||[]}
+async function loadTeamActivity(){
+ if(!adminOnly())return;
+ const{data,error}=await db.from('team_activity_log')
+  .select('id,actor_id,actor_name,actor_role,action,entity_table,record_key,occurred_at')
+  .order('occurred_at',{ascending:false}).limit(250);
+ if(error){state.auditError=error.message;state.rows.team_activity_log=[];return}
+ state.auditError='';
+ state.rows.team_activity_log=data||[];
+}
 async function load(){
 const base=['settings','assessment_stages','weeks','families','events','announcements','resources','roles_family','rota_leader'];
 const staff=['students','student_birthdates','followups','reports_self','cards','milestones','goals','questions','tasks','journal','minutes','docs_family'];
@@ -59,6 +69,7 @@ const student=['students','student_birthdates','followups','reports_self','cards
 const tables=[...base,...(team()?staff:student),...(leadership()?['accounts','done_survey','responses_survey','observations']:!team()?['done_survey']:[])];
 await Promise.all(tables.map(t=>read(t).catch(err=>{console.warn(t,err.message);state.rows[t]=[]})));
 if(rows('assessment_stages').length)syncAssessmentStages();
+if(adminOnly())await loadTeamActivity();
 if(!team()&&state.account?.student_id){state.profile=rows('students').find(s=>s.id===state.account.student_id);const result=await db.rpc('family_directory');if(!result.error&&result.data){const own=rows('students');state.rows.students=[...own,...result.data.filter(s=>!own.some(m=>m.id===s.id))]}const pub=await db.rpc('published_questions');if(!pub.error&&pub.data){const mine=rows('questions');state.rows.questions=[...mine,...pub.data.filter(q=>!mine.some(m=>m.id===q.id))]}}
 state.week ||= currentWeek()?.id;
 state.family=team()?(state.family||rows('families')[0]?.id||null):ownFamilyId();
@@ -1004,6 +1015,45 @@ function accounts(){
  '<section class="account-table-card"><header><div><h2>الحسابات القائمة</h2><p>تعديل الأسماء والألقاب والصفات وسجل الغارسة المرتبط، مع بيان الحسابات الموقوفة والمرفوضة.</p></div></header><div class="account-table-scroll">'+table(['الاسم','اللقب','البريد الإلكتروني','الصفة','الغارسة المرتبطة','الإجراء'],currentRows||'<tr><td colspan="6" class="account-no-results">لا توجد حسابات في هذه القائمة.</td></tr>')+'</div></section>')+'</div>';
 }
 
+
+const auditTableLabels={
+ accounts:'الحسابات والصلاحيات',announcements:'الإعلانات',assessment_stages:'مراحل التقييم',
+ cards:'بطاقة الغارسة',docs_family:'وثائق الأسرة',events:'المواعيد واللقاءات',
+ families:'الأسر',followups:'المتابعة الأسبوعية',goals:'الأهداف',journal:'سجل التجربة',
+ milestones:'المخرجات',minutes:'محاضر الأسر',observations:'ملاحظات المرافقة',
+ questions:'الأسئلة',reports_self:'التقارير الذاتية',resources:'المصادر',
+ roles_family:'أدوار الأسرة',rota_leader:'التكليفات الدوّارة',settings:'إعدادات البرنامج',
+ students:'الغارسات',tasks:'التحضير والتشغيل',weeks:'الأسابيع والتقويم'
+};
+const auditActionNames={INSERT:'إضافة',UPDATE:'تعديل',DELETE:'حذف'};
+const auditRoleNames={admin:'الإدارة',murafiqa:'المرافقة',musaida:'مساعدة المرافقة'};
+function adminActivityPanel(){
+ if(!adminOnly())return '';
+ const all=rows('team_activity_log');
+ const actors=[...new Map(all.map(row=>[row.actor_id,row.actor_name])).entries()];
+ const entities=[...new Set(all.map(row=>row.entity_table))].sort();
+ const recent=all.filter(row=>
+  (state.auditActor==='all'||row.actor_id===state.auditActor)&&
+  (state.auditAction==='all'||row.action===state.auditAction)&&
+  (state.auditEntity==='all'||row.entity_table===state.auditEntity));
+ const choose=(label,name,selected,values)=>'<label class="audit-filter">'+esc(label)+'<select data-select="'+name+'" aria-label="'+esc(label)+'">'+values.map(([value,text])=>option(value,text,selected)).join('')+'</select></label>';
+ const tableRows=recent.map(item=>{
+  const action=auditActionNames[item.action]||item.action;
+  const category=auditTableLabels[item.entity_table]||item.entity_table;
+  const time=new Intl.DateTimeFormat('ar-SA',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Riyadh'}).format(new Date(item.occurred_at));
+  return '<tr><td><strong>'+esc(item.actor_name)+'</strong><small>'+esc(auditRoleNames[item.actor_role]||item.actor_role)+'</small></td><td><span class="audit-operation operation-'+esc(item.action.toLowerCase())+'">'+esc(action)+'</span></td><td>'+esc(category)+'</td><td class="audit-time">'+esc(time)+'</td></tr>';
+ }).join('');
+ return '<section class="card settings-section admin-audit-section" id="teamActivity"><header><div><span class="audit-eyebrow">'+iconSvg('shield-check')+' للإدارة فقط</span><h2>سجل نشاط فريق العمل</h2><p>متابعة من أضاف أو عدّل أو حذف بيانات المنصة، مع تاريخ العملية وقسمها. لا يُعرض المحتوى الخاص أو كلمات المرور أو الإجابات المجهولة.</p></div></header>'+
+ '<div class="audit-summary"><div><span>أحدث العمليات المحمّلة</span><strong>'+all.length+'</strong></div><div><span>بعد التصفية</span><strong>'+recent.length+'</strong></div><div><span>عضوات نفّذن عمليات</span><strong>'+actors.length+'</strong></div></div>'+
+ '<div class="audit-toolbar">'+choose('عضوة الفريق','auditActor',state.auditActor,[['all','جميع العضوات'],...actors.map(([id,name])=>[id,name])])+
+ choose('نوع العملية','auditAction',state.auditAction,[['all','كل العمليات'],['INSERT','إضافة'],['UPDATE','تعديل'],['DELETE','حذف']])+
+ choose('القسم','auditEntity',state.auditEntity,[['all','كل الأقسام'],...entities.map(key=>[key,auditTableLabels[key]||key])])+
+ btn('refreshTeamActivity','تحديث السجل','secondary smallbtn')+'</div>'+
+ (state.auditError?'<p class="audit-error" role="alert">تعذر تحميل سجل النشاط: '+esc(state.auditError)+'</p>':'')+
+ '<div class="audit-table-wrap" role="region" aria-label="عمليات فريق العمل" tabindex="0"><table class="audit-table"><thead><tr><th scope="col">من نفّذت العملية</th><th scope="col">العملية</th><th scope="col">القسم</th><th scope="col">التاريخ والوقت</th></tr></thead><tbody>'+
+ (tableRows||'<tr><td colspan="4" class="audit-empty">لا توجد عمليات مطابقة للفلاتر الحالية.</td></tr>')+
+ '</tbody></table></div><p class="audit-privacy-note">يعرض أحدث ٢٥٠ عملية فقط. يبدأ التسجيل من تفعيل هذه الميزة، ولا يشمل عمليات القراءة أو تسجيل الدخول أو إجابات الاستبانة المجهولة. يُحدَّث السجل عند فتح الصفحة أو الضغط على «تحديث السجل».</p></section>';
+}
 function settings(){
  if(!team())return heading('الإعدادات','هذه الصفحة للفريق فقط');
  const stages=rows('assessment_stages').slice().sort((a,b)=>a.sort_order-b.sort_order);
@@ -1013,7 +1063,7 @@ function settings(){
  '<section class="card settings-section"><header><h2>معلومات البرنامج</h2><p>يظهر الترحيب في تسجيل الدخول ويُعرض رقم التواصل البديل للغارسات عند الحاجة.</p></header><form id="settingsForm"><div class="form-grid">'+field('اسم البرنامج','program_name',setting('program_name','الغارسات'))+field('اسم المرحلة الحالية','stage_name',setting('stage_name','المرحلة الأولى'))+field('رقم الدورة الجارية','current_cycle',setting('current_cycle',1),'number')+field('رقم التواصل البديل','backup_phone',setting('backup_phone',''),'tel')+'<div class="full">'+field('عبارة الترحيب','welcome',setting('welcome',''),'textarea')+'</div></div><div class="settings-section-actions"><button type="submit" class="btn goldbtn">حفظ إعدادات البرنامج</button></div></form></section>'+
  '<section class="card settings-section"><header><h2>إزاحة التقويم</h2><p>تقديم أو تأخير أسابيع التحضير والمرحلة والفاصل وجميع مواعيد الأحداث المسجلة؛ يظهر العدد والاتجاه قبل التأكيد.</p></header><div class="settings-calendar-grid"><div class="settings-calendar-current"><span>بداية الأسبوع الأول الحالية</span><strong>'+esc(start?date(start):'غير محددة')+'</strong></div>'+field('بداية الأسبوع الأول الجديدة','first_start',start,'date')+'</div><p class="settings-shift-warning">يجب أن تبدأ أسابيع البرنامج يوم السبت وألا تتجاوز الإزاحة ٣٦٦ يومًا.</p><div class="settings-section-actions">'+btn('shiftcalendar','مراجعة إزاحة التقويم','secondary')+'</div></section>'+
  '<section class="card settings-section"><header><h2>الأسر</h2><p>إدارة أسمائها ومواعيد لقائها وإضافة أسر جديدة.</p></header><div class="settings-family-summary"><strong>'+rows('families').length+' أسر</strong><span>'+rows('families').map(f=>esc(f.name)+' ('+rows('students').filter(st=>st.family_id===f.id).length+' عضوات)').join(' • ')+'</span></div><div class="settings-section-actions">'+btn('go:families','إدارة الأسر','secondary')+'</div></section>'+
- '<section class="card settings-section"><header><h2>مراحل التقييم في بطاقة الغارسة</h2><p>إضافة مراحل جديدة وتعديل أسمائها دون فقدان أي تقييم سابق. لا يمكن حذف مرحلة أساسية أو مرحلة تحتوي على تقييمات.</p></header>'+list+'<div class="settings-section-actions">'+(leadership()?btn('newassessmentstage','إضافة مرحلة تقييم','goldbtn'):'<span class="muted small">إدارة المراحل للإدارة والمرافقة فقط</span>')+'</div></section></div>';
+ '<section class="card settings-section"><header><h2>مراحل التقييم في بطاقة الغارسة</h2><p>إضافة مراحل جديدة وتعديل أسمائها دون فقدان أي تقييم سابق. لا يمكن حذف مرحلة أساسية أو مرحلة تحتوي على تقييمات.</p></header>'+list+'<div class="settings-section-actions">'+(leadership()?btn('newassessmentstage','إضافة مرحلة تقييم','goldbtn'):'<span class="muted small">إدارة المراحل للإدارة والمرافقة فقط</span>')+'</div></section>'+adminActivityPanel()+'</div>';
 }
 function myweek(){
 const w=currentWeek();return '<div class="eyebrow">'+date(new Date())+'</div>'+heading('أسبوعي','أهلاً '+(state.account?.name||'')+' | '+name('families',state.profile?.family_id))+backupContactNotice()+'<div class="hero-card"><div class="eyebrow">'+esc(w?.code||'')+' | '+(w?date(w.starts_on):'')+'</div><h1>'+esc(w?.title||'أهلاً بك في الغارسات')+'</h1><p>'+esc(w?.reflection||'رحلة غرسٍ ورعاية')+'</p></div><div class="grid two"><div class="card"><h3>منهج الأسبوع</h3>'+[['الدرس العلمي',w?.lesson],['الأربعون',w?.hadith],['جزء عم',w?.tilawa],['رياض الصالحين',w?.riyad]].map(([t,v])=>'<div class="list-row"><strong>'+t+'</strong><span class="muted">'+esc(v)+'</span></div>').join('')+'</div><div class="card"><h3>مهمتي الثلاثية</h3>'+[['في نفسي',w?.task_self],['في بيتي',w?.task_home],['في محيطي',w?.task_community]].map(([t,v])=>'<div class="list-row" style="display:block"><strong>'+t+'</strong><p>'+esc(v)+'</p></div>').join('')+btn('go:myreport','سجلي تقريركِ','goldbtn')+'</div></div><div class="card" style="margin-top:15px"><h3>المواعيد والإعلانات</h3>'+rows('events').filter(e=>!e.family_id||e.family_id===state.profile?.family_id).slice(0,4).map(e=>'<p>'+esc(e.title)+' | '+date(e.starts_at)+'</p>').join('')+[...rows('announcements')].sort((a,b)=>Number(!!b.pinned)-Number(!!a.pinned)||(b.created_at||'').localeCompare(a.created_at||'')).slice(0,3).map(a=>'<p>'+(a.pinned?'📌 ':'')+esc(a.title)+'</p>').join('')+'</div>';
@@ -1384,6 +1434,7 @@ else if(action==='close')$('.dialog-backdrop')?.remove();
 else if(action==='print')window.print();
  else if(action.startsWith('accountsTab:')){if(!leadership())throw Error('هذا القسم للإدارة والمرافقة فقط');state.accountsTab=action.split(':')[1]==='current'?'current':'pending';render()}
  else if(action.startsWith('journalView:')){if(!team())throw Error('هذه الصفحة للفريق فقط');state.journalView=action.split(':')[1]==='review'?'review':'weeks';render()}
+else if(action==='refreshTeamActivity'){if(!adminOnly())throw Error('سجل النشاط للإدارة فقط');await loadTeamActivity();render();if(!state.auditError)flash('تم تحديث سجل النشاط')}
 else if(action==='shiftcalendar'){
  if(!leadership())throw Error('إزاحة التقويم للإدارة والمرافقة فقط');
  const next=$('#f_first_start')?.value,current=rows('weeks').find(w=>w.code==='w1')?.starts_on;
@@ -1506,6 +1557,10 @@ if(el.id==='f_role'||el.id==='f_link_mode'){
  return;
  }
  if(el.id==='resourceCoverMode'){const field=document.querySelector('#resourceCoverUpload');if(field)field.hidden=el.value!=='upload';return}
+if(['auditActor','auditAction','auditEntity'].includes(el.dataset.select)){
+ if(!adminOnly())throw Error('سجل النشاط للإدارة فقط');
+ state[el.dataset.select]=el.value;render();return;
+}
 if(el.dataset.select==='resourceWeekFilter'){state.resourceWeekFilter=el.value;render();return}
 if(el.dataset.select==='studentsFamily'){state.studentsFamily=el.value;updateStudentsView();rememberCurrentPage()}
 else if(el.dataset.select==='week'){if(!(await confirmFollowupLeave())){el.value=state.week;return}state.week=el.value;render()}
