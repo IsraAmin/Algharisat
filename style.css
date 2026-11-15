@@ -3377,3 +3377,16 @@ html[data-theme="dark"] .dashboard-hero .welcome-reflection{
  color:var(--dm-gold,#f0c48b)!important;
  opacity:1;
 }
+
+
+/* Welcome banner: the large week title is gold, not the explanatory sentence. */
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > h2,
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero h2{
+ color:#f0c48b!important;
+ -webkit-text-fill-color:#f0c48b!important;
+ opacity:1!important;
+}
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero .welcome-reflection{
+ color:#c3d2df!important;
+ -webkit-text-fill-color:#c3d2df!important;
+}
