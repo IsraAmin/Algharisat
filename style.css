@@ -3390,3 +3390,24 @@ html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero .welcome-r
  color:#c3d2df!important;
  -webkit-text-fill-color:#c3d2df!important;
 }
+
+
+/* Corrected welcome-card hierarchy: ONLY the underlined large title is gold. */
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > h2{
+ color:#f0c48b!important;
+ -webkit-text-fill-color:#f0c48b!important;
+}
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > .eyebrow,
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > p,
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > p.welcome-reflection,
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > p.dashboard-week-dates{
+ color:#ffffff!important;
+ -webkit-text-fill-color:#ffffff!important;
+ opacity:1;
+}
+html[data-theme="dark"] .hero-card:not(.dashboard-hero) > h1,
+html[data-theme="dark"] .hero-card:not(.dashboard-hero) > .eyebrow,
+html[data-theme="dark"] .hero-card:not(.dashboard-hero) > p.welcome-reflection{
+ color:#ffffff!important;
+ -webkit-text-fill-color:#ffffff!important;
+}
