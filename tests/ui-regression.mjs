@@ -489,3 +489,14 @@ test('report PDF uses dedicated readable A4 landscape print rules',()=>{
  assert.match(css,/\.professional-report-page \.report-table-scroll\{[\s\S]*?overflow:visible!important/);
  assert.match(css,/html\[data-theme="dark"\] \.professional-report-page \.report-method p/);
 });
+
+test('report printing fills page before continuing to the next page',()=>{
+ assert.doesNotMatch(css,/html \.professional-report-page \.report-section:nth-of-type\(5\)/);
+ assert.match(css,/html \.professional-report-page \.report-section\{\s*break-before:auto!important;/);
+ assert.match(css,/html \.professional-report-page \.report-table-scroll\{\s*display:contents!important;/);
+ assert.match(css,/html \.professional-report-page \.report-table tbody\{\s*break-inside:auto!important;/);
+ assert.match(css,/html \.professional-report-page \.report-section-head\{\s*break-inside:avoid!important;/);
+ assert.match(css,/html \.professional-report-page \.report-method\{\s*display:block!important;/);
+ assert.match(css,/html \.professional-report-page \.report-note\{\s*break-inside:auto!important;/);
+ assert.match(css,/\.professional-report-page \.report-table tr\{[\s\S]*?break-inside:avoid!important;/);
+});
