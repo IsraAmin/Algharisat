@@ -3157,3 +3157,17 @@ html[data-theme="dark"] .family-hub .family-leader-table tbody tr.is-current :is
 .home-comms-empty{padding:22px 14px;text-align:center;background:#faf7f0;border:1px dashed #dbd0be;border-radius:13px;color:#68737d}
 @media(max-width:850px){.home-comms-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:540px){.home-comms-section{padding:13px;border-radius:16px}.home-comms-event,.home-comms-notice{padding:12px;gap:10px}.home-comms-heading h2{font-size:1.18rem}.home-comms-heading-icon{width:42px;height:42px}}
+
+
+/* A comfortable separation between the last weekly task and its report action */
+.myweek-tasks-card > .btn,
+.myweek-tasks-card > button[data-action="go:myreport"]{
+  display:inline-flex;
+  margin-top:24px;
+  margin-bottom:6px;
+}
+.myweek-tasks-card > .list-row:last-of-type{margin-bottom:3px}
+@media(max-width:540px){
+ .myweek-tasks-card > .btn,
+ .myweek-tasks-card > button[data-action="go:myreport"]{margin-top:22px;margin-bottom:8px}
+}
