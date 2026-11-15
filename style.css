@@ -3369,3 +3369,11 @@ html[data-theme="dark"] .hero-card h1{
  .home-comms-date{font-size:.69rem;max-width:50%}
  .home-comms + .grid.two{margin-top:26px}
 }
+
+
+/* Welcome-card reflection (e.g. "لماذا نبت؟") uses the signature gold in dark mode. */
+html[data-theme="dark"] .hero-card .welcome-reflection,
+html[data-theme="dark"] .dashboard-hero .welcome-reflection{
+ color:var(--dm-gold,#f0c48b)!important;
+ opacity:1;
+}
