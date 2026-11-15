@@ -492,10 +492,89 @@ return '<div class="students-register">'+heading('الغارسات','سجل ال
 '<div class="students-filter-summary"><span data-students-result-count aria-live="polite">'+all.length+' من '+all.length+' سجل</span><span class="muted small">يمكن البحث بأكثر من كلمة وبأي ترتيب</span></div>'+
 '<div class="card table-wrap students-table-wrap"><table class="students-table"><thead><tr>'+['الاسم','الأسرة','الجامعة','الهاتف','الحال','ربط الحساب','الإجراء'].map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table><div class="students-empty-results" hidden>'+empty('لا توجد غارسات تطابق البحث أو الفلاتر الحالية')+'</div></div></div>';
 }
+
+const familyRotatingTasks=[
+ ['munassiqa','المنسقة','المواعيد والمحضر، وتسجيل الورد والحضور، وجمع أرقام التقرير'],
+ ['fiqhiya','المسؤولة الفقهية','الدرس والتسميع والأسئلة الفقهية'],
+ ['fikriya','المسؤولة الفكرية','تيسير النقاش والقراءة الفكرية'],
+ ['ijtimaiya','المسؤولة الاجتماعية','أحوال الأخوات والسؤال والتزاور'],
+ ['ataa','مسؤولة العطاء','المهمة الثلاثية والدرس المنقول وورقة الحاجة']
+];
+const familyDocuments=[
+ ['wird','قدر الورد'],
+ ['page_need','صفحة الحاجة'],
+ ['initiative','المبادرة'],
+ ['charter','الميثاق']
+];
+const familyScopeId=()=>team()?state.family:ownFamilyId();
+const canEditFamilyContent=()=>team()||!!ownFamilyId();
 function families(){
-const familyId=team()?state.family:ownFamilyId(),fam=rows('families').find(f=>f.id===familyId),members=rows('students').filter(s=>s.family_id===fam?.id),isTeam=team();
-return heading(isTeam?'الأسر':'أسرتي','الأخوات، والمهام الدوارة، ولقاءات الأسرة',isTeam?btn('newfamily','إضافة أسرة','goldbtn')+' '+btn('assignrole','توزيع المهام')+' '+btn('assignleader','مديرات اللقاء'):'')+'<div class="toolbar">'+(isTeam?selectFamilies():'')+'</div>'+(fam?'<div class="grid two"><div class="card"><h3>'+esc(fam.name)+'</h3><p class="muted">موعد اللقاء: '+esc(fam.meeting_day||'لم يحدد')+' '+esc(fam.meeting_time||'')+'</p>'+(fam.meeting_url?'<p><a target="_blank" rel="noopener noreferrer" href="'+esc(safeUrl(fam.meeting_url))+'">رابط اللقاء</a></p>':'')+'<div class="separator"></div>'+members.map(s=>'<div class="list-row"><div><strong>'+esc(s.name)+'</strong><p class="muted">'+esc(rows('roles_family').find(r=>r.student_id===s.id&&r.cycle===Number(setting('current_cycle',1)))?.task||'لم توزع المهمة')+'</p></div>'+(s.phone?'<a class="btn secondary smallbtn" href="https://wa.me/'+encodeURIComponent(s.phone.replace(/[^0-9]/g,''))+'" target="_blank" rel="noopener">واتساب</a>':'')+'</div>').join('')+'</div><div class="card"><h3>وثائق الأسرة</h3>'+[['wird','قدر الورد'],['page_need','صفحة الحاجة'],['initiative','المبادرة'],['charter','الميثاق']].map(([key,t])=>'<div class="list-row"><span>'+t+'</span>'+btn('doc:'+key,rows('docs_family').some(d=>d.kind===key&&d.family_id===fam.id)?'عرض وتعديل':'كتابة','secondary smallbtn')+'</div>').join('')+'<div class="separator"></div><h3>محاضر اللقاءات</h3>'+rows('minutes').filter(m=>m.family_id===fam.id).map(m=>'<div class="list-row">'+date(m.meeting_date)+' | '+esc(m.summary?.slice(0,45))+'</div>').join('')+btn('newminute','إضافة محضر','goldbtn')+'</div></div>':empty('أضيفي أسرة أولًا'));
+ const familyId=familyScopeId(),fam=rows('families').find(f=>f.id===familyId),isTeam=team();
+ const allFamilies=rows('families');
+ const members=rows('students').filter(student=>student.family_id===familyId).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ar'));
+ const weeks=sortedWeeks().filter(w=>w.kind==='program').slice(0,8);
+ const currentCycle=Math.min(4,Math.max(1,Number(setting('current_cycle',1))||1));
+ const cycle=Math.min(4,Math.max(1,Number(state.familyCycle||currentCycle)||currentCycle));
+ const tasks=rows('roles_family').filter(r=>r.family_id===familyId&&r.cycle===cycle);
+ const leaders=rows('rota_leader').filter(r=>r.family_id===familyId);
+ const minutes=rows('minutes').filter(m=>m.family_id===familyId).sort((a,b)=>String(b.meeting_date||'').localeCompare(String(a.meeting_date||'')));
+ const docs=rows('docs_family').filter(d=>d.family_id===familyId);
+ const latestWeek=weeks.find(weekCurrent)||weeks.find(w=>w.starts_on>todayISO())||weeks[weeks.length-1];
+ const scope=familyId&&fam;
+ const head=heading(isTeam?'الأسر':'أسرتي','لقاء الأسرة، مهامها الدوارة، مديرات اللقاء، محاضرها ووثائقها',
+  isTeam?btn('newfamily','إضافة أسرة','goldbtn'):'');
+ if(!scope)return head+(isTeam?'<div class="family-selection-empty">'+(allFamilies.length?'اختاري الأسرة لعرض تفاصيلها.':'أضيفي أسرة للبدء.')+'</div>':empty('لم تُربط أسرة بحسابك بعد.'));
+ const roleCards=familyRotatingTasks.map(([key,label,description])=>{
+   const assignment=tasks.find(t=>t.task===key),student=members.find(m=>m.id===assignment?.student_id);
+   const assigned=!!student;
+   return '<div class="family-role-card"><div class="family-role-details"><strong>'+esc(label)+'</strong><p>'+esc(assigned?student.name:'لم تُعيّن بعد')+'</p></div><div class="family-role-meta">'+(assigned?'<span class="family-assigned">تم التوزيع</span>':'<span class="family-unassigned">بانتظار التوزيع</span>')+
+    (isTeam?btn('assignrole:'+key,assigned?'تغيير':'تعيين','secondary smallbtn'):'')+'</div></div>';
+ }).join('');
+ const cycleButtons=[1,2,3,4].map(n=>'<button type="button" class="family-cycle-btn '+(cycle===n?'is-active':'')+'" data-action="familyCycle:'+n+'" aria-pressed="'+(cycle===n)+'">الدورة '+n+'</button>').join('');
+ const memberRows=members.map(m=>{
+  const task=tasks.find(t=>t.student_id===m.id);
+  return '<div class="family-member-row"><span class="family-member-name">'+esc(m.name)+'</span><span class="family-member-duty">'+esc(familyRotatingTasks.find(t=>t[0]===task?.task)?.[1]||'بدون مهمة في هذه الدورة')+'</span></div>';
+ }).join('');
+ const leaderRows=weeks.map((week,i)=>{
+  const row=leaders.find(r=>r.week_id===week.id);
+  const assigned=members.find(m=>m.id===row?.student_id);
+  const current=weekCurrent(week);
+  return '<tr'+(current?' class="is-current"':'')+'><th scope="row">الأسبوع '+(i+1)+(current?'<span class="family-current-week">الجاري</span>':'')+'</th><td>'+esc(week.title)+'</td><td>'+esc(assigned?.name||'لم تُعيّن بعد')+'</td><td>'+(isTeam?btn('assignleader:'+week.id,assigned?'تعديل':'تعيين','secondary smallbtn'):'<span class="muted small">—</span>')+'</td></tr>';
+ }).join('');
+ const minuteCards=minutes.map(m=>{
+  const student=members.find(x=>x.id===m.leader_id);
+  return '<article class="family-minute"><div class="family-minute-top"><div><strong>'+esc(weekName(m.week_id))+'</strong><span>'+esc(date(m.meeting_date))+' · المديرة: '+esc(student?.name||'لم تُحدّد')+' · الحاضرات: '+esc(m.attendance_count??'غير مسجّل')+'</span></div>'+
+   (canEditFamilyContent()?btn('editminute:'+m.id,'تعديل المحضر','secondary smallbtn'):'')+'</div>'+
+   '<div class="family-minute-parts"><div><strong>الخلاصة</strong><p>'+esc(m.summary||'لم تُكتب الخلاصة بعد')+'</p></div><div><strong>التكليفات والقرارات</strong><p>'+esc(m.decisions||'لم تُدوّن قرارات بعد')+'</p></div></div></article>';
+ }).join('');
+ const documents=familyDocuments.map(([key,title])=>{
+  const doc=docs.find(d=>d.kind===key),written=!!String(doc?.body||'').trim();
+  const preview=written?'<div class="family-document-body">'+esc(doc.body)+'</div>':
+   '<p class="family-document-pending">لم تُكتب الوثيقة بعد'+(latestWeek?' · '+esc(latestWeek.title):'')+'</p>';
+  return '<article class="family-document"><div class="family-document-head"><div><strong>'+esc(title)+'</strong><span class="'+(written?'family-assigned':'family-unassigned')+'">'+(written?'مكتوبة':'بانتظار الكتابة')+'</span></div>'+
+   btn('doc:'+key,written?'عرض وتعديل':'كتابة الوثيقة','secondary smallbtn')+'</div>'+
+   (written?'<p class="family-document-date">آخر تعديل: '+esc(doc.updated_at?date(doc.updated_at):'غير متاح')+'</p>':'')+
+   '<details class="family-document-details" '+(!written?'open':'')+'><summary> '+(written?'عرض النص الكامل':'حالة الوثيقة')+'</summary>'+preview+'</details></article>';
+ }).join('');
+ return '<div class="family-hub">'+head+
+ '<div class="family-hub-toolbar">'+(isTeam?'<label><span>اختيار الأسرة</span>'+selectFamilies()+'</label>':'<div class="family-own-label"><span>الأسرة المسندة لكِ</span><strong>'+esc(fam.name)+'</strong></div>')+'</div>'+
+ '<section class="card family-hub-section"><header class="family-hub-section-header"><div><span class="family-section-number">01</span><h2>بيانات الأسرة ولقاؤها الأسبوعي</h2></div>'+(isTeam?btn('editfamily','تعديل بيانات الأسرة','secondary smallbtn'):'')+'</header>'+
+ '<div class="family-details-grid"><div><span>الأسرة</span><strong>'+esc(fam.name)+'</strong></div><div><span>عدد العضوات</span><strong>'+members.length+'</strong></div>'+
+ '<div><span>يوم اللقاء</span><strong>'+esc(fam.meeting_day||'لم يُحدّد')+'</strong></div><div><span>ساعة اللقاء</span><strong>'+esc(fam.meeting_time||'لم تُحدّد')+'</strong></div></div>'+
+ (fam.meeting_url?'<a class="btn secondary family-meeting-link" href="'+esc(safeUrl(fam.meeting_url))+'" target="_blank" rel="noopener noreferrer">فتح رابط لقاء الأسرة</a>':'<p class="muted small">رابط اللقاء لم يُحدّد بعد.</p>')+
+ (fam.notes?'<p class="family-notes">'+esc(fam.notes)+'</p>':'')+
+ '<h3 class="family-subheading">أخوات الأسرة</h3><div class="family-members">'+(memberRows||'<p class="muted small">لا توجد غارسات في هذه الأسرة بعد.</p>')+'</div></section>'+
+ '<section class="card family-hub-section"><header class="family-hub-section-header"><div><span class="family-section-number">02</span><h2>الأخوات والمهام الدوارة</h2><p>توزيع المسؤوليات الخمس في الدورة المختارة.</p></div></header>'+
+ '<div class="family-cycle-switch" role="group" aria-label="الدورة المختارة">'+cycleButtons+'</div>'+
+ '<div class="family-role-grid">'+roleCards+'</div>'+
+ '<details class="family-task-explainer"><summary>ما المهام الخمس؟</summary><div>'+familyRotatingTasks.map(([,label,description])=>'<div><strong>'+esc(label)+'</strong><p>'+esc(description)+'</p></div>').join('')+'</div></details></section>'+
+ '<section class="card family-hub-section"><header class="family-hub-section-header"><div><span class="family-section-number">03</span><h2>مديرات لقاءات الأسرة</h2><p>مديرة كل أسبوع من الأسابيع الثمانية؛ الأسبوع الجاري مميز.</p></div></header>'+
+ '<div class="family-leader-scroll" role="region" aria-label="جدول مديرات اللقاء" tabindex="0"><table class="family-leader-table"><thead><tr><th>الأسبوع</th><th>العنوان</th><th>مديرة اللقاء</th><th>الإجراء</th></tr></thead><tbody>'+leaderRows+'</tbody></table></div></section>'+
+ '<section class="card family-hub-section"><header class="family-hub-section-header"><div><span class="family-section-number">04</span><h2>محاضر لقاءات الأسرة</h2><p>الأسبوع والتاريخ والمديرة والحاضرات والخلاصة والقرارات.</p></div>'+btn('newminute','محضر جديد','goldbtn smallbtn')+'</header>'+
+ '<div class="family-minutes">'+(minuteCards||'<p class="family-empty">لم تُسجّل محاضر لقاءات لهذه الأسرة بعد.</p>')+'</div></section>'+
+ '<section class="card family-hub-section"><header class="family-hub-section-header"><div><span class="family-section-number">05</span><h2>وثائق الأسرة الأربع</h2><p>النص الكامل وتاريخ آخر تعديل، وحالة الوثائق غير المكتوبة.</p></div></header><div class="family-documents">'+documents+'</div></section></div>';
 }
+
 const followAttendanceOptions=[['','لم يُسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']];
 const followTaskOptions=[['','لم يُسجل'],['done','أنجزت'],['partial','أنجزت بعضها'],['none','لم تنجز']];
 function followupDirty(){return document.querySelector('#followupForm')?.dataset.dirty==='true'}
