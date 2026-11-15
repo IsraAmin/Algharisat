@@ -423,3 +423,11 @@ test('dark-mode audit uses accessible action colors and mobile overflow handling
  assert.match(css,/html\[data-theme="dark"\] \.audit-table/);
  assert.match(css,/@media\(max-width:570px\)/);
 });
+
+test('student registry action controls stay on one line with horizontal overflow',()=>{
+ assert.match(css,/\.students-row-actions\{[\s\S]*?flex-flow:row nowrap!important/);
+ assert.match(css,/\.students-row-actions>\.btn,[\s\S]*?flex:0 0 auto/);
+ assert.match(css,/\.students-table td\[data-label="الإجراءات"\]\{[\s\S]*?white-space:nowrap/);
+ assert.match(css,/\.students-table-wrap\{[\s\S]*?overflow-x:auto/);
+ assert.match(css,/@media\(max-width:650px\)\{[\s\S]*?\.students-row-actions\{max-width:none;width:max-content;flex-wrap:nowrap!important/);
+});
