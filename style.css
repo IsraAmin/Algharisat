@@ -3411,3 +3411,10 @@ html[data-theme="dark"] .hero-card:not(.dashboard-hero) > p.welcome-reflection{
  color:#ffffff!important;
  -webkit-text-fill-color:#ffffff!important;
 }
+
+
+/* Restore the welcome banner headline to its original white in dark mode. */
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > h2{
+ color:#ffffff!important;
+ -webkit-text-fill-color:#ffffff!important;
+}
