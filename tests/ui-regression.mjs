@@ -411,7 +411,7 @@ test('system settings show staff actions to admins only',()=>{
 });
 test('staff audit filters and refresh work with existing custom selects',()=>{
  for(const selection of ['auditActor','auditAction','auditEntity']){
-  assert.ok(app.includes("data-select=\\"'+name+'\\"")||app.includes("'"+selection+"'"),'missing filter '+selection);
+  assert.ok(app.includes("'"+selection+"'"),'missing filter '+selection);
  }
  assert.match(app,/action==='refreshTeamActivity'/);
  assert.match(app,/\['auditActor','auditAction','auditEntity'\]\.includes\(el\.dataset\.select\)/);
