@@ -1176,7 +1176,7 @@ function formData(f){const o={};new FormData(f).forEach((v,k)=>o[k]=v);return o}
 async function save(t,obj,conflict){const q=db.from(t).upsert(obj,conflict?{onConflict:conflict}:{});const{error}=await q;if(error)throw error;await read(t);flash('حُفظت التغييرات بنجاح')}
 async function modal(action){
 const [a,id]=action.split(':');state.editing={a,id};let o={};
-if(a.startsWith('edit')){const tab={editstudent:'students',editweek:'weeks',editaccount:'accounts',edittask:'tasks',editjournal:'journal'}[a];o=rows(tab).find(x=>x.id===id||x.user_id===id)||{}}
+if(a.startsWith('edit')){const tab={editstudent:'students',editweek:'weeks',editaccount:'accounts',edittask:'tasks',editjournal:'journal',editminute:'minutes',editfamily:'families'}[a];o=rows(tab).find(x=>x.id===id||x.user_id===id)||{}}
 const stSelect=[['','بلا أسرة'],...rows('families').map(x=>[x.id,x.name])];
 switch(a){
 case 'newstudent':case 'editstudent':
@@ -1190,7 +1190,18 @@ case 'newassessmentstage':case 'editassessmentstage':{
  dialog(existing?'تعديل اسم مرحلة التقييم':'إضافة مرحلة تقييم',field('اسم مرحلة التقييم','label',existing?.label||'','text',true)+'<p class="small muted">سيظهر الاسم في بطاقة الغارسة والتقارير، مع بقاء التقييمات المحفوظة دون تغيير.</p>');
  break;
 }
-case 'newfamily':dialog('إضافة أسرة',field('اسم الأسرة','name','','text',true)+field('يوم اللقاء','meeting_day')+field('ساعة اللقاء','meeting_time')+field('الرابط','meeting_url','','url'));break;
+case 'newfamily':case 'editfamily':{
+ if(!team())throw Error('تعديل بيانات الأسر للفريق فقط');
+ const fam=a==='editfamily'?rows('families').find(x=>x.id===familyScopeId()):null;
+ if(a==='editfamily'&&!fam)throw Error('الأسرة غير موجودة');
+ dialog(fam?'تعديل بيانات الأسرة':'إضافة أسرة',
+  field('اسم الأسرة','name',fam?.name||'','text',true)+
+  field('يوم اللقاء الأسبوعي','meeting_day',fam?.meeting_day||'')+
+  field('ساعة اللقاء','meeting_time',fam?.meeting_time||'')+
+  field('رابط اللقاء','meeting_url',fam?.meeting_url||'','url')+
+  field('ملاحظات الأسرة','notes',fam?.notes||'','textarea'));
+ break;
+}
 case 'bulkstudents':dialog('إضافة قائمة',field('الأسماء، اسم في كل سطر (ثم الهاتف والجامعة مفصولة بفاصلة)','bulk','','textarea',true));break;
 case 'editweek':o=rows('weeks').find(w=>w.id===state.week)||{};dialog('تعديل جميع بيانات الأسبوع',field('رمز الأسبوع','code',o.code,'text',true)+field('العنوان','title',o.title,'text',true)+field('النوع','kind',o.kind,'text',true,[['prep','التحضير'],['program','المرحلة'],['break','ما بعدها']])+field('الترتيب','sort_order',o.sort_order,'number',true)+field('من','starts_on',o.starts_on,'date',true)+field('إلى','ends_on',o.ends_on,'date',true)+[['reflection','وقفة التدبر'],['lesson','الدرس العلمي'],['hadith','الأربعون'],['tilawa','جزء عمّ'],['riyad','رياض الصالحين'],['task_self','في نفسي'],['task_home','في بيتي'],['task_community','في محيطي'],['discussion','أسئلة مدارسة الأسرة'],['activity','نشاط الأسبوع'],['team_work','ما يجري سوى الإيقاع الثابت / عمل الفريق'],['deliverable','ما يكون في اليد في آخر الأسبوع']].map(([key,title])=>field(title,key,o[key],'textarea')).join(''));break;
 case 'followup':o=rows('followups').find(f=>f.student_id===id&&f.week_id===state.week)||{};dialog('متابعة '+name('students',id),field('المجلس','majlis',o.majlis||'','text',false,[['','لم يسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']])+field('لقاء الأسرة','family_meeting',o.family_meeting||'','text',false,[['','لم يسجل'],['present','حاضرة'],['late','متأخرة'],['excused','غائبة بعذر'],['absent','غائبة']])+field('أيام الورد','wird_days',o.wird_days??'','number')+['triple_task','transferred_lesson','rotating_task'].map((k,i)=>field(['المهمة الثلاثية','الدرس المنقول','المهمة الدوارة'][i],k,o[k]||'','text',false,[['','لم يسجل'],['done','أنجزت'],['partial','بعضها'],['none','لم تنجز']])).join('')+field('ملاحظة','note',o.note,'textarea'));break;
@@ -1289,11 +1300,55 @@ case 'rejectaccount':{
  document.querySelector('#modalForm button[type="submit"]')?.classList.add('dangerbtn');
  break;
 }
-case 'doc':o=rows('docs_family').find(d=>d.family_id===state.family&&d.kind===id)||{};dialog('وثيقة الأسرة',field('نص الوثيقة','body',o.body,'textarea',true));break;
-case 'assignrole':dialog('توزيع مهمة دوارة',field('المهمة','task','munassiqa','text',true,[['munassiqa','المنسقة'],['fiqhiya','المسؤولة الفقهية'],['fikriya','المسؤولة الفكرية'],['ijtimaiya','المسؤولة الاجتماعية'],['ataa','مسؤولة العطاء']])+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name]))+field('الدورة','cycle',setting('current_cycle',1),'number',true));break;
-case 'assignleader':dialog('مديرة اللقاء',field('الأسبوع','week_id',state.week,'text',true,rows('weeks').filter(x=>x.kind==='program').map(x=>[x.id,x.title]))+field('الغارسة','student_id','','text',true,rows('students').filter(x=>x.family_id===state.family).map(x=>[x.id,x.name])));break;
+case 'doc':{
+ const familyId=familyScopeId();
+ if(!familyId||!canEditFamilyContent())throw Error('لا يمكن تعديل وثيقة هذه الأسرة');
+ if(!familyDocuments.some(([kind])=>kind===id))throw Error('نوع الوثيقة غير صالح');
+ o=rows('docs_family').find(d=>d.family_id===familyId&&d.kind===id)||{};
+ const label=familyDocuments.find(([kind])=>kind===id)?.[1]||'وثيقة الأسرة';
+ dialog(label,field('نص الوثيقة','body',o.body||'','textarea',true),o.body?'حفظ التعديل':'حفظ الوثيقة');
+ break;
+}
+case 'assignrole':{
+ if(!team())throw Error('توزيع المهام الدوارة للفريق فقط');
+ const familyId=familyScopeId(),cycle=Math.min(4,Math.max(1,Number(state.familyCycle||setting('current_cycle',1))||1));
+ const task=familyRotatingTasks.some(([key])=>key===id)?id:'munassiqa';
+ const assigned=rows('roles_family').find(r=>r.family_id===familyId&&r.cycle===cycle&&r.task===task);
+ dialog('توزيع مهمة الدورة '+cycle,
+  field('المهمة','task',task,'text',true,familyRotatingTasks.map(([key,label])=>[key,label]))+
+  field('الغارسة المسؤولة','student_id',assigned?.student_id||'','text',true,rows('students').filter(x=>x.family_id===familyId).map(x=>[x.id,x.name]))+
+  field('الدورة','cycle',cycle,'text',true,[1,2,3,4].map(x=>[String(x),'الدورة '+x])));
+ break;
+}
+case 'assignleader':{
+ if(!team())throw Error('تعيين مديرات اللقاء للفريق فقط');
+ const familyId=familyScopeId(),weeks=sortedWeeks().filter(w=>w.kind==='program').slice(0,8);
+ const weekId=weeks.some(w=>w.id===id)?id:(weeks.some(w=>w.id===state.week)?state.week:weeks[0]?.id);
+ const previous=rows('rota_leader').find(r=>r.family_id===familyId&&r.week_id===weekId);
+ dialog('مديرة لقاء الأسرة',
+  field('الأسبوع','week_id',weekId,'text',true,weeks.map((w,i)=>[w.id,'الأسبوع '+(i+1)+' — '+w.title]))+
+  field('الغارسة المديرة','student_id',previous?.student_id||'','text',true,rows('students').filter(x=>x.family_id===familyId).map(x=>[x.id,x.name])));
+ break;
+}
 case 'newevent':dialog('موعد جديد',field('عنوان الموعد','title','','text',true)+field('نوع الموعد','kind','مجلس','text',true,[['مجلس','مجلس'],['لقاء التأسيس','لقاء التأسيس'],['درس','درس'],['لقاء أسرة','لقاء أسرة'],['لقاء حضوري','لقاء حضوري'],['لقاء فردي','لقاء فردي'],['لقاء فريق','لقاء فريق'],['غيره','غيره']])+field('وقت الموعد (اختياري — يُحدّد لاحقًا)','starts_at','','datetime-local')+field('المدة بالدقائق','duration_minutes',90,'number')+field('الأسبوع','week_id',state.week||'','text',false,[['','غير مرتبط بأسبوع'],...sortedWeeks().map(w=>[w.id,w.title])])+field('الأسرة (اختياري)','family_id','','text',false,[['','للجميع'],...rows('families').map(f=>[f.id,f.name])])+field('المكان أو الرابط','place')+field('ملاحظات','notes','','textarea'));break;
-case 'newminute':dialog('محضر لقاء',field('تاريخ اللقاء','meeting_date',new Date().toISOString().slice(0,10),'date')+field('الأسبوع','week_id',state.week,'text',false,rows('weeks').filter(w=>w.kind==='program').map(w=>[w.id,w.title]))+field('عدد الحاضرات','attendance_count','','number')+field('الخلاصة','summary','','textarea')+field('التكليف والقرارات','decisions','','textarea'));break;
+case 'newminute':case 'editminute':{
+ const familyId=familyScopeId();
+ if(!familyId||!canEditFamilyContent())throw Error('كتابة المحاضر لأعضاء الأسرة والفريق فقط');
+ const existing=a==='editminute'?rows('minutes').find(m=>m.id===id&&m.family_id===familyId):null;
+ if(a==='editminute'&&!existing)throw Error('محضر اللقاء غير موجود');
+ const weeks=sortedWeeks().filter(w=>w.kind==='program').slice(0,8);
+ const preferred=existing?.week_id||(weeks.some(w=>w.id===state.week)?state.week:(weeks.find(weekCurrent)||weeks[0])?.id);
+ const leader=existing?.leader_id||rows('rota_leader').find(r=>r.family_id===familyId&&r.week_id===preferred)?.student_id||'';
+ const memberOptions=[['','غير محددة'],...rows('students').filter(x=>x.family_id===familyId).map(x=>[x.id,x.name])];
+ dialog(existing?'تعديل محضر اللقاء':'محضر لقاء جديد',
+  field('الأسبوع','week_id',preferred||'','text',true,weeks.map((w,i)=>[w.id,'الأسبوع '+(i+1)+' — '+w.title]))+
+  field('تاريخ اللقاء','meeting_date',existing?.meeting_date||todayISO(),'date',true)+
+  field('مديرة اللقاء','leader_id',leader,'text',false,memberOptions)+
+  field('عدد الحاضرات','attendance_count',existing?.attendance_count??'','number')+
+  field('الخلاصة','summary',existing?.summary||'','textarea')+
+  field('التكليفات والقرارات','decisions',existing?.decisions||'','textarea'));
+ break;
+}
 default:return;
 }
 }
@@ -1318,7 +1373,18 @@ else if(a==='newassessmentstage'||a==='editassessmentstage'){
  }
  await refreshAssessmentStages();render();flash(a==='newassessmentstage'?'أضيفت مرحلة التقييم':'حُفظ اسم المرحلة');
 }
-else if(a==='newfamily')await save('families',x);else if(a==='newgoal'){if(rows('goals').filter(g=>g.student_id===id).length>=3)throw Error('الحد الأقصى ثلاثة أهداف للغارسة');await save('goals',{...x,student_id:id,done:false})}
+else if(a==='newfamily'||a==='editfamily'){
+ if(!team())throw Error('إدارة الأسر للفريق فقط');
+ const name=String(x.name||'').trim();
+ if(!name)throw Error('أدخلي اسم الأسرة');
+ const payload={name,meeting_day:String(x.meeting_day||'').trim()||null,meeting_time:String(x.meeting_time||'').trim()||null,meeting_url:String(x.meeting_url||'').trim()||null,notes:String(x.notes||'').trim()||null};
+ if(a==='editfamily'){
+  const id=familyScopeId();if(!rows('families').some(f=>f.id===id))throw Error('الأسرة غير موجودة');
+  const{data,error}=await db.from('families').update(payload).eq('id',id).select('id');
+  if(error)throw error;if(!data?.length)throw Error('تعذر تعديل الأسرة');
+  await read('families');flash('حُفظت بيانات الأسرة');
+ }else{await save('families',payload)}
+}else if(a==='newgoal'){if(rows('goals').filter(g=>g.student_id===id).length>=3)throw Error('الحد الأقصى ثلاثة أهداف للغارسة');await save('goals',{...x,student_id:id,done:false})}
 else if(a==='newobservation'){if(!leadership())throw Error('الملاحظات واللقاءات مخصصة للإدارة والمرافقة');await save('observations',{...x,student_id:id,secret:state.account?.role==='murafiqa'&&bo(x.secret),week_id:x.week_id||null,author_id:state.user.id})}
 
 else if(a==='bulkstudents'){const arr=x.bulk.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(line=>{const [name,phone,university]=line.split(',');return{name:name.trim(),phone:phone?.trim(),university:university?.trim(),stage:'candidate'}});const{error}=await db.from('students').insert(arr);if(error)throw error;await read('students');flash('تمت إضافة '+arr.length+' غارسة')}
@@ -1451,9 +1517,33 @@ else if(a==='rejectaccount'){
  const{error}=await db.rpc('review_account',{p_user_id:id,p_action:'reject',p_rejection_reason:String(x.rejection_reason||'').trim()||null});
  if(error)throw error;await read('accounts');flash('تم تسجيل رفض الطلب');
 }
-else if(a==='doc')await save('docs_family',{...x,kind:id,family_id:state.family},'family_id,kind');
-else if(a==='assignrole')await save('roles_family',{family_id:state.family,student_id:x.student_id,task:x.task,cycle:Number(x.cycle)},'family_id,task,cycle');
-else if(a==='assignleader')await save('rota_leader',{family_id:state.family,week_id:x.week_id,student_id:x.student_id},'family_id,week_id');
+else if(a==='doc'){
+ const familyId=familyScopeId();
+ if(!familyId||!canEditFamilyContent())throw Error('تعديل الوثائق لأعضاء الأسرة والفريق فقط');
+ if(!familyDocuments.some(([key])=>key===id))throw Error('نوع الوثيقة غير صالح');
+ const body=String(x.body||'').trim();
+ if(!body)throw Error('اكتبي نص الوثيقة أولًا');
+ await save('docs_family',{kind:id,family_id:familyId,body,updated_at:new Date().toISOString()},'family_id,kind');
+}
+else if(a==='assignrole'){
+ if(!team())throw Error('إدارة المهام الدوارة للفريق فقط');
+ const familyId=familyScopeId(),cycle=Number(x.cycle);
+ if(!Number.isInteger(cycle)||cycle<1||cycle>4)throw Error('اختاري دورة من الدورات الأربع');
+ if(!familyRotatingTasks.some(([key])=>key===x.task))throw Error('المهمة غير صحيحة');
+ if(!rows('students').some(student=>student.id===x.student_id&&student.family_id===familyId))throw Error('اختاري غارسة من الأسرة نفسها');
+ const conflict=rows('roles_family').find(r=>r.family_id===familyId&&r.cycle===cycle&&r.student_id===x.student_id&&r.task!==x.task);
+ if(conflict)throw Error('هذه الغارسة لديها مهمة أخرى في الدورة نفسها؛ غيّري توزيعها أولًا');
+ const previous=rows('roles_family').find(r=>r.family_id===familyId&&r.cycle===cycle&&r.task===x.task);
+ await save('roles_family',{...(previous?.id?{id:previous.id}:{}),family_id:familyId,student_id:x.student_id,task:x.task,cycle},'family_id,task,cycle');
+}
+else if(a==='assignleader'){
+ if(!team())throw Error('إدارة مديرات اللقاء للفريق فقط');
+ const familyId=familyScopeId();
+ if(!sortedWeeks().some(w=>w.id===x.week_id&&w.kind==='program'))throw Error('اختاري أسبوعًا من أسابيع البرنامج');
+ if(!rows('students').some(student=>student.id===x.student_id&&student.family_id===familyId))throw Error('اختاري مديرة من الأسرة نفسها');
+ const previous=rows('rota_leader').find(r=>r.family_id===familyId&&r.week_id===x.week_id);
+ await save('rota_leader',{...(previous?.id?{id:previous.id}:{}),family_id:familyId,week_id:x.week_id,student_id:x.student_id},'family_id,week_id');
+}
 else if(a==='newevent'){
  if(isFoundationMeeting(x.kind,x.title)){
   const launch=launchReadiness();
@@ -1461,7 +1551,23 @@ else if(a==='newevent'){
  }
  await save('events',{...x,starts_at:x.starts_at||null,duration_minutes:Number(x.duration_minutes||90),week_id:x.week_id||null,family_id:x.family_id||null});
 }
-else if(a==='newminute')await save('minutes',{...x,family_id:state.family,attendance_count:x.attendance_count?Number(x.attendance_count):null,author_id:state.user.id});
+else if(a==='newminute'||a==='editminute'){
+ const familyId=familyScopeId();
+ if(!familyId||!canEditFamilyContent())throw Error('المحاضر لأعضاء الأسرة والفريق فقط');
+ if(!sortedWeeks().some(w=>w.id===x.week_id&&w.kind==='program'))throw Error('اختاري أسبوعًا صحيحًا');
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(x.meeting_date||'')))throw Error('تاريخ اللقاء غير صالح');
+ if(x.leader_id&&!rows('students').some(st=>st.id===x.leader_id&&st.family_id===familyId))throw Error('اختاري مديرة من الأسرة نفسها');
+ const count=x.attendance_count===''?null:Number(x.attendance_count);
+ if(count!==null&&(!Number.isInteger(count)||count<0||count>rows('students').filter(st=>st.family_id===familyId).length))throw Error('عدد الحاضرات غير صالح');
+ const payload={week_id:x.week_id,meeting_date:x.meeting_date,leader_id:x.leader_id||null,attendance_count:count,summary:String(x.summary||'').trim()||null,decisions:String(x.decisions||'').trim()||null};
+ if(a==='editminute'){
+  const row=rows('minutes').find(m=>m.id===id&&m.family_id===familyId);
+  if(!row)throw Error('لا يمكن تعديل محضر خارج أسرتك');
+  const{data,error}=await db.from('minutes').update(payload).eq('id',id).eq('family_id',familyId).select('id');
+  if(error)throw error;if(!data?.length)throw Error('تعذّر تعديل المحضر');
+  await read('minutes');flash('تم تحديث محضر اللقاء');
+ }else await save('minutes',{...payload,family_id:familyId,author_id:state.user.id});
+}
 $('.dialog-backdrop')?.remove();state.editing=null;render();
 }
 document.addEventListener('click',async e=>{
@@ -1511,7 +1617,12 @@ else if(action==='refresh')await start();
 else if(action==='reset'){const email=await appConfirm({title:'استعادة كلمة المرور',message:'أدخلي بريدكِ الإلكتروني لإرسال رابط إعادة التعيين.',input:true,placeholder:'name@example.com',confirmText:'إرسال الرابط'});if(email){const{error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;flash('إن كان البريد مسجلاً، سيصلك رابط إعادة كلمة المرور')}}
 else if(action==='close')$('.dialog-backdrop')?.remove();
 else if(action==='print')window.print();
- else if(action.startsWith('accountsTab:')){if(!leadership())throw Error('هذا القسم للإدارة والمرافقة فقط');state.accountsTab=action.split(':')[1]==='current'?'current':'pending';render()}
+ else if(action.startsWith('familyCycle:')){
+ const cycle=Number(action.split(':')[1]);
+ if(![1,2,3,4].includes(cycle))throw Error('الدورة غير صحيحة');
+ state.familyCycle=cycle;render();
+}
+else if(action.startsWith('accountsTab:')){if(!leadership())throw Error('هذا القسم للإدارة والمرافقة فقط');state.accountsTab=action.split(':')[1]==='current'?'current':'pending';render()}
  else if(action.startsWith('journalView:')){if(!team())throw Error('هذه الصفحة للفريق فقط');state.journalView=action.split(':')[1]==='review'?'review':'weeks';render()}
 else if(action==='refreshTeamActivity'){if(!adminOnly())throw Error('سجل النشاط للإدارة فقط');await loadTeamActivity();render();if(!state.auditError)flash('تم تحديث سجل النشاط')}
 else if(action==='shiftcalendar'){
