@@ -3069,11 +3069,55 @@ html[data-theme="dark"] .family-hub .family-leader-table tbody tr.is-current :is
   border-top:1px solid #dce4e9!important;
   break-inside:avoid!important;
  }
- /* Keep short sections whole; allow long outcome tables to continue naturally. */
- html .professional-report-page .report-section:nth-of-type(5),
- html .professional-report-page .report-section:nth-of-type(6),
- html .professional-report-page .report-section:nth-of-type(7){
+ /* Do not force short sections onto a new sheet just because the last
+    section cannot fit as one block. Let content continue in normal flow. */
+ html .professional-report-page .report-section{
+  break-before:auto!important;
+  page-break-before:auto!important;
+  break-after:auto!important;
+  page-break-after:auto!important;
+  break-inside:auto!important;
+  page-break-inside:auto!important;
+ }
+ /* Removing the scrolling box for print lets the actual <table> fragment
+    normally across pages rather than being treated as a single large box. */
+ html .professional-report-page .report-table-scroll{
+  display:contents!important;
+  overflow:visible!important;
+  break-inside:auto!important;
+  page-break-inside:auto!important;
+  border:0!important;
+ }
+ html .professional-report-page .report-table{
+  break-inside:auto!important;
+  page-break-inside:auto!important;
+ }
+ html .professional-report-page .report-table tbody{
+  break-inside:auto!important;
+  page-break-inside:auto!important;
+ }
+ /* A heading stays with the immediately following content, without
+    forcing the whole section onto the next page. */
+ html .professional-report-page .report-section-head{
   break-inside:avoid!important;
-  page-break-inside:avoid!important;
+  break-after:avoid!important;
+  page-break-after:avoid!important;
+ }
+ /* Long notes and method paragraphs must not create half-empty sheets. */
+ html .professional-report-page .report-method{
+  display:block!important;
+  break-inside:auto!important;
+  page-break-inside:auto!important;
+ }
+ html .professional-report-page .report-method p{
+  margin:1.5mm 0 0!important;
+  break-inside:auto!important;
+  page-break-inside:auto!important;
+  orphans:2;
+  widows:2;
+ }
+ html .professional-report-page .report-note{
+  break-inside:auto!important;
+  page-break-inside:auto!important;
  }
 }
