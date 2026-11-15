@@ -3178,3 +3178,160 @@ html[data-theme="dark"] .family-hub .family-leader-table tbody tr.is-current :is
 .home-comms-notice p{-webkit-line-clamp:2;line-clamp:2}
 .home-comms-section-head .btn{white-space:nowrap}
 @media(max-width:540px){.home-comms + .grid.two{margin-top:18px}}
+
+
+/* Cohesive announcement design: use the app's existing surface and text tokens. */
+.home-comms{
+ margin:26px 0 34px;
+ padding:0;
+ color:var(--ink);
+}
+.home-comms + .grid.two,
+.home-comms + .grid{
+ margin-top:32px;
+ row-gap:20px;
+}
+.home-comms-heading{margin-bottom:17px;gap:11px}
+.home-comms-heading-icon{
+ width:42px;height:42px;border-radius:13px;
+ background:var(--gold-light);color:var(--gold);
+}
+.home-comms-heading h2{color:var(--ink);font-size:1.14rem;line-height:1.5}
+.home-comms-heading p{color:var(--muted);font-size:.83rem}
+.home-comms-grid{gap:18px;align-items:start}
+.home-comms-section{
+ padding:17px 18px;
+ border-radius:18px;
+ background:var(--paper);
+ border:1px solid var(--line);
+ box-shadow:var(--shadow-sm);
+}
+.home-comms-section-head{margin-bottom:12px}
+.home-comms-section-head h3{color:var(--ink);font-size:.98rem;margin:0}
+.home-comms-section-icon{
+ width:32px;height:32px;background:var(--gold-light);color:var(--gold);
+}
+.home-comms-section-head .btn{font-size:.76rem}
+.home-comms-items{gap:9px}
+.home-comms-event,.home-comms-notice{
+ padding:12px 13px;
+ gap:11px;
+ border-radius:13px;
+ background:var(--soft);
+ border:1px solid var(--line);
+ box-shadow:none;
+}
+.home-comms-event.is-next{
+ border-color:var(--gold);
+ background:var(--paper);
+ box-shadow:inset -3px 0 0 var(--gold);
+}
+.home-comms-notice.is-pinned{
+ border-color:var(--gold);
+ background:var(--paper);
+ box-shadow:inset -3px 0 0 var(--gold);
+}
+.home-comms-event-icon,.home-comms-notice-icon{
+ height:36px;width:36px;border-radius:10px;flex:none;
+ background:var(--gold-light);color:var(--gold);
+}
+.home-comms-event-icon svg,.home-comms-notice-icon svg{width:18px;height:18px}
+.home-comms-event h4,.home-comms-notice h4{
+ color:var(--ink);font-size:.91rem;line-height:1.6;margin:0 0 5px;
+}
+.home-comms-event p,.home-comms-notice p{
+ color:var(--ink-2);font-size:.8rem;line-height:1.7;
+}
+.home-comms-notice p{margin:0 0 5px;max-height:3.4em}
+.home-comms-notice small,.home-comms-audience{color:var(--muted)}
+.home-comms-tag{background:var(--soft);color:var(--ink-2);font-size:.69rem;padding:2px 8px}
+.home-comms-tag.primary{background:var(--gold-light);color:var(--gold)}
+.home-comms-tag.soon{background:var(--gold-light);color:var(--gold)}
+.home-comms-empty{background:var(--soft);border-color:var(--line);color:var(--muted)}
+/* Dedicated announcements page: compact editorial cards, with clear hierarchy. */
+.communications-page .comms-announcements{gap:12px}
+.communications-page .comms-announcement{
+ position:relative;
+ border-radius:16px;
+ padding:15px 17px;
+ gap:9px;
+ background:var(--paper);
+ border:1px solid var(--line);
+ box-shadow:var(--shadow-xs);
+}
+.communications-page .comms-announcement.is-pinned{
+ background:var(--paper);
+ border-color:var(--gold);
+ box-shadow:inset -3px 0 0 var(--gold),var(--shadow-xs);
+}
+.communications-page .comms-announcement-top{
+ justify-content:flex-start;
+ gap:9px;
+}
+.communications-page .comms-announcement-symbol{
+ width:34px;height:34px;border-radius:10px;flex:none;
+ display:grid;place-items:center;
+ background:var(--gold-light);color:var(--gold);
+}
+.communications-page .comms-announcement-symbol svg{width:17px;height:17px}
+.communications-page .comms-date{margin-inline-start:auto;color:var(--muted)}
+.communications-page .comms-announcement h3{
+ color:var(--ink);font-size:1rem;line-height:1.55;
+}
+.communications-page .comms-description{color:var(--ink-2);font-size:.85rem;line-height:1.8}
+.communications-page .comms-item-actions{margin-top:4px;padding-top:10px;border-color:var(--line)}
+/* Explicit dark colors must win over pre-existing hardcoded light card styles. */
+html[data-theme="dark"] .home-comms{color:var(--dm-text)}
+html[data-theme="dark"] .home-comms :is(.home-comms-heading h2,.home-comms-section-head h3,.home-comms-event h4,.home-comms-notice h4){color:var(--dm-text)!important}
+html[data-theme="dark"] .home-comms :is(.home-comms-heading p,.home-comms-event p,.home-comms-notice p,.home-comms-audience,.home-comms-notice small,.home-comms-empty){color:var(--dm-text-muted)!important}
+html[data-theme="dark"] .home-comms-section{
+ background:var(--dm-surface)!important;
+ border-color:var(--dm-border)!important;
+ box-shadow:0 5px 17px rgba(0,0,0,.14);
+}
+html[data-theme="dark"] .home-comms :is(.home-comms-event,.home-comms-notice,.home-comms-empty){
+ background:var(--dm-surface-muted)!important;
+ border-color:var(--dm-border)!important;
+}
+html[data-theme="dark"] .home-comms :is(.home-comms-event.is-next,.home-comms-notice.is-pinned){
+ background:var(--dm-surface-raised)!important;
+ border-color:var(--dm-gold)!important;
+ box-shadow:inset -3px 0 0 var(--dm-gold);
+}
+html[data-theme="dark"] .home-comms :is(.home-comms-heading-icon,.home-comms-section-icon,.home-comms-event-icon,.home-comms-notice-icon){
+ background:#364252!important;color:var(--dm-gold)!important;
+}
+html[data-theme="dark"] .home-comms .home-comms-tag{
+ background:#374b5e!important;color:#e1ecf5!important;
+}
+html[data-theme="dark"] .home-comms .home-comms-tag.primary,
+html[data-theme="dark"] .home-comms .home-comms-tag.soon{
+ background:#58472f!important;color:#ffe0a8!important;
+}
+html[data-theme="dark"] .communications-page .comms-announcement{
+ background:var(--dm-surface)!important;
+ border-color:var(--dm-border)!important;
+ color:var(--dm-text)!important;
+}
+html[data-theme="dark"] .communications-page .comms-announcement.is-pinned{
+ background:var(--dm-surface-raised)!important;
+ border-color:var(--dm-gold)!important;
+ box-shadow:inset -3px 0 0 var(--dm-gold);
+}
+html[data-theme="dark"] .communications-page .comms-announcement-symbol{
+ background:#364252;color:var(--dm-gold);
+}
+html[data-theme="dark"] .communications-page :is(.comms-announcement h3){color:var(--dm-text)!important}
+html[data-theme="dark"] .communications-page :is(.comms-description,.comms-date){color:var(--dm-text-muted)!important}
+@media(max-width:850px){
+ .home-comms{margin-bottom:28px}
+ .home-comms + .grid.two,.home-comms + .grid{margin-top:26px}
+}
+@media(max-width:540px){
+ .home-comms{margin-top:22px;margin-bottom:28px}
+ .home-comms + .grid.two,.home-comms + .grid{margin-top:24px}
+ .home-comms-section{padding:13px}
+ .home-comms-event,.home-comms-notice{padding:11px}
+ .home-comms-section-head{gap:8px}
+ .communications-page .comms-announcement{padding:13px;gap:8px}
+}
