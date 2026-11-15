@@ -3171,3 +3171,10 @@ html[data-theme="dark"] .family-hub .family-leader-table tbody tr.is-current :is
  .myweek-tasks-card > .btn,
  .myweek-tasks-card > button[data-action="go:myreport"]{margin-top:22px;margin-bottom:8px}
 }
+
+
+/* Keep the home preview compact and separate it from weekly study content. */
+.home-comms + .grid.two{margin-top:20px}
+.home-comms-notice p{-webkit-line-clamp:2;line-clamp:2}
+.home-comms-section-head .btn{white-space:nowrap}
+@media(max-width:540px){.home-comms + .grid.two{margin-top:18px}}
