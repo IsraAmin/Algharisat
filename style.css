@@ -3444,3 +3444,23 @@ html[data-theme="dark"] .hero-card:not(.dashboard-hero) :is(h1,h2,.eyebrow,p,.we
   -webkit-text-fill-color:#ffffff!important;
   opacity:1;
 }
+
+
+/* Staff dashboard uses the same top-priority schedule and announcement cards as "أسبوعي". */
+.dashboard-overview > .home-comms{
+ margin:0 0 8px;
+ align-self:start;
+}
+.dashboard-overview > .home-comms .home-comms-grid{
+ align-items:start;
+}
+.dashboard-overview > .home-comms .home-comms-section{
+ align-self:start;
+}
+.dashboard-overview > .dashboard-week-tasks{
+ width:100%;
+ align-self:start;
+}
+@media(max-width:850px){
+ .dashboard-overview > .home-comms{margin:0 0 5px}
+}
