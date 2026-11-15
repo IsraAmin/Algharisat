@@ -3418,3 +3418,20 @@ html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > h2{
  color:#ffffff!important;
  -webkit-text-fill-color:#ffffff!important;
 }
+
+
+/* Unified welcome-card headings for student and staff dashboards.
+   The main weekly title alone is gold in dark mode; all supporting copy stays white. */
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > h2,
+html[data-theme="dark"] .hero-card:not(.dashboard-hero) > h1{
+  color:#f0c48b!important;
+  -webkit-text-fill-color:#f0c48b!important;
+  opacity:1!important;
+}
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > .eyebrow,
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero > p,
+html[data-theme="dark"] .hero-card:not(.dashboard-hero) > .eyebrow,
+html[data-theme="dark"] .hero-card:not(.dashboard-hero) > p{
+  color:#ffffff!important;
+  -webkit-text-fill-color:#ffffff!important;
+}
