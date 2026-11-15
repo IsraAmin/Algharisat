@@ -3435,3 +3435,12 @@ html[data-theme="dark"] .hero-card:not(.dashboard-hero) > p{
   color:#ffffff!important;
   -webkit-text-fill-color:#ffffff!important;
 }
+
+
+/* Restore the original white lettering inside every welcome banner, for all roles. */
+html[data-theme="dark"] .dashboard-overview .hero-card.dashboard-hero :is(h1,h2,.eyebrow,p,.welcome-reflection,.dashboard-week-dates),
+html[data-theme="dark"] .hero-card:not(.dashboard-hero) :is(h1,h2,.eyebrow,p,.welcome-reflection){
+  color:#ffffff!important;
+  -webkit-text-fill-color:#ffffff!important;
+  opacity:1;
+}
