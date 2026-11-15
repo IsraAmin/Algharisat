@@ -397,3 +397,29 @@ test('active bottom navigation stays dark with visible white icon and label',()=
  assert.match(css,/html\[data-theme="dark"\] \.mobile-nav button\.active svg \*/);
  assert.match(css,/border-top:1px solid #445c70!important/);
 });
+
+
+test('system settings show staff actions to admins only',()=>{
+ assert.match(app,/const adminOnly=\(\)=>state\.account\?\.role==='admin'/);
+ assert.match(app,/function adminActivityPanel\(\)/);
+ assert.match(app,/if\(!adminOnly\(\)\)return ''/);
+ assert.match(app,/adminActivityPanel\(\)/);
+ assert.match(app,/سجل نشاط فريق العمل/);
+ assert.match(app,/function loadTeamActivity\(\)/);
+ assert.match(app,/db\.from\('team_activity_log'\)/);
+ assert.match(app,/\.limit\(250\)/);
+});
+test('staff audit filters and refresh work with existing custom selects',()=>{
+ for(const selection of ['auditActor','auditAction','auditEntity']){
+  assert.ok(app.includes("data-select=\\"'+name+'\\"")||app.includes("'"+selection+"'"),'missing filter '+selection);
+ }
+ assert.match(app,/action==='refreshTeamActivity'/);
+ assert.match(app,/\['auditActor','auditAction','auditEntity'\]\.includes\(el\.dataset\.select\)/);
+ assert.match(app,/auditActionNames=\{INSERT:'إضافة',UPDATE:'تعديل',DELETE:'حذف'\}/);
+});
+test('dark-mode audit uses accessible action colors and mobile overflow handling',()=>{
+ assert.match(css,/\.audit-table-wrap\{width:100%;max-width:100%;overflow-x:auto/);
+ assert.match(css,/html\[data-theme="dark"\] \.audit-operation\.operation-delete/);
+ assert.match(css,/html\[data-theme="dark"\] \.audit-table/);
+ assert.match(css,/@media\(max-width:570px\)/);
+});
