@@ -1,5 +1,5 @@
-const CACHE_NAME='algharisat-shell-v5';
-const FILES=['./','./index.html','./style.css?v=20261115-family-hub-v5','./app.bundle.js?v=20261115-family-hub-v5','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
+const CACHE_NAME='algharisat-shell-v6';
+const FILES=['./','./index.html','./style.css?v=20261115-report-print-v6','./app.bundle.js?v=20261115-report-print-v6','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(FILES)).catch(()=>{}));
   self.skipWaiting();
