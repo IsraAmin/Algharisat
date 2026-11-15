@@ -475,3 +475,17 @@ test('family hub remains responsive and readable in dark mode',()=>{
  assert.match(css,/html\[data-theme="dark"\] \.family-hub \.family-cycle-btn\.is-active/);
  assert.match(css,/@media\(max-width:600px\)/);
 });
+
+test('report PDF uses dedicated readable A4 landscape print rules',()=>{
+ assert.match(css,/@page algharisatReport\{/);
+ assert.match(css,/size:A4 landscape;/);
+ assert.match(css,/\.professional-report-page[\s\S]*?page:algharisatReport/);
+ assert.match(css,/\.professional-report-page \.report-cover,[\s\S]*?background:#fff!important/);
+ assert.match(css,/\.professional-report-page \.report-cover h2,[\s\S]*?color:#172f42!important/);
+ assert.match(css,/\.professional-report-page \.report-meta strong,[\s\S]*?color:#203344!important/);
+ assert.match(css,/\.professional-report-page \.report-table thead\{display:table-header-group!important\}/);
+ assert.match(css,/\.professional-report-page \.report-table tr\{[\s\S]*?break-inside:avoid!important/);
+ assert.match(css,/\.professional-report-page \.report-section-head\{[\s\S]*?break-after:avoid!important/);
+ assert.match(css,/\.professional-report-page \.report-table-scroll\{[\s\S]*?overflow:visible!important/);
+ assert.match(css,/html\[data-theme="dark"\] \.professional-report-page \.report-method p/);
+});
