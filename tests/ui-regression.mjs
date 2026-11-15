@@ -431,3 +431,47 @@ test('student registry action controls stay on one line with horizontal overflow
  assert.match(css,/\.students-table-wrap\{[\s\S]*?overflow-x:auto/);
  assert.match(css,/@media\(max-width:650px\)\{[\s\S]*?\.students-row-actions\{max-width:none;width:max-content;flex-wrap:nowrap!important/);
 });
+
+
+test('family hub matches guide with four cycles and five documented rotating duties',()=>{
+ assert.match(app,/function families\(\)/);
+ assert.match(app,/const familyRotatingTasks=/);
+ assert.match(app,/const familyDocuments=/);
+ for(const role of ['المنسقة','المسؤولة الفقهية','المسؤولة الفكرية','المسؤولة الاجتماعية','مسؤولة العطاء'])assert.ok(app.includes(role),role);
+ for(const label of ['ما المهام الخمس؟','الدورة ','مديرات لقاءات الأسرة','محاضر لقاءات الأسرة','وثائق الأسرة الأربع'])assert.ok(app.includes(label),label);
+ assert.match(app,/\[1,2,3,4\]\.map\(n=>/);
+ assert.match(app,/data-action="familyCycle:'/);
+ assert.match(app,/family-task-explainer/);
+});
+test('family leader roster renders all eight weeks with current-week indicator',()=>{
+ assert.match(app,/const weeks=sortedWeeks\(\)\.filter\(w=>w\.kind==='program'\)\.slice\(0,8\)/);
+ assert.match(app,/const leaderRows=weeks\.map/);
+ assert.match(app,/weekCurrent\(week\)/);
+ assert.match(app,/family-current-week/);
+ assert.match(app,/case 'assignleader':/);
+ assert.match(app,/db\.from\('rota_leader'\)|save\('rota_leader'/);
+});
+test('family members can write and edit fully detailed meeting minutes in own family',()=>{
+ assert.match(app,/case 'newminute':case 'editminute'/);
+ assert.match(app,/field\('مديرة اللقاء','leader_id'/);
+ assert.match(app,/field\('عدد الحاضرات','attendance_count'/);
+ assert.match(app,/field\('الخلاصة','summary'/);
+ assert.match(app,/field\('التكليفات والقرارات','decisions'/);
+ assert.match(app,/db\.from\('minutes'\)\.update\(payload\)/);
+ assert.match(app,/\.eq\('family_id',familyId\)/);
+ assert.match(app,/familyScopeId=\(\)=>team\(\)\?state\.family:ownFamilyId\(\)/);
+});
+test('family documents show full text and update timestamps without leaking other families',()=>{
+ assert.match(app,/familyDocuments\.map/);
+ assert.match(app,/family-document-details/);
+ assert.match(app,/doc\.updated_at\?date\(doc\.updated_at\)/);
+ assert.match(app,/updated_at:new Date\(\)\.toISOString\(\)/);
+ assert.match(app,/family_id:familyId/);
+ assert.match(app,/family-document-pending/);
+});
+test('family hub remains responsive and readable in dark mode',()=>{
+ assert.match(css,/\.family-role-grid\{display:grid/);
+ assert.match(css,/\.family-leader-scroll\{overflow-x:auto/);
+ assert.match(css,/html\[data-theme="dark"\] \.family-hub \.family-cycle-btn\.is-active/);
+ assert.match(css,/@media\(max-width:600px\)/);
+});
