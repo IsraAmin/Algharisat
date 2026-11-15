@@ -3335,3 +3335,37 @@ html[data-theme="dark"] .communications-page :is(.comms-description,.comms-date)
  .home-comms-section-head{gap:8px}
  .communications-page .comms-announcement{padding:13px;gap:8px}
 }
+
+
+/* Top-aligned schedule / notices with dates opposite the badges. */
+.home-comms-grid{align-items:start;grid-auto-flow:row}
+.home-comms-section{align-self:start;height:auto;min-height:0}
+.home-comms-items{align-content:start;grid-auto-rows:max-content}
+.home-comms-event,.home-comms-notice{align-items:flex-start}
+.home-comms-event-content,.home-comms-notice-content{min-width:0}
+.home-comms-meta{
+ display:flex;align-items:flex-start;justify-content:space-between;
+ gap:8px 14px;margin-bottom:9px;
+}
+.home-comms-meta .home-comms-tags{margin:0;min-width:0;flex:1}
+.home-comms-date{
+ display:inline-block;flex:none;max-width:48%;margin-inline-start:auto;
+ font-size:.73rem;font-weight:700;line-height:1.5;
+ color:var(--muted);text-align:left;white-space:normal;
+}
+.home-comms-event h4,.home-comms-notice h4{margin-top:0}
+.home-comms-grid + .grid,.home-comms + .grid.two{margin-top:30px}
+.dashboard-primary-grid,.dashboard-secondary-grid{align-items:start}
+.dashboard-primary-grid > *, .dashboard-secondary-grid > *{align-self:start}
+html[data-theme="dark"] .home-comms-date{color:var(--dm-text-muted)!important}
+/* The main current-week/preparation title is a gold accent on dark mode. */
+html[data-theme="dark"] .dashboard-hero h2,
+html[data-theme="dark"] .dashboard-hero .eyebrow,
+html[data-theme="dark"] .hero-card h1{
+ color:var(--dm-gold)!important;
+}
+@media(max-width:540px){
+ .home-comms-meta{gap:7px}
+ .home-comms-date{font-size:.69rem;max-width:50%}
+ .home-comms + .grid.two{margin-top:26px}
+}
